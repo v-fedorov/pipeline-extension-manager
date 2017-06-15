@@ -32,6 +32,7 @@
     "https://*/*"
   ],
   "web_accessible_resources": [
-    "search.html"
+    "search.html",
+    "modal.html"
   ]
 }

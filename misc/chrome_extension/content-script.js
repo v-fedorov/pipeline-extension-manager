@@ -7,25 +7,59 @@ var options = [];
 
 function createModal() {
 	let editorElement = $('#EditExtensionComponent > div > div > form > div:nth-child(2)')[0];
-	let testButton = document.createElement('div');
-	testButton.style = 'margin: 0 !important;float:right';
-	$(testButton).addClass("btn mod-prepend spaced-box");
-	testButton.innerHTML = `<span class="btn-prepend">+</span>Add from gallery`;
-	editorElement.insertBefore(document.createElement('br'), editorElement.childNodes[0]);
-	editorElement.insertBefore(testButton, editorElement.childNodes[0]);
-	$.get(chrome.extension.getURL('/search.html'), function (data) {
+	// let testButton = document.createElement('div');
+	// testButton.style = 'margin: 0 !important;float:right';
+	// $(testButton).addClass("btn mod-prepend spaced-box");
+	// testButton.innerHTML = `<span class="btn-prepend">+</span>Add from gallery`;
+	// editorElement.insertBefore(document.createElement('br'), editorElement.childNodes[0]);
+	// editorElement.insertBefore(testButton, editorElement.childNodes[0]);
+	$.get(chrome.extension.getURL('/modal.html'), function (data) {
 		let containerDiv = document.createElement('div');
 		containerDiv.innerHTML = data;
-		$(containerDiv).appendTo('body');
+		editorElement.insertBefore(containerDiv, editorElement.childNodes[0]);
 		let scriptElement = document.createElement('script');
-		scriptElement.innerHTML = `
-		var root = $('#search')[0];
-    	Coveo.SearchEndpoint.endpoints['default'] = new Coveo.SearchEndpoint({
-      		restUri: 'https://platformqa.cloud.coveo.com/rest/search',
-      		accessToken: 'xx55c20bcb-59aa-40a2-b8b2-72ae625e6762'
-    	});
-    	Coveo.init(root);`;
-		$(scriptElement).appendTo('body');
+		let script = `
+		// Get the modal
+		var modal = document.getElementById('__myModal');
+
+		// Get the button that opens the modal
+		var btn = document.getElementById("__modalButton");
+
+		// Get the <span> element that closes the modal
+		var span = document.getElementsByClassName("__close")[0];
+
+		// When the user clicks the button, open the modal 
+		btn.onclick = function () {
+			modal.style.display = "block";
+		}
+
+		// When the user clicks on <span> (x), close the modal
+		span.onclick = function () {
+			modal.style.display = "none";
+		}
+
+		// When the user clicks anywhere outside of the modal, close it
+		window.onclick = function (event) {
+			if (event.target == modal) {
+				modal.style.display = "none";
+			}
+		}
+		`;
+		scriptElement.innerHTML = script;
+		editorElement.insertBefore(scriptElement, editorElement.childNodes[0]);
+		let coveoScript = `
+		var root = document.getElementById('__search');
+		Coveo.SearchEndpoint.endpoints['default'] = new Coveo.SearchEndpoint({
+			restUri: 'https://platformqa.cloud.coveo.com/rest/search',
+			accessToken: 'xx55c20bcb-59aa-40a2-b8b2-72ae625e6762'
+		});
+		Coveo.init(root);
+		`;
+		let coveoScriptElement = document.createElement('script');
+		coveoScriptElement.innerHTML = coveoScript;
+		editorElement.insertBefore(coveoScriptElement, editorElement.childNodes[0]);
+		// data += scriptElement;
+		// $(scriptElement).appendTo('body');
 	});
 }
 
