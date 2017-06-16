@@ -56,3 +56,17 @@
 .__pointer{
 	cursor: pointer !important;
 }
+
+.__animateBottom{
+	position:relative;
+	animation:animatebottom 0.4s
+}
+
+@keyframes animatebottom{
+	from{
+		bottom:-300px;opacity:0
+	} 
+	to{
+		bottom:0;opacity:1
+	}
+}
