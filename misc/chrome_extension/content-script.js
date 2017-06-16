@@ -4,135 +4,135 @@ var addTimeOut;
 //Contains all the option values (title, description, content, required data)
 var options = [];
 
+function setupModal() {
 
+	let svgButton = `
+	<svg height="18" width="18" style="
+	    position: absolute;
+	    top:50%;
+	    transform:translate(-50%, -50%);
+	">
+		<polygon points="0,0 0,18 18,9" style="fill:#f58020;"></polygon>
+		Search
+	</svg>
+	`;
+
+	$('#__search > div.coveo-search-section > div > a').html(svgButton);
+
+	// Get the modal
+	let modal = document.getElementById('__myModal');
+
+	// Get the button that opens the modal
+	let btn = document.getElementById("__modalButton");
+
+	// Get the <span> element that closes the modal
+	let span = document.getElementsByClassName("__close")[0];
+
+	let resultList = document.getElementById('__resultList');
+
+	// When the user clicks the button, open the modal 
+	btn.onclick = function () {
+		modal.style.display = "block";
+	}
+
+	// When the user clicks on <span> (x), close the modal
+	span.onclick = function () {
+		modal.style.display = "none";
+	}
+
+	// When the user clicks anywhere outside of the modal, close it
+	window.onclick = function (event) {
+		if (event.target == modal) {
+			modal.style.display = "none";
+		}
+		else {
+			//Check if the check was inside the result list
+			if (resultList.contains(event.target)) {
+				//Check if the click was inside a result
+				$('#__resultList > div')[0].childNodes.forEach(function (element) {
+					//Check if its the specific result
+					//If it is, take the hidden values and put them in the editor
+					if (element.contains(event.target)) {
+						let title;
+						if (element.childNodes[1].childNodes[1].children.length > 0) {
+							title = element.childNodes[1].childNodes[1].children[0].children[0].innerHTML;
+						}
+						let description;
+						if (element.childNodes[1].childNodes[3].children.length > 0) {
+							description = element.childNodes[1].childNodes[3].children[0].children[0].innerHTML;
+						}
+						let content;
+						if (element.childNodes[1].childNodes[5].children.length > 0) {
+							content = element.childNodes[1].childNodes[5].children[0].children[0].innerHTML;
+						}
+						let reqData;
+						if (element.childNodes[1].childNodes[7].children.length > 0) {
+							reqData = element.childNodes[1].childNodes[7].children[0].children[0].innerHTML;
+						}
+
+						setAceEditorValue('');
+						$('#BodyTextDataStream').attr('checked', false);
+						$('#BodyHTMLDataStream').attr('checked', false);
+						$('#ThumbnailDataStream').attr('checked', false);
+						$('#FileBinaryStream').attr('checked', false);
+						$('#ExtensionName').val('');
+						$('#ExtensionDescription').val('');
+
+						if (content) {
+							setAceEditorValue(atob(content));
+						}
+						if (title) {
+							$('#ExtensionName').val(title)
+						}
+						if (description) {
+							$('#ExtensionDescription').val(description);
+						}
+						if (reqData) {
+							reqData.split(';').forEach(function (element) {
+								if (element === 'Body text') {
+									$('#BodyTextDataStream').attr('checked', true);
+								}
+								else if (element === 'Body HTML') {
+									$('#BodyHTMLDataStream').attr('checked', true);
+								}
+								else if (element === 'Thumbnail') {
+									$('#ThumbnailDataStream').attr('checked', true);
+								}
+								else if (element === 'Original file') {
+									$('#FileBinaryStream').attr('checked', true);
+								}
+							}, this);
+						}
+						modal.style.display = "none";
+					}
+				}, this);
+			}
+		}
+	}
+
+}
+
+/**
+ * Creates the modal componant of the page along with the button
+ * 
+ */
 function createModal() {
 	let editorElement = $('#EditExtensionComponent > div > div > form > div:nth-child(2)')[0];
-	// let testButton = document.createElement('div');
-	// testButton.style = 'margin: 0 !important;float:right';
-	// $(testButton).addClass("btn mod-prepend spaced-box");
-	// testButton.innerHTML = `<span class="btn-prepend">+</span>Add from gallery`;
-	// editorElement.insertBefore(document.createElement('br'), editorElement.childNodes[0]);
-	// editorElement.insertBefore(testButton, editorElement.childNodes[0]);
+	//Get the HTML data
 	$.get(chrome.extension.getURL('/modal.html'), function (data) {
 		let containerDiv = document.createElement('div');
 		containerDiv.innerHTML = data;
 		editorElement.insertBefore(containerDiv, editorElement.childNodes[0]);
-		let scriptElement = document.createElement('script');
-		let script = ` 
 
-		function setAceEditorValue(stringToSet) {
-			window.ace.edit("AceCodeEditor").setValue(stringToSet);
-		}
-
-		// Get the modal
-		var modal = document.getElementById('__myModal');
-
-		// Get the button that opens the modal
-		var btn = document.getElementById("__modalButton");
-
-		// Get the <span> element that closes the modal
-		var span = document.getElementsByClassName("__close")[0];
-
-		var resultList = document.getElementById('__resultList');
-
-		// When the user clicks the button, open the modal 
-		btn.onclick = function () {
-			modal.style.display = "block";
-		}
-
-		// When the user clicks on <span> (x), close the modal
-		span.onclick = function () {
-			modal.style.display = "none";
-		}
-
-		// When the user clicks anywhere outside of the modal, close it
-		window.onclick = function (event) {
-			if (event.target == modal) {
-				modal.style.display = "none";
-			}
-			else {
-				if (resultList.contains(event.target)) {
-					$('#__resultList > div')[0].childNodes.forEach(function (element) {
-						if (element.contains(event.target)) {
-							let title;
-							if (element.childNodes[1].childNodes[1].children.length > 0) {
-								title = element.childNodes[1].childNodes[1].children[0].children[0].innerHTML;
-							}
-							let description;
-							if (element.childNodes[1].childNodes[3].children.length > 0) {
-								description = element.childNodes[1].childNodes[3].children[0].children[0].innerHTML;
-							}
-							let content;
-							if (element.childNodes[1].childNodes[5].children.length > 0) {
-								content = element.childNodes[1].childNodes[5].children[0].children[0].innerHTML;
-							}
-							let reqData;
-							if (element.childNodes[1].childNodes[7].children.length > 0) {
-								reqData = element.childNodes[1].childNodes[7].children[0].children[0].innerHTML;
-							}
-
-							setAceEditorValue('');
-							$('#BodyTextDataStream').attr('checked', false);
-							$('#BodyHTMLDataStream').attr('checked', false);
-							$('#ThumbnailDataStream').attr('checked', false);
-							$('#FileBinaryStream').attr('checked', false);
-							$('#ExtensionName').val('');
-							$('#ExtensionDescription').val('');
-
-							if (content) {
-								setAceEditorValue(atob(content));
-							}
-							if (title) {
-								$('#ExtensionName').val(title)
-							}
-							if (description) {
-								$('#ExtensionDescription').val(description);
-							}
-							if (reqData) {
-								reqData.split(';').forEach(function (element) {
-									if (element === 'Body text') {
-										$('#BodyTextDataStream').click();
-									}
-									else if (element === 'Body HTML') {
-										$('#BodyHTMLDataStream').click();
-									}
-									else if (element === 'Thumbnail') {
-										$('#ThumbnailDataStream').click();
-									}
-									else if (element === 'Original file') {
-										$('#FileBinaryStream').click();
-									}
-								}, this);
-							}
-							modal.style.display = "none";
-						}
-					}, this);
-				}
-			}
-		}
-		`;
-
-		scriptElement.innerHTML = script;
-		editorElement.insertBefore(scriptElement, editorElement.childNodes[0]);
-		// let coveoScript = `
-		// var root = document.getElementById('__search');
-		// Coveo.SearchEndpoint.endpoints['default'] = new Coveo.SearchEndpoint({
-		// 	restUri: 'https://platformqa.cloud.coveo.com/rest/search',
-		// 	accessToken: 'xx55c20bcb-59aa-40a2-b8b2-72ae625e6762'
-		// });
-		// Coveo.init(root);
-		// `;
-		// let coveoScriptElement = document.createElement('script');
-		// coveoScriptElement.innerHTML = coveoScript;
-		//editorElement.insertBefore(coveoScriptElement, editorElement.childNodes[0]);
-		// data += scriptElement;
-		// $(scriptElement).appendTo('body');
+		//Init the Coveo search
 		var root = document.getElementById('__search');
 		Coveo.SearchEndpoint.endpoints['default'] = new Coveo.SearchEndpoint({
 			restUri: 'https://platformqa.cloud.coveo.com/rest/search',
 			accessToken: 'xx55c20bcb-59aa-40a2-b8b2-72ae625e6762'
 		});
 		Coveo.init(root);
+
+		setupModal();
 	});
 }
 
