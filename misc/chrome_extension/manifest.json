@@ -18,6 +18,7 @@
       ],
       "js": [
         "js/jquery-3.2.1.min.js",
+        "js/CoveoJsSearch.min.js",
         "content-script.js"
       ],
       "css": [
@@ -32,7 +33,6 @@
     "https://*/*"
   ],
   "web_accessible_resources": [
-    "search.html",
     "modal.html"
   ]
 }
