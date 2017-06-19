@@ -12,4 +12,4 @@ If a folder is found, it takes all the `.py` files and indexes them
 	2. Coveo: Use the PUSH source api key when it was created
 2. Change the settings in `main.py`
 3. Run the script
-4. The return status should be 202 or 200
+4. The return status should be `202` or `200`
