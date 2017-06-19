@@ -4,6 +4,11 @@ var addTimeOut;
 //Contains all the option values (title, description, content, required data)
 var options = [];
 
+
+/**
+ * Sets up the javascript for the modal
+ * 
+ */
 function setupModal() {
 
 	let svgButton = `
@@ -53,22 +58,11 @@ function setupModal() {
 					//Check if its the specific result
 					//If it is, take the hidden values and put them in the editor
 					if (element.contains(event.target)) {
-						let title;
-						if (element.childNodes[1].childNodes[1].children.length > 0) {
-							title = element.childNodes[1].childNodes[1].children[0].children[0].innerHTML;
-						}
-						let description;
-						if (element.childNodes[1].childNodes[3].children.length > 0) {
-							description = element.childNodes[1].childNodes[3].children[0].children[0].innerHTML;
-						}
-						let content;
-						if (element.childNodes[1].childNodes[5].children.length > 0) {
-							content = element.childNodes[1].childNodes[5].children[0].children[0].innerHTML;
-						}
-						let reqData;
-						if (element.childNodes[1].childNodes[7].children.length > 0) {
-							reqData = element.childNodes[1].childNodes[7].children[0].children[0].innerHTML;
-						}
+
+						let title = $(element.children[0].children[0]).attr('data-ext-title');
+						let description = $(element.children[0].children[1]).attr('data-ext-desc');
+						let content = $(element.children[0].children[2]).attr('data-ext-content');
+						let reqData = $(element.children[0].children[3]).attr('data-ext-required');
 
 						setAceEditorValue('');
 						$('#BodyTextDataStream').attr('checked', false);
@@ -89,18 +83,10 @@ function setupModal() {
 						}
 						if (reqData) {
 							reqData.split(';').forEach(function (element) {
-								if (element === 'Body text') {
-									$('#BodyTextDataStream').attr('checked', true);
-								}
-								else if (element === 'Body HTML') {
-									$('#BodyHTMLDataStream').attr('checked', true);
-								}
-								else if (element === 'Thumbnail') {
-									$('#ThumbnailDataStream').attr('checked', true);
-								}
-								else if (element === 'Original file') {
-									$('#FileBinaryStream').attr('checked', true);
-								}
+								element === 'Body text' ? $('#BodyTextDataStream').attr('checked', true) : false;
+								element === 'Body HTML' ? $('#BodyHTMLDataStream').attr('checked', true) : false;
+								element === 'Thumbnail' ? $('#ThumbnailDataStream').attr('checked', true) : false;
+								element === 'Original file' ? $('#FileBinaryStream').attr('checked', true) : false;
 							}, this);
 						}
 						modal.style.display = "none";
@@ -128,6 +114,7 @@ function createModal() {
 		var root = document.getElementById('__search');
 		Coveo.SearchEndpoint.endpoints['default'] = new Coveo.SearchEndpoint({
 			restUri: 'https://platformqa.cloud.coveo.com/rest/search',
+			//Public key with only search enabled
 			accessToken: 'xx55c20bcb-59aa-40a2-b8b2-72ae625e6762'
 		});
 		Coveo.init(root);
