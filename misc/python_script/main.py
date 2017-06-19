@@ -19,11 +19,12 @@ gitHeaders = {"Authorization": gitAuth}
 orgID = "extensions"
 sourceID = "xohlxjrobk77gcxxdjvytnca2i-extensions"
 coveoAuth = config['Coveo']
+coveoHeaders = {"Accept": "application/json", "Authorization" : coveoAuth, "Content-Type": "application/json"}
 
-headers = {"Accept": "application/json", "Authorization" : coveoAuth, "Content-Type": "application/json"}
+#Final data variable
 data = []
 
-# Get all repos for the users
+# Get all repos for the user
 gitRepoRequest = requests.get(gitUrl, headers = gitHeaders)
 gitRepoData = json.loads(gitRepoRequest.text)
 
@@ -52,7 +53,7 @@ for repos in gitRepoData:
 			extensionContentsRequest = requests.get(extensionContentsUrl, headers = gitHeaders)
 			extensionContentsData = json.loads(extensionContentsRequest.text)
 
-			# Loop through all the files in the extension work
+			# Loop through all the files in the extension folder
 			for extensionFile in extensionContentsData:
 				
 				# Find all .py files
@@ -94,9 +95,9 @@ for repos in gitRepoData:
 
 print "Sending {0} extension(s) to Coveo Index".format(len(data))
 
-# Send all results to Coveo Index
+# Send all results to the PUSH api
 for result in data:
 	r = requests.put("https://pushqa.cloud.coveo.com/v1/organizations/"+orgID+"/sources/"+sourceID+"/documents?documentId=" + result['url'],
-					data=json.dumps(result), headers = headers)
+					data=json.dumps(result), headers = coveoHeaders)
 
 	print "{0}: {1}".format(result['rawfilename'], r.status_code)
