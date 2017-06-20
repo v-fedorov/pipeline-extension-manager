@@ -2,6 +2,13 @@
 coveo_org_id: org_name
 coveo_source_id: xxxxxxxxxxxxxxxxxxxxxxxxxx-org_name
 coveo_api_key: Bearer xxxxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+# What type of enviroment the Coveo Org is in
+# Possible values:
+# dev
+# qa
+# 
+# (blank for no dev enviroment)
+coveo_dev_area: qa
 
 # Git settings
 git_user: coveo-labs

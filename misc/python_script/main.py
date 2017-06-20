@@ -21,6 +21,9 @@ if 'coveo_source_id' not in config:
 if 'coveo_org_id' not in config:
 	exit("Missing Coveo org id")
 
+if 'coveo_dev_area' not in config:
+	exit("Missing Coveo dev area")
+
 ### Github settings
 user = config['git_user']
 git_url = "https://api.github.com/users/{0}/repos".format(user)
@@ -109,7 +112,7 @@ print "Sending {0} extension(s) to Coveo Index".format(len(data))
 
 # Send all results to the PUSH api
 for result in data:
-	r = requests.put("https://pushqa.cloud.coveo.com/v1/organizations/{0}/sources/{1}/documents?documentId={2}".format(org_id, source_id, result['url']),
+	r = requests.put("https://push{0}.cloud.coveo.com/v1/organizations/{1}/sources/{2}/documents?documentId={3}".format(config['coveo_dev_area'], org_id, source_id, result['url']),
 					data=json.dumps(result), headers = coveo_headers)
 
 	print "{0}: {1}".format(result['rawfilename'], r.status_code)
