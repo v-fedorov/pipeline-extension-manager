@@ -4,76 +4,88 @@ import json
 import base64
 import yaml
 
-# Load API keys
-config = yaml.safe_load(open("keys.yml"))
-if(len(config) != 2):
-	exit("Failed to find all API keys")
+# Load config
+config = yaml.safe_load(open("config.yml"))
+if 'coveo_api_key' not in config:
+	exit("Missing Coveo API key")
+
+if 'git_api_key' not in config:
+	exit("Missing Git API key")
+
+if 'git_user' not in config:
+	exit("Missing git user")
+
+if 'coveo_source_id' not in config:
+	exit("Missing Coveo source id")
+
+if 'coveo_org_id' not in config:
+	exit("Missing Coveo org id")
 
 ### Github settings
-user = "coveo-labs"
-gitUrl = "https://api.github.com/users/{0}/repos".format(user)
-gitAuth = config['Git']
-gitHeaders = {"Authorization": gitAuth}
+user = config['git_user']
+git_url = "https://api.github.com/users/{0}/repos".format(user)
+git_auth = config['git_api_key']
+git_headers = {"Authorization": git_auth}
 
 ### Push API settings
-orgID = "extensions"
-sourceID = "xohlxjrobk77gcxxdjvytnca2i-extensions"
-coveoAuth = config['Coveo']
-coveoHeaders = {"Accept": "application/json", "Authorization" : coveoAuth, "Content-Type": "application/json"}
+org_id = config['coveo_org_id']
+source_id = config['coveo_source_id']
+coveo_auth = config['coveo_api_key']
+coveo_headers = {"Accept": "application/json", "Authorization" : coveo_auth, "Content-Type": "application/json"}
 
 #Final data variable
 data = []
 
 # Get all repos for the user
-gitRepoRequest = requests.get(gitUrl, headers = gitHeaders)
-gitRepoData = json.loads(gitRepoRequest.text)
+git_repo_request = requests.get(git_url, headers = git_headers)
+git_repo_data = json.loads(git_repo_request.text)
 
-print "Found {0} repo(s) for {1}".format(len(gitRepoData), user)
+print "Found {0} repo(s) for {1}".format(len(git_repo_data), user)
 
 # Loop through all the repos
-for repos in gitRepoData:
+for repos in git_repo_data:
 
 	print "Searching {0} for 'extensions' folder".format(repos['name'])
 
 	# Get all files in the repo
-	repoContentsUrl = '/'.join(repos['contents_url'].split('/')[:-1])
-	repoContentsRequest = requests.get(repoContentsUrl, headers = gitHeaders)
-	repoContentsData = json.loads(repoContentsRequest.text)
+	repo_contents_url = '/'.join(repos['contents_url'].split('/')[:-1])
+	repo_contents_request = requests.get(repo_contents_url, headers = git_headers)
+	repo_contents_data = json.loads(repo_contents_request.text)
 
 	# Loop through all the files in the repo
-	for repoContent in repoContentsData:
+	for repo_content in repo_contents_data:
 
 		# Find the 'extensions' folder
-		if(repoContent['name'] == 'extensions' and repoContent['type'] == 'dir'):
+		if(repo_content['name'] == 'extensions' and repo_content['type'] == 'dir'):
 			
 			print "Found 'extensions' folder in {0}".format(repos['name'])
 
 			# Get all the content in the extensions folder
-			extensionContentsUrl = repoContent['url']
-			extensionContentsRequest = requests.get(extensionContentsUrl, headers = gitHeaders)
-			extensionContentsData = json.loads(extensionContentsRequest.text)
+			extension_contents_url = repo_content['url']
+			extension_contents_request = requests.get(extension_contents_url, headers = git_headers)
+			extension_contents_data = json.loads(extension_contents_request.text)
 
 			# Loop through all the files in the extension folder
-			for extensionFile in extensionContentsData:
+			for extension_file in extension_contents_data:
 				
 				# Find all .py files
-				if(extensionFile['name'].split(".")[-1] == "py"):
+				if(extension_file['name'].split(".")[-1] == "py"):
 
-					print "Found extension {0}".format(extensionFile['name'])
+					print "Found extension {0}".format(extension_file['name'])
 
-					extensionFileUrl = extensionFile['url']
-					extensionFileRequest = requests.get(extensionFileUrl, headers = gitHeaders)
-					extensionFileData = json.loads(extensionFileRequest.text)
+					extension_file_url = extension_file['url']
+					extension_file_request = requests.get(extension_file_url, headers = git_headers)
+					extension_file_data = json.loads(extension_file_request.text)
 
-					extensionFileContent = extensionFileData['content']
+					extension_file_content = extension_file_data['content']
 
-					extensionFileContent = base64.b64decode(''.join(extensionFileContent.split('\n')))
+					extension_file_content = base64.b64decode(''.join(extension_file_content.split('\n')))
 					
 					# Extract the metadata
 					title = []
 					description = []
 					reqData = []
-					for line in extensionFileContent.split("\n"):
+					for line in extension_file_content.split("\n"):
 						if "# Title: " in line:
 							title.append(line.split("# Title: ")[1])
 
@@ -84,12 +96,12 @@ for repos in gitRepoData:
 							reqData.extend(line.split("# Required data: ")[1].split(", "))
 					
 					data.append({
-						"rawfilename": ' '.join(extensionFile['name'].split(".")[:-1]),
+						"rawfilename": ' '.join(extension_file['name'].split(".")[:-1]),
 						"title": ' '.join(title), 
 						"description": ' '.join(description), 
 						"required": reqData, 
-						"content": base64.b64encode(extensionFileContent),
-						"url": extensionFile['html_url'],
+						"content": base64.b64encode(extension_file_content),
+						"url": extension_file['html_url'],
 						"type": "extension"
 					})
 
@@ -97,7 +109,7 @@ print "Sending {0} extension(s) to Coveo Index".format(len(data))
 
 # Send all results to the PUSH api
 for result in data:
-	r = requests.put("https://pushqa.cloud.coveo.com/v1/organizations/"+orgID+"/sources/"+sourceID+"/documents?documentId=" + result['url'],
-					data=json.dumps(result), headers = coveoHeaders)
+	r = requests.put("https://pushqa.cloud.coveo.com/v1/organizations/{0}/sources/{1}/documents?documentId={2}".format(org_id, source_id, result['url']),
+					data=json.dumps(result), headers = coveo_headers)
 
 	print "{0}: {1}".format(result['rawfilename'], r.status_code)
