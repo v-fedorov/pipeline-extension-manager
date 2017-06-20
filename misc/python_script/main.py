@@ -3,6 +3,7 @@ import requests
 import json
 import base64
 import yaml
+import zlib
 
 # Load config
 config = yaml.safe_load(open("config.yml"))
@@ -97,9 +98,9 @@ for repos in git_repo_data:
 						"title": ' '.join(title), 
 						"description": ' '.join(description), 
 						"required": reqData, 
-						"content": base64.b64encode(extension_file_content),
+						"CompressedBinaryData": base64.b64encode(zlib.compress(extension_file_content)),
 						"url": extension_file['html_url'],
-						"type": "extension"
+						"FileExtension" : '.py'
 					})
 
 print "Sending {0} extension(s) to Coveo Index".format(len(data))
