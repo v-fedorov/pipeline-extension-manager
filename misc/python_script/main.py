@@ -54,7 +54,7 @@ for repos in git_repo_data:
 	for repo_content in repo_contents_data:
 
 		# Find the 'extensions' folder
-		if(repo_content['name'] == 'extensions' and repo_content['type'] == 'dir'):
+		if('name' in  repo_content and 'type' in repo_content and repo_content['name'] == 'extensions' and repo_content['type'] == 'dir'):
 			
 			print "Found 'extensions' folder in {0}".format(repos['name'])
 
