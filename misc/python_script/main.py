@@ -106,7 +106,7 @@ print "Sending {0} extension(s) to Coveo Index".format(len(data))
 
 # Send all results to the PUSH api
 for result in data:
-	r = requests.put("{0}organizations/{1}/sources/{2}/documents?documentId={3}".format(config['coveo_push_url'], org_id, source_id, result['url']),
+	r = requests.put("{0}/organizations/{1}/sources/{2}/documents?documentId={3}".format(config['coveo_push_url'], org_id, source_id, result['url']),
 					data=json.dumps(result), headers = coveo_headers)
 
 	print "{0}: {1}".format(result['rawfilename'], r.status_code)
