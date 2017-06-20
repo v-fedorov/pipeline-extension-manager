@@ -58,8 +58,8 @@ function setupModal() {
 
 						let title = $(element.children[0].children[0]).attr('data-ext-title');
 						let description = $(element.children[0].children[1]).attr('data-ext-desc');
-						let content = $(element.children[0].children[2]).attr('data-ext-content');
-						let reqData = $(element.children[0].children[3]).attr('data-ext-required');
+						let reqData = $(element.children[0].children[2]).attr('data-ext-required');
+						let uniqueId = $(element.children[0].children[3]).attr('data-ext-id');
 
 						setAceEditorValue('');
 						$('#BodyTextDataStream').attr('checked', false);
@@ -69,8 +69,12 @@ function setupModal() {
 						$('#ExtensionName').val('');
 						$('#ExtensionDescription').val('');
 
-						if (content) {
-							setAceEditorValue(atob(content));
+						if (uniqueId) {
+							$.get(`https://platformqa.cloud.coveo.com/rest/search/v2/html?organizationId=extensions&uniqueId=${uniqueId}&access_token=xx55c20bcb-59aa-40a2-b8b2-72ae625e6762`,
+								function(data){
+									setAceEditorValue($(data).contents()[4].innerHTML);
+								}
+							)
 						}
 						if (title) {
 							$('#ExtensionName').val(title)
