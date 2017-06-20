@@ -6,23 +6,17 @@ import yaml
 
 # Load config
 config = yaml.safe_load(open("config.yml"))
-if 'coveo_api_key' not in config:
-	exit("Missing Coveo API key")
 
-if 'git_api_key' not in config:
-	exit("Missing Git API key")
+# Check for missing config keys
+config_vars = ['coveo_org_id', 'coveo_source_id', 'coveo_api_key',  'coveo_push_url', 'git_user', 'git_api_key']
+is_config_missing = False
+for config_var in config_vars:
+	if config_var not in config:
+		is_config_missing = True
+		print 'Missing key in config.yml: ' + config_var
 
-if 'git_user' not in config:
-	exit("Missing git user")
-
-if 'coveo_source_id' not in config:
-	exit("Missing Coveo source id")
-
-if 'coveo_org_id' not in config:
-	exit("Missing Coveo org id")
-
-if 'coveo_push_url' not in config:
-	exit("Missing Coveo push URL")
+if is_config_missing:
+	exit('Config key is missing')
 
 ### Github settings
 user = config['git_user']
