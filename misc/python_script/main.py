@@ -16,7 +16,7 @@ for config_var in config_vars:
 		print 'Missing key in config.yml: ' + config_var
 
 if is_config_missing:
-	exit('Config key is missing')
+	exit('Some required keys are missing from config.yml.')
 
 ### Github settings
 user = config['git_user']
