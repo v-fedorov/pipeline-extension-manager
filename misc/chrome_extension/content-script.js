@@ -1,9 +1,6 @@
 'use strict';
 //The global timeout variable for the addToPage()
 var addTimeOut;
-//Contains all the option values (title, description, content, required data)
-var options = [];
-
 
 /**
  * Sets up the javascript for the modal
@@ -28,27 +25,27 @@ function setupModal() {
 	let modal = document.getElementById('__myModal');
 
 	// Get the button that opens the modal
-	let btn = document.getElementById("__modalButton");
+	let btn = document.getElementById('__modalButton');
 
 	// Get the <span> element that closes the modal
-	let span = document.getElementsByClassName("__close")[0];
+	let span = document.getElementsByClassName('__close')[0];
 
 	let resultList = document.getElementById('__resultList');
 
 	// When the user clicks the button, open the modal 
 	btn.onclick = function () {
-		modal.style.display = "block";
+		modal.style.display = 'block';
 	}
 
 	// When the user clicks on <span> (x), close the modal
 	span.onclick = function () {
-		modal.style.display = "none";
+		modal.style.display = 'none';
 	}
 
 	// When the user clicks anywhere outside of the modal, close it
 	window.onclick = function (event) {
 		if (event.target == modal) {
-			modal.style.display = "none";
+			modal.style.display = 'none';
 		}
 		else {
 			//Check if the check was inside the result list
@@ -174,27 +171,10 @@ function addToPage() {
 		clearTimeout(addTimeOut);
 	}
 	addTimeOut = setTimeout(function () {
-		if (document.getElementById('EditExtensionComponent') && !$('#__extensionChooser')[0]) {
+		if (document.getElementById('EditExtensionComponent') && !$('#__modalButton')[0]) {
 
 			createModal();
 
-			let selectElement = document.createElement('select');
-			selectElement.onchange = extensionChooserOnChange;
-			$(selectElement).addClass('chosen js-chosen-single-select');
-			selectElement.id = '__extensionChooser';
-			let defaultOption = document.createElement('option');
-			defaultOption.innerText = 'Choose a script to load';
-			defaultOption.value = -1;
-			selectElement.appendChild(defaultOption);
-			for (let i = 0; i < options.length; i++) {
-				let element = options[i];
-				let option = document.createElement('option');
-				option.innerText = element.title;
-				option.value = i;
-				selectElement.appendChild(option);
-			}
-			let footerElement = $('#EditExtensionComponent > div > footer')[0];
-			footerElement.insertBefore(selectElement, footerElement.childNodes[0]);
 		}
 	}, 350);
 }
@@ -221,18 +201,9 @@ window.onload = function () {
 		attributes: true
 	});
 
-	//Gets all the search results possible for the scripts
-	$.getJSON('https://platformqa.cloud.coveo.com/rest/search/?format=json&organizationId=extensions&access_token=xx55c20bcb-59aa-40a2-b8b2-72ae625e6762', function (data) {
-		data.results.forEach(function (result) {
-			options.push({
-				title: result.raw.rawfilename,
-				value: result.raw.title,
-				desc: result.raw.description,
-				content: result.raw.content,
-				reqData: result.raw.required
-			});
-		}, this);
-	});
+	//Output of seachAPI
+	//https://platformqa.cloud.coveo.com/rest/search/?format=json&organizationId=extensions&access_token=xx55c20bcb-59aa-40a2-b8b2-72ae625e6762
+
 };
 
 /**
