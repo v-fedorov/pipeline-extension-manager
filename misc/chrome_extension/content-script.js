@@ -72,7 +72,7 @@ function setupModal() {
 
 						if (uniqueId) {
 							$.get(`https://platformqa.cloud.coveo.com/rest/search/v2/html?organizationId=extensions&uniqueId=${uniqueId}&access_token=${apiKey}`,
-								function(data){
+								function (data) {
 									setAceEditorValue($(data).contents()[4].innerHTML);
 								}
 							)
@@ -107,7 +107,7 @@ function setupModal() {
 function createModal() {
 	let editorElement = $('#EditExtensionComponent > div > div > form > div:nth-child(2)')[0];
 	//Get the HTML data
-	$.get(chrome.extension.getURL('/modal.html'), function (data) {
+	$.get(chrome.extension.getURL('/html/extension-search.html'), function (data) {
 		let containerDiv = document.createElement('div');
 		containerDiv.innerHTML = data;
 		editorElement.insertBefore(containerDiv, editorElement.childNodes[0]);
@@ -172,7 +172,7 @@ function extensionChooserOnChange() {
  * after 350 ms the edit modal started appearing
  * 
  */
-function addToPage() {
+function addExtensionSearchToPage() {
 	if (addTimeOut) {
 		clearTimeout(addTimeOut);
 	}
@@ -185,6 +185,23 @@ function addToPage() {
 	}, 350);
 }
 
+/**
+ * Adds the Test buttons in the table of the extensions
+ * 
+ */
+function addTestButtonsToPage() {
+	//Do this first, since it will be called multiple times
+	//before the async function is done below
+	//This is to ensure we don't get multiple columns
+	$('#extensions').attr('__modified', true)
+	$.get(chrome.extension.getURL('/html/extension-test.html'), function (data) {
+		$($('#extensions')[0].children[0].children[0]).append('<th>Tests</th>');
+		for (let i = 0; i < $('#extensions')[0].children[1].children.length; i++) {
+			let element = $('#extensions')[0].children[1].children[i];
+			$(element).append(data);
+		}
+	});
+}
 
 window.onload = function () {
 	// your code 
@@ -195,8 +212,13 @@ window.onload = function () {
 	var observer = new MutationObserver(function (mutations, observer) {
 		// fired when a mutation occurs
 		if (document.getElementById('EditExtensionComponent')) {
-			addToPage();
+			addExtensionSearchToPage();
 		}
+
+		if (document.getElementById('extensions') && !$('#extensions').attr('__modified')) {
+			addTestButtonsToPage();
+		}
+
 		// ...
 	});
 

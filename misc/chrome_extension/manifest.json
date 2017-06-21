@@ -33,6 +33,7 @@
     "https://*/*"
   ],
   "web_accessible_resources": [
-    "modal.html"
+    "/html/extension-search.html",
+    "/html/extension-test.html"
   ]
 }
