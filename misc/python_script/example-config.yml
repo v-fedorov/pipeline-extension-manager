@@ -1,0 +1,9 @@
+# Coveo settings
+coveo_org_id: org_name
+coveo_source_id: xxxxxxxxxxxxxxxxxxxxxxxxxx
+coveo_api_key: Bearer xxxxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+coveo_push_url: https://push.cloud.coveo.com/v1/
+
+# Git settings
+git_user: coveo-labs
+git_api_key: token xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
