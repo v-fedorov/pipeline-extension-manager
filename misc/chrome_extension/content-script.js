@@ -1,6 +1,7 @@
 'use strict';
 //The global timeout variable for the addToPage()
 var addTimeOut;
+var apiKey = 'xx0b957ee7-8846-4b6c-b4c3-6f88362e601f';
 
 /**
  * Sets up the javascript for the modal
@@ -70,7 +71,7 @@ function setupModal() {
 						$('#ExtensionDescription').val('');
 
 						if (uniqueId) {
-							$.get(`https://platformqa.cloud.coveo.com/rest/search/v2/html?organizationId=extensions&uniqueId=${uniqueId}&access_token=xx55c20bcb-59aa-40a2-b8b2-72ae625e6762`,
+							$.get(`https://platformqa.cloud.coveo.com/rest/search/v2/html?organizationId=extensions&uniqueId=${uniqueId}&access_token=${apiKey}`,
 								function(data){
 									setAceEditorValue($(data).contents()[4].innerHTML);
 								}
@@ -117,7 +118,7 @@ function createModal() {
 			restUri: 'https://platformqa.cloud.coveo.com/rest/search',
 			//Public key with only search enabled
 			//accessToken: 'xx55c20bcb-59aa-40a2-b8b2-72ae625e6762'
-			accessToken: 'xx0b957ee7-8846-4b6c-b4c3-6f88362e601f'
+			accessToken: apiKey
 		});
 		Coveo.init(root);
 

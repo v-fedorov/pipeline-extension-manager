@@ -12,7 +12,7 @@
 	<div class="__modal-content __animateBottom">
 		<span class="__close">&times;</span>
 
-		<div id="__search" class="CoveoSearchInterface" data-enable-history="false" data-design="new">
+		<div id="__search" class="CoveoSearchInterface" data-enable-history="false" data-design="new" data-expression="@source=extensions-coveo-lab">
 
 			<div class="CoveoAnalytics"></div>
 			<div class="coveo-search-section">
@@ -26,8 +26,8 @@
 						<script id="Default" class="result-template" type="text/underscore" data-layout="list">
 							<div class="__hiddenData" style="display:none;">
 								<div class="__title" data-ext-title="<%=title%>"></div>
-								<div class="__desc" data-ext-desc="<%=raw.description%>"></div>
-								<div class="__required" data-ext-required="<%=raw.required%>"></div>
+								<div class="__desc" data-ext-desc="<%=raw.extdescription%>"></div>
+								<div class="__required" data-ext-required="<%=raw.extrequired%>"></div>
 								<div class="__id" data-ext-id="<%=uniqueId%>"></div>
 							</div>
 							<div class="coveo-result-frame __pointer">
@@ -35,7 +35,7 @@
 									<div class="coveo-result-cell">
 										<div class="coveo-result-row">
 											<div class="coveo-result-cell" style="font-size:18px;">
-												<span class="CoveoFieldValue" data-field="@rawfilename"></span>
+												<span class="CoveoFieldValue" data-field="@extrawfilename"></span>
 											</div>
 											<div class="coveo-result-cell" style="width:120px; text-align:right; font-size:12px">
 												<span class="CoveoFieldValue" data-field="@date" data-helper="date"></span>
@@ -51,7 +51,7 @@
 										<div class="coveo-result-row">
 											<div class="coveo-result-row">
 												<div class="coveo-result-cell" style="font-size:18px;">
-													<span class="CoveoFieldValue" data-field="@description"></span>
+													<span class="CoveoFieldValue" data-field="@extdescription"></span>
 												</div>
 											</div>
 										</div>
