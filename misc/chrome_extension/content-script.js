@@ -116,7 +116,8 @@ function createModal() {
 		Coveo.SearchEndpoint.endpoints['default'] = new Coveo.SearchEndpoint({
 			restUri: 'https://platformqa.cloud.coveo.com/rest/search',
 			//Public key with only search enabled
-			accessToken: 'xx55c20bcb-59aa-40a2-b8b2-72ae625e6762'
+			//accessToken: 'xx55c20bcb-59aa-40a2-b8b2-72ae625e6762'
+			accessToken: 'xx0b957ee7-8846-4b6c-b4c3-6f88362e601f'
 		});
 		Coveo.init(root);
 
