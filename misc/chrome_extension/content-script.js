@@ -1,7 +1,10 @@
 'use strict';
 //The global timeout variable for the addToPage()
 var addTimeOut;
-var apiKey = 'xx0b957ee7-8846-4b6c-b4c3-6f88362e601f';
+//The api key
+var apiKey;
+//The url of the cloud platform
+var url;
 
 /**
  * Sets up the javascript for the modal
@@ -71,7 +74,7 @@ function setupModal() {
 						$('#ExtensionDescription').val('');
 
 						if (uniqueId) {
-							$.get(`https://platformqa.cloud.coveo.com/rest/search/v2/html?organizationId=extensions&uniqueId=${uniqueId}&access_token=${apiKey}`,
+							$.get(`${url}/rest/search/v2/html?organizationId=extensions&uniqueId=${uniqueId}&access_token=${apiKey}`,
 								function (data) {
 									setAceEditorValue($(data).contents()[4].innerHTML);
 								}
@@ -115,9 +118,7 @@ function createModal() {
 		//Init the Coveo search
 		var root = document.getElementById('__search');
 		Coveo.SearchEndpoint.endpoints['default'] = new Coveo.SearchEndpoint({
-			restUri: 'https://platformqa.cloud.coveo.com/rest/search',
-			//Public key with only search enabled
-			//accessToken: 'xx55c20bcb-59aa-40a2-b8b2-72ae625e6762'
+			restUri: url + 'rest/search',
 			accessToken: apiKey
 		});
 		Coveo.init(root);
@@ -177,12 +178,32 @@ function addExtensionSearchToPage() {
 		clearTimeout(addTimeOut);
 	}
 	addTimeOut = setTimeout(function () {
-		if (document.getElementById('EditExtensionComponent') && !$('#__modalButton')[0]) {
+		if ($('#EditExtensionComponent').length && !$('#__modalButton')[0]) {
 
 			createModal();
 
 		}
 	}, 350);
+}
+
+/**
+ * The onclick for the test button
+ * 
+ * @param {object} element - The row element
+ */
+function testOnClick(element) {
+	let extId = $('.extension-name .second-row', element).text().trim();
+	console.log(extId);
+	launchTestModal(extId);
+}
+
+/**
+ * Opens the testing modal with the specific extension to test
+ * 
+ * @param {string} extensionId - The extension id
+ */
+function launchTestModal(extensionId) {
+
 }
 
 /**
@@ -199,39 +220,52 @@ function addTestButtonsToPage() {
 		for (let i = 0; i < $('#extensions')[0].children[1].children.length; i++) {
 			let element = $('#extensions')[0].children[1].children[i];
 			$(element).append(data);
+			$(element).find('.btn')[0].onclick = function () {
+				testOnClick(element);
+			}
 		}
 	});
 }
 
+
+/**
+ * The 'init' function of the script
+ * Loads the values from the config and inits the mutation obs
+ * 
+ */
 window.onload = function () {
-	// your code 
 
-	//Checks if there were changes 
-	MutationObserver = window.MutationObserver || window.WebKitMutationObserver;
+	//Default values if no values are found
+	chrome.storage.local.get({
+		// Public key with only search enabled
+		__publicApiKey: 'xx0b957ee7-8846-4b6c-b4c3-6f88362e601f',
+		__searchURL: 'https://platformqa.cloud.coveo.com/'
+	}, function (items) {
+		apiKey = items.__publicApiKey;
+		url = items.__searchURL;
 
-	var observer = new MutationObserver(function (mutations, observer) {
-		// fired when a mutation occurs
-		if (document.getElementById('EditExtensionComponent')) {
-			addExtensionSearchToPage();
-		}
+		//Checks if there were changes on the page
+		MutationObserver = window.MutationObserver || window.WebKitMutationObserver;
 
-		if (document.getElementById('extensions') && !$('#extensions').attr('__modified')) {
-			addTestButtonsToPage();
-		}
+		var observer = new MutationObserver(function (mutations, observer) {
+			// If the EditExtensionComponent appears
+			if (document.getElementById('EditExtensionComponent')) {
+				addExtensionSearchToPage();
+			}
 
-		// ...
+			// If extensions appears AND it wasn't already modified by this script
+			if (document.getElementById('extensions') && !$('#extensions').attr('__modified')) {
+				addTestButtonsToPage();
+			}
+		});
+
+		// define what element should be observed by the observer
+		// and what types of mutations trigger the callback
+		observer.observe(document, {
+			subtree: true,
+			attributes: true
+		});
 	});
-
-	// define what element should be observed by the observer
-	// and what types of mutations trigger the callback
-	observer.observe(document, {
-		subtree: true,
-		attributes: true
-	});
-
-	//Output of seachAPI
-	//https://platformqa.cloud.coveo.com/rest/search/?format=json&organizationId=extensions&access_token=xx55c20bcb-59aa-40a2-b8b2-72ae625e6762
-
 };
 
 /**
