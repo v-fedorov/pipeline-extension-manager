@@ -32,7 +32,7 @@ function setupModal() {
 	let btn = document.getElementById('__modalButton');
 
 	// Get the <span> element that closes the modal
-	let span = document.getElementsByClassName('__close')[0];
+	let span = document.getElementsByClassName('__close');
 
 	let resultList = document.getElementById('__resultList');
 
@@ -42,9 +42,12 @@ function setupModal() {
 	}
 
 	// When the user clicks on <span> (x), close the modal
-	span.onclick = function () {
-		modal.style.display = 'none';
-	}
+	for (var i = 0; i < span.length; i++) {
+			var element = span[i];
+			element.onclick = function () {
+				modal.style.display = 'none';
+			}
+		}
 
 	// When the user clicks anywhere outside of the modal, close it
 	window.onclick = function (event) {
@@ -118,7 +121,7 @@ function createModal() {
 		//Init the Coveo search
 		var root = document.getElementById('__search');
 		Coveo.SearchEndpoint.endpoints['default'] = new Coveo.SearchEndpoint({
-			restUri: url + 'rest/search',
+			restUri: `${url}/rest/search`,
 			accessToken: apiKey
 		});
 		Coveo.init(root);
@@ -193,7 +196,6 @@ function addExtensionSearchToPage() {
  */
 function testOnClick(element) {
 	let extId = $('.extension-name .second-row', element).text().trim();
-	console.log(extId);
 	launchTestModal(extId);
 }
 
@@ -203,7 +205,40 @@ function testOnClick(element) {
  * @param {string} extensionId - The extension id
  */
 function launchTestModal(extensionId) {
+	let modal = document.getElementById('__contentModal');
+	modal.style.display = 'block';
+	$('#__currentExtension').text(extensionId);
+}
 
+function addTestModal() {
+	$.get(chrome.extension.getURL('/html/content-search.html'), function (data) {
+		$('#extensions').append(data);
+
+		$('#__runTests').click(runTest);
+
+		let modal = document.getElementById('__contentModal');
+		let span = document.getElementsByClassName('__close');
+
+		for (var i = 0; i < span.length; i++) {
+			var element = span[i];
+			element.onclick = function () {
+				modal.style.display = 'none';
+			}
+		}
+
+		modal.onclick = function (event) {
+			if (event.target == modal) {
+				modal.style.display = 'none';
+			}
+		}
+	});
+}
+
+function runTest(){
+	let currentOrg = $('#OrganizationsPickerSearch_chosen > a > span').text().split('-').pop().trim();
+	let extensionId = $('#__currentExtension').text();
+	let testUrl = `https://${location.host}/rest/organizations/${currentOrg}/extensions/${extensionId}/test`;
+	console.log(testUrl);
 }
 
 /**
@@ -256,6 +291,7 @@ window.onload = function () {
 			// If extensions appears AND it wasn't already modified by this script
 			if (document.getElementById('extensions') && !$('#extensions').attr('__modified')) {
 				addTestButtonsToPage();
+				addTestModal();
 			}
 		});
 
@@ -287,4 +323,29 @@ function setAceEditorValue(stringToSet) {
 
 	$('#tmpScript').remove();
 
+}
+
+function retrieveWindowVariables(variables) {
+    var ret = {};
+
+    var scriptContent = "";
+    for (var i = 0; i < variables.length; i++) {
+        var currVariable = variables[i];
+        scriptContent += "if (typeof " + currVariable + " !== 'undefined') $('body').attr('tmp_" + currVariable + "', " + currVariable + ");\n"
+    }
+
+    var script = document.createElement('script');
+    script.id = 'tmpScript';
+    script.appendChild(document.createTextNode(scriptContent));
+    (document.body || document.head || document.documentElement).appendChild(script);
+
+    for (var i = 0; i < variables.length; i++) {
+        var currVariable = variables[i];
+        ret[currVariable] = $("body").attr("tmp_" + currVariable);
+        $("body").removeAttr("tmp_" + currVariable);
+    }
+
+    $("#tmpScript").remove();
+
+    return ret;
 }
