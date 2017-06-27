@@ -70,3 +70,8 @@
 		bottom:0;opacity:1
 	}
 }
+
+#__testResults{
+	background-color: #efefef;
+	padding: 5px;
+}
