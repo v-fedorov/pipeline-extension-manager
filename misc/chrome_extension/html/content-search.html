@@ -9,19 +9,59 @@
 		<h4 class="admin-description text-dark-grey">Panel description</h4>
 		<br>
 		<br>
-		<div class="coveo-form">
 
-			<fieldset class="input-field form-group">
-				<input type="text" id="__testDocId" placeholder="Document unique ID">
-				<input type="hidden" id="__currentExtension">
-			</fieldset>
-			<fieldset class="form-group">
-				<button id="__runTests" class="btn mod-primary">Test</button>
-			</fieldset>
-			<fieldset class="form-group">
-				<pre id="__testResults" style="white-space: pre-wrap; word-wrap:break-word;"></pre>
-			</fieldset>
-
+		<div class="tab-navigation">
+			<div id="tab1" class="tab enabled active">Search for document</div>
+			<div id="tab2" class="tab enabled">Test document</div>
 		</div>
+
+		<div class="tab-content">
+			<div data-tab="tab1" class="tab-pane active">
+				<div class="mod-header-padding mod-form-top-bottom-padding">
+					Search goes here
+				</div>
+			</div>
+			<div data-tab="tab2" class="tab-pane">
+				<div class="mod-header-padding mod-form-top-bottom-padding">
+					<div class="coveo-form">
+						<label>Document unique ID</label>
+						<fieldset class="input-field form-group">
+							<input type="text" id="__testDocId" placeholder="uniqueId">
+							<input type="hidden" id="__currentExtension">
+						</fieldset>
+						<fieldset class="form-group">
+							<button id="__runTests" class="btn mod-primary">Test</button>
+						</fieldset>
+						<fieldset class="form-group">
+							<pre id="__testResults" style="white-space: pre-wrap; word-wrap:break-word;"></pre>
+						</fieldset>
+
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<script type="text/javascript">
+			var tab1 = $("#tab1");
+			var tab2 = $("#tab2");
+			var tabpane1 = $("[data-tab=tab1]");
+			var tabpane2 = $("[data-tab=tab2]");
+
+			tab1.on("click", function () {
+				tab1.addClass("active");
+				tab2.removeClass("active");
+				tabpane1.addClass("active");
+				tabpane2.removeClass("active");
+			});
+
+			tab2.on("click", function () {
+				tab1.removeClass("active");
+				tab2.addClass("active");
+				tabpane1.removeClass("active");
+				tabpane2.addClass("active");
+			});
+
+		</script>
+
 	</div>
 </div>
