@@ -13,12 +13,12 @@ var url;
 function setupModal() {
 
 	let svgButton = `
-	<svg height="18" width="18" style="
+	<svg height='18' width='18' style='
 	    position: absolute;
 	    top:50%;
 	    transform:translate(-50%, -50%);
-	">
-		<polygon points="0,0 0,18 18,9" style="fill:#f58020;"></polygon>
+	'>
+		<polygon points='0,0 0,18 18,9' style='fill:#f58020;'></polygon>
 		Search
 	</svg>
 	`;
@@ -43,11 +43,11 @@ function setupModal() {
 
 	// When the user clicks on <span> (x), close the modal
 	for (var i = 0; i < span.length; i++) {
-			var element = span[i];
-			element.onclick = function () {
-				modal.style.display = 'none';
-			}
+		var element = span[i];
+		element.onclick = function () {
+			modal.style.display = 'none';
 		}
+	}
 
 	// When the user clicks anywhere outside of the modal, close it
 	window.onclick = function (event) {
@@ -97,7 +97,7 @@ function setupModal() {
 								element === 'Original file' ? $('#FileBinaryStream').attr('checked', true) : false;
 							}, this);
 						}
-						modal.style.display = "none";
+						modal.style.display = 'none';
 					}
 				}, this);
 			}
@@ -233,12 +233,40 @@ function addTestModal() {
 		}
 	});
 }
-
-function runTest(){
+//myorgsarecursed-whh3ifffqbt5sizrbkvpgbklki
+function runTest() {
+	let apiTestsKey = 'xxde8a49ae-62ac-47c3-9ab2-ca8fd2fdbca9';
 	let currentOrg = $('#OrganizationsPickerSearch_chosen > a > span').text().split('-').pop().trim();
 	let extensionId = $('#__currentExtension').text();
 	let testUrl = `https://${location.host}/rest/organizations/${currentOrg}/extensions/${extensionId}/test`;
+	let toSendData = {
+		"document": {
+			"permissions": [],
+			"metadata": [
+				{
+					"Values": {
+						
+					}
+				}
+			]
+		},
+		"parameters": {}
+	}
 	console.log(testUrl);
+	$.ajax({
+		url: testUrl,
+		headers: {
+			'Authorization': `Bearer ${apiTestsKey}`,
+			'Accept': 'application/json',
+			'Content-Type': 'application/json'
+		},
+		method: 'POST',
+		dataType: 'json',
+		data: JSON.stringify(toSendData,null,0),
+		complete: function (data) {
+			$('#__testResults').text(JSON.stringify(data.responseJSON, null, 2));
+		}
+	});
 }
 
 /**
@@ -314,7 +342,7 @@ window.onload = function () {
  */
 function setAceEditorValue(stringToSet) {
 
-	var scriptContent = `window.ace.edit("AceCodeEditor").setValue(\`${stringToSet}\`)`;
+	var scriptContent = `window.ace.edit('AceCodeEditor').setValue(\`${stringToSet}\`)`;
 
 	var script = document.createElement('script');
 	script.id = 'tmpScript';
@@ -323,29 +351,4 @@ function setAceEditorValue(stringToSet) {
 
 	$('#tmpScript').remove();
 
-}
-
-function retrieveWindowVariables(variables) {
-    var ret = {};
-
-    var scriptContent = "";
-    for (var i = 0; i < variables.length; i++) {
-        var currVariable = variables[i];
-        scriptContent += "if (typeof " + currVariable + " !== 'undefined') $('body').attr('tmp_" + currVariable + "', " + currVariable + ");\n"
-    }
-
-    var script = document.createElement('script');
-    script.id = 'tmpScript';
-    script.appendChild(document.createTextNode(scriptContent));
-    (document.body || document.head || document.documentElement).appendChild(script);
-
-    for (var i = 0; i < variables.length; i++) {
-        var currVariable = variables[i];
-        ret[currVariable] = $("body").attr("tmp_" + currVariable);
-        $("body").removeAttr("tmp_" + currVariable);
-    }
-
-    $("#tmpScript").remove();
-
-    return ret;
 }
