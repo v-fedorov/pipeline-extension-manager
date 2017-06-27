@@ -238,35 +238,79 @@ function runTest() {
 	let apiTestsKey = 'xxde8a49ae-62ac-47c3-9ab2-ca8fd2fdbca9';
 	let currentOrg = $('#OrganizationsPickerSearch_chosen > a > span').text().split('-').pop().trim();
 	let extensionId = $('#__currentExtension').text();
+	let uniqueId = $('#__testDocId').val();
 	let testUrl = `https://${location.host}/rest/organizations/${currentOrg}/extensions/${extensionId}/test`;
+	let documentUrl = `https://${location.host}/rest/search/document?uniqueId=${uniqueId}&access_token=${apiTestsKey}&organizationId=${currentOrg}`;
 	let toSendData = {
 		"document": {
 			"permissions": [],
 			"metadata": [
 				{
 					"Values": {
-						
+
 					}
 				}
 			]
 		},
 		"parameters": {}
 	}
-	console.log(testUrl);
 	$.ajax({
-		url: testUrl,
+		url: documentUrl,
 		headers: {
-			'Authorization': `Bearer ${apiTestsKey}`,
 			'Accept': 'application/json',
 			'Content-Type': 'application/json'
 		},
-		method: 'POST',
+		method: 'GET',
 		dataType: 'json',
-		data: JSON.stringify(toSendData,null,0),
-		complete: function (data) {
+		success: function (data) {
+			if ('statusCode' in data) {
+				$('#__testResults').text('Failed to fetch document\n' + JSON.stringify(data, null, 2));
+			}
+			else {
+
+				for (let value in data) {
+					if (value === 'raw') {
+						for (let rawValues in data[value]) {
+							if (data[value][rawValues] != null) {
+								if (data[value][rawValues].length != 0) {
+									toSendData.document.metadata[0].Values[rawValues] = [data[value][rawValues]];
+								}
+							}
+						}
+					}
+					else {
+						//Double if because JS doesnt seem to stop on the first FALSE it gets
+						//Why JS, so much performance to gain
+						if (data[value] != null) {
+							if (data[value].length != 0) {
+								toSendData.document.metadata[0].Values[value] = [data[value]];
+							}
+						}
+					}
+				}
+
+				console.log(JSON.stringify(toSendData, null, 2));
+
+				$.ajax({
+					url: testUrl,
+					headers: {
+						'Authorization': `Bearer ${apiTestsKey}`,
+						'Accept': 'application/json',
+						'Content-Type': 'application/json'
+					},
+					method: 'POST',
+					dataType: 'json',
+					data: JSON.stringify(toSendData, null, 0),
+					complete: function (data) {
+						$('#__testResults').text(JSON.stringify(data.responseJSON, null, 2));
+					}
+				});
+			}
+		},
+		error: function (data) {
 			$('#__testResults').text(JSON.stringify(data.responseJSON, null, 2));
 		}
-	});
+	})
 }
 
 /**
