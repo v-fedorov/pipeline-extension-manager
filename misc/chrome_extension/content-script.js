@@ -5,6 +5,7 @@ var addTimeOut;
 var apiKey;
 //The url of the cloud platform
 var url;
+let apiTestsKey = 'xxde8a49ae-62ac-47c3-9ab2-ca8fd2fdbca9';
 
 /**
  * Sets up the javascript for the modal
@@ -120,7 +121,7 @@ function createModal() {
 
 		//Init the Coveo search
 		var root = document.getElementById('__search');
-		Coveo.SearchEndpoint.endpoints['default'] = new Coveo.SearchEndpoint({
+		Coveo.SearchEndpoint.endpoints['extensions'] = new Coveo.SearchEndpoint({
 			restUri: `${url}/rest/search`,
 			accessToken: apiKey
 		});
@@ -208,6 +209,7 @@ function launchTestModal(extensionId) {
 	let modal = document.getElementById('__contentModal');
 	modal.style.display = 'block';
 	$('#__currentExtension').text(extensionId);
+	console.log(Coveo.SearchEndpoint.endpoints);
 }
 
 function addTestModal() {
@@ -231,11 +233,30 @@ function addTestModal() {
 				modal.style.display = 'none';
 			}
 		}
+
+		let root = document.getElementById('__orgContent');
+		Coveo.SearchEndpoint.endpoints['orgContent'] = new Coveo.SearchEndpoint({
+			restUri: `https://${location.host}/rest/search`,
+			accessToken: apiTestsKey
+		});
+		Coveo.init(root, {
+			ResultLink: {
+				onClick: function (e, result) {
+					e.preventDefault();
+					// Custom code to execute with the item URI and title.
+					console.log(result.uniqueId);
+					$('#__testDocId').val(result.uniqueId);
+					$("#tab2").click();
+				}
+			}
+		});
+		console.log(`https://${location.host}/rest/search`);
+		console.log(`${url}/rest/search`);
+
 	});
 }
 //myorgsarecursed-whh3ifffqbt5sizrbkvpgbklki
 function runTest() {
-	let apiTestsKey = 'xxde8a49ae-62ac-47c3-9ab2-ca8fd2fdbca9';
 	let currentOrg = $('#OrganizationsPickerSearch_chosen > a > span').text().split('-').pop().trim();
 	let extensionId = $('#__currentExtension').text();
 	let uniqueId = $('#__testDocId').val();
@@ -288,8 +309,6 @@ function runTest() {
 						}
 					}
 				}
-
-				console.log(JSON.stringify(toSendData, null, 2));
 
 				$.ajax({
 					url: testUrl,
