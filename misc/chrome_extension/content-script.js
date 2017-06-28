@@ -273,38 +273,52 @@ function addTestModal() {
 		$('#extensions').append(data);
 
 		$('#__runTests').click(runTest);
+		$('#__saveSettings').on('click', saveTestsKey);
 
-		let modal = document.getElementById('__contentModal');
-		let span = document.getElementsByClassName('__close');
-
-		for (var i = 0; i < span.length; i++) {
-			var element = span[i];
-			element.onclick = function () {
-				modal.style.display = 'none';
+		//Get the API key
+		chrome.storage.local.get({
+			__testsApiKey: ''
+		}, function (items) {
+			//Set it for later
+			$('#__testApiKey').val(items.__testsApiKey);
+			console.log(items.__testsApiKey);
+			if(items.__testsApiKey == ''){
+				$('#__apiKeyWarning').css('display', 'block');
 			}
-		}
 
-		modal.onclick = function (event) {
-			if (event.target == modal) {
-				modal.style.display = 'none';
-			}
-		}
+			let modal = document.getElementById('__contentModal');
+			let span = document.getElementsByClassName('__close');
 
-		let root = document.getElementById('__orgContent');
-		Coveo.SearchEndpoint.endpoints['orgContent'] = new Coveo.SearchEndpoint({
-			restUri: `https://${location.host}/rest/search`,
-			accessToken: apiTestsKey
-		});
-		Coveo.init(root, {
-			ResultLink: {
-				onClick: function (e, result) {
-					e.preventDefault();
-					$('#__testDocId').val(result.uniqueId);
-					$('#__tab2').click();
-					$('#__runTests').click();
+			for (var i = 0; i < span.length; i++) {
+				var element = span[i];
+				element.onclick = function () {
+					modal.style.display = 'none';
 				}
 			}
+
+			modal.onclick = function (event) {
+				if (event.target == modal) {
+					modal.style.display = 'none';
+				}
+			}
+
+			let root = document.getElementById('__orgContent');
+			Coveo.SearchEndpoint.endpoints['orgContent'] = new Coveo.SearchEndpoint({
+				restUri: `https://${location.host}/rest/search`,
+				accessToken: items.__testsApiKey
+			});
+			Coveo.init(root, {
+				ResultLink: {
+					onClick: function (e, result) {
+						e.preventDefault();
+						$('#__testDocId').val(result.uniqueId);
+						$('#__tab2').click();
+						$('#__runTests').click();
+					}
+				}
+			});
 		});
+
 
 	});
 }
@@ -316,6 +330,7 @@ function addTestModal() {
  */
 function runTest() {
 	$('#__testResults').text('');
+	let apiTestsKey = $('#__testApiKey').val();
 	let currentOrg = $('#OrganizationsPickerSearch_chosen > a > span').text().split('-').pop().trim();
 	let extensionId = $('#__currentExtension').text();
 	let uniqueId = $('#__testDocId').val();
@@ -421,6 +436,18 @@ function addTestButtonsToPage() {
 	});
 }
 
+
+/**
+ * Saves the test api key to the chrome storage
+ * 
+ */
+function saveTestsKey() {
+	chrome.storage.local.set({
+		__testsApiKey: $('#__testApiKey').val()
+	}, function () {
+		location.reload();
+	});
+}
 
 
 
