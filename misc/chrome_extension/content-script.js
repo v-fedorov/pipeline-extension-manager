@@ -433,11 +433,18 @@ function addTestButtonsToPage() {
 		}
 		for (let i = 0; i < $('#extensions')[0].children[1].children.length; i++) {
 			let element = $('#extensions')[0].children[1].children[i];
-			if ($(element).find('.btn').length == 0) {
+			//If a button is not found and there is an extension present
+			if ($(element).find('.btn').length == 0 && !$(element).hasClass('empty')) {
 				$(element).append(data);
 				$(element).find('.btn')[0].onclick = function () {
 					testOnClick(element);
 				}
+			}
+			//Changes the length of "No extensions found" TD when found to occupy space of "Tests" TH
+			//Makes it look better basicly
+			else if($(element).hasClass('empty')){
+				let tdElement = $(element).find('td');
+				tdElement.attr('colspan', tdElement.attr('colspan') + 1);
 			}
 		}
 	});
