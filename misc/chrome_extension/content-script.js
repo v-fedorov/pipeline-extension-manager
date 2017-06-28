@@ -10,7 +10,6 @@ var addTestButtonDelay;
 //Delay for the save extension button
 //Since it breaks it when you save
 var fixTestButtonDelay;
-let apiTestsKey = 'xxde8a49ae-62ac-47c3-9ab2-ca8fd2fdbca9';
 
 
 
@@ -252,6 +251,7 @@ function testOnClick(element) {
 	launchTestModal(extId);
 }
 
+
 /**
  * Opens the testing modal with the specific extension to test
  * 
@@ -275,14 +275,18 @@ function addTestModal() {
 		$('#__runTests').click(runTest);
 		$('#__saveSettings').on('click', saveTestsKey);
 
+		let jsonToGet = {};
+		let currentOrg = $('#OrganizationsPickerSearch_chosen > a > span').text().split('-').pop().trim();
+		let platform = location.host.split('.')[0];
+		jsonToGet[`__testsApiKey_${currentOrg}_${platform}`] = '';
 		//Get the API key
-		chrome.storage.local.get({
-			__testsApiKey: ''
-		}, function (items) {
+		chrome.storage.local.get(jsonToGet, function (items) {
 			//Set it for later
-			$('#__testApiKey').val(items.__testsApiKey);
-			console.log(items.__testsApiKey);
-			if(items.__testsApiKey == ''){
+			let testApiKey = items[`__testsApiKey_${currentOrg}_${platform}`];
+			console.log(items);
+			$('#__testApiKey').val(testApiKey);
+			console.log(testApiKey);
+			if (testApiKey == '' || testApiKey == undefined) {
 				$('#__apiKeyWarning').css('display', 'block');
 			}
 
@@ -305,7 +309,7 @@ function addTestModal() {
 			let root = document.getElementById('__orgContent');
 			Coveo.SearchEndpoint.endpoints['orgContent'] = new Coveo.SearchEndpoint({
 				restUri: `https://${location.host}/rest/search`,
-				accessToken: items.__testsApiKey
+				accessToken: testApiKey
 			});
 			Coveo.init(root, {
 				ResultLink: {
@@ -411,6 +415,7 @@ function runTest() {
 	})
 }
 
+
 /**
  * Adds the Test buttons in the table of the extensions
  * 
@@ -442,9 +447,11 @@ function addTestButtonsToPage() {
  * 
  */
 function saveTestsKey() {
-	chrome.storage.local.set({
-		__testsApiKey: $('#__testApiKey').val()
-	}, function () {
+	let jsonToSave = {};
+	let currentOrg = $('#OrganizationsPickerSearch_chosen > a > span').text().split('-').pop().trim();
+	let platform = location.host.split('.')[0];
+	jsonToGet[`__testsApiKey_${currentOrg}_${platform}`] = $('#__testApiKey').val();
+	chrome.storage.local.set(jsonToSave, function () {
 		location.reload();
 	});
 }
