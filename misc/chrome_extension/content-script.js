@@ -196,6 +196,8 @@ function addExtensionSearchToPage() {
  */
 function testOnClick(element) {
 	let extId = $('.extension-name .second-row', element).text().trim();
+	$('#tab1').click();
+	$('#__testDocId').val('');
 	launchTestModal(extId);
 }
 
@@ -243,7 +245,8 @@ function addTestModal() {
 				onClick: function (e, result) {
 					e.preventDefault();
 					$('#__testDocId').val(result.uniqueId);
-					$("#tab2").click();
+					$('#tab2').click();
+					$('#__runTests').click();
 				}
 			}
 		});
