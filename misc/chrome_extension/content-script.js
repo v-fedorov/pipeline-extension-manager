@@ -7,6 +7,7 @@ var apiKey;
 var url;
 
 var addTestButtonDelay;
+var fixTestButtonDelay;
 let apiTestsKey = 'xxde8a49ae-62ac-47c3-9ab2-ca8fd2fdbca9';
 
 /**
@@ -27,6 +28,15 @@ function setupModal() {
 	`;
 
 	$('#__search > div.coveo-search-section > div > a').html(svgButton);
+
+	$('#CreateExtension').on('click', function () {
+		if (fixTestButtonDelay) {
+			clearTimeout(fixTestButtonDelay);
+		}
+		fixTestButtonDelay = setTimeout(function () {
+			addTestButtonsToPage();
+		}, 400);
+	});
 
 	// Get the modal
 	let modal = document.getElementById('__myModal');
@@ -298,7 +308,7 @@ function runTest() {
 						}
 					}
 					else {
-						//Double if because JS doesnt seem to stop on the first FALSE it gets
+						//Double 'if' because JS doesnt seem to stop on the first FALSE it gets
 						//Why JS, so much performance to gain
 						if (data[value] != null) {
 							if (data[value].length != 0) {
@@ -338,14 +348,18 @@ function addTestButtonsToPage() {
 	//Do this first, since it will be called multiple times
 	//before the async function is done below
 	//This is to ensure we don't get multiple columns
-	$('#extensions').attr('__modified', true)
+	$('#extensions').attr('__modified', true);
 	$.get(chrome.extension.getURL('/html/extension-test.html'), function (data) {
-		$($('#extensions')[0].children[0].children[0]).append('<th>Tests</th>');
+		if ($('#__testHeader').length == 0) {
+			$($('#extensions')[0].children[0].children[0]).append('<th id="__testHeader">Tests</th>');
+		}
 		for (let i = 0; i < $('#extensions')[0].children[1].children.length; i++) {
 			let element = $('#extensions')[0].children[1].children[i];
-			$(element).append(data);
-			$(element).find('.btn')[0].onclick = function () {
-				testOnClick(element);
+			if ($(element).find('.btn').length == 0) {
+				$(element).append(data);
+				$(element).find('.btn')[0].onclick = function () {
+					testOnClick(element);
+				}
 			}
 		}
 	});
