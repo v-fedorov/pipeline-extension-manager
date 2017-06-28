@@ -53,10 +53,6 @@
 	cursor: pointer;
 }
 
-.__pointer{
-	cursor: pointer !important;
-}
-
 .__animateBottom{
 	position:relative;
 	animation:animatebottom 0.4s

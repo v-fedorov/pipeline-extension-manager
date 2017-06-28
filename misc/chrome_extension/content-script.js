@@ -5,6 +5,8 @@ var addTimeOut;
 var apiKey;
 //The url of the cloud platform
 var url;
+
+var addTestButtonDelay;
 let apiTestsKey = 'xxde8a49ae-62ac-47c3-9ab2-ca8fd2fdbca9';
 
 /**
@@ -55,56 +57,46 @@ function setupModal() {
 		if (event.target == modal) {
 			modal.style.display = 'none';
 		}
-		else {
-			//Check if the check was inside the result list
-			if (resultList.contains(event.target)) {
-				//Check if the click was inside a result
-				$('#__resultList > div')[0].childNodes.forEach(function (element) {
-					//Check if its the specific result
-					//If it is, take the hidden values and put them in the editor
-					if (element.contains(event.target)) {
-
-						let title = $(element.children[0].children[0]).attr('data-ext-title');
-						let description = $(element.children[0].children[1]).attr('data-ext-desc');
-						let reqData = $(element.children[0].children[2]).attr('data-ext-required');
-						let uniqueId = $(element.children[0].children[3]).attr('data-ext-id');
-
-						setAceEditorValue('');
-						$('#BodyTextDataStream').attr('checked', false);
-						$('#BodyHTMLDataStream').attr('checked', false);
-						$('#ThumbnailDataStream').attr('checked', false);
-						$('#FileBinaryStream').attr('checked', false);
-						$('#ExtensionName').val('');
-						$('#ExtensionDescription').val('');
-
-						if (uniqueId) {
-							$.get(`${url}/rest/search/v2/html?organizationId=extensions&uniqueId=${uniqueId}&access_token=${apiKey}`,
-								function (data) {
-									setAceEditorValue($(data).contents()[4].innerHTML);
-								}
-							)
-						}
-						if (title) {
-							$('#ExtensionName').val(title)
-						}
-						if (description) {
-							$('#ExtensionDescription').val(description);
-						}
-						if (reqData) {
-							reqData.split(';').forEach(function (element) {
-								element === 'Body text' ? $('#BodyTextDataStream').attr('checked', true) : false;
-								element === 'Body HTML' ? $('#BodyHTMLDataStream').attr('checked', true) : false;
-								element === 'Thumbnail' ? $('#ThumbnailDataStream').attr('checked', true) : false;
-								element === 'Original file' ? $('#FileBinaryStream').attr('checked', true) : false;
-							}, this);
-						}
-						modal.style.display = 'none';
-					}
-				}, this);
-			}
-		}
 	}
 
+}
+
+function extensionSearchOnClick(e, result) {
+	let title = result.title;
+	let description = result.raw.extdescription;
+	let reqData = result.raw.extrequired;
+	let uniqueId = result.uniqueId;
+
+	setAceEditorValue('');
+	$('#BodyTextDataStream').attr('checked', false);
+	$('#BodyHTMLDataStream').attr('checked', false);
+	$('#ThumbnailDataStream').attr('checked', false);
+	$('#FileBinaryStream').attr('checked', false);
+	$('#ExtensionName').val('');
+	$('#ExtensionDescription').val('');
+
+	if (uniqueId) {
+		$.get(`${url}/rest/search/v2/html?organizationId=extensions&uniqueId=${uniqueId}&access_token=${apiKey}`,
+			function (data) {
+				setAceEditorValue($(data).contents()[4].innerHTML);
+			}
+		)
+	}
+	if (title) {
+		$('#ExtensionName').val(title)
+	}
+	if (description) {
+		$('#ExtensionDescription').val(description);
+	}
+	if (reqData) {
+		reqData.split(';').forEach(function (element) {
+			element === 'Body text' ? $('#BodyTextDataStream').attr('checked', true) : false;
+			element === 'Body HTML' ? $('#BodyHTMLDataStream').attr('checked', true) : false;
+			element === 'Thumbnail' ? $('#ThumbnailDataStream').attr('checked', true) : false;
+			element === 'Original file' ? $('#FileBinaryStream').attr('checked', true) : false;
+		}, this);
+	}
+	$('#__myModal')[0].style.display = 'none';
 }
 
 /**
@@ -125,7 +117,14 @@ function createModal() {
 			restUri: `${url}/rest/search`,
 			accessToken: apiKey
 		});
-		Coveo.init(root);
+		Coveo.init(root, {
+			ResultLink: {
+				onClick: function (e, result) {
+					e.preventDefault();
+					extensionSearchOnClick(e, result);
+				}
+			}
+		});
 
 		setupModal();
 	});
@@ -243,15 +242,11 @@ function addTestModal() {
 			ResultLink: {
 				onClick: function (e, result) {
 					e.preventDefault();
-					// Custom code to execute with the item URI and title.
-					console.log(result.uniqueId);
 					$('#__testDocId').val(result.uniqueId);
 					$("#tab2").click();
 				}
 			}
 		});
-		console.log(`https://${location.host}/rest/search`);
-		console.log(`${url}/rest/search`);
 
 	});
 }
@@ -381,8 +376,14 @@ window.onload = function () {
 
 			// If extensions appears AND it wasn't already modified by this script
 			if (document.getElementById('extensions') && !$('#extensions').attr('__modified')) {
-				addTestButtonsToPage();
-				addTestModal();
+
+				if (addTestButtonDelay) {
+					clearTimeout(addTestButtonDelay);
+				}
+				addTestButtonDelay = setTimeout(function () {
+					addTestButtonsToPage();
+					addTestModal();
+				}, 100);
 			}
 		});
 
