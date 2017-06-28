@@ -5,8 +5,10 @@ var addTimeOut;
 var apiKey;
 //The url of the cloud platform
 var url;
-
+//Add button delay for the test buttons
 var addTestButtonDelay;
+//Delay for the save extension button
+//Since it breaks it when you save
 var fixTestButtonDelay;
 let apiTestsKey = 'xxde8a49ae-62ac-47c3-9ab2-ca8fd2fdbca9';
 
@@ -71,6 +73,13 @@ function setupModal() {
 
 }
 
+
+/**
+ * The onclick function for the extension search result link
+ * 
+ * @param {event} e - The event
+ * @param {object} result - The search result
+ */
 function extensionSearchOnClick(e, result) {
 	let title = result.title;
 	let description = result.raw.extdescription;
@@ -263,7 +272,12 @@ function addTestModal() {
 
 	});
 }
-//myorgsarecursed-whh3ifffqbt5sizrbkvpgbklki
+
+
+/**
+ * Run the extension test
+ * 
+ */
 function runTest() {
 	let currentOrg = $('#OrganizationsPickerSearch_chosen > a > span').text().split('-').pop().trim();
 	let extensionId = $('#__currentExtension').text();
