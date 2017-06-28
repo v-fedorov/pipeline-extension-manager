@@ -5,18 +5,19 @@
 	<div class="__modal-content __animateBottom">
 		<span class="__close">&times;</span>
 
-		<h1 class="inline bold text-medium-blue">Testing extension</h1>
-		<h4 class="admin-description text-dark-grey">Panel description</h4>
+		<h1 class="inline bold text-medium-blue">Extension testing</h1>
+		<h4 class="admin-description text-dark-grey">Click on a document to test it with the extension</h4>
 		<br>
 		<br>
 
 		<div class="tab-navigation">
-			<div id="tab1" class="tab enabled active">Search for document</div>
-			<div id="tab2" class="tab enabled">Test document</div>
+			<div id="__tab1" class="tab enabled active">Select document</div>
+			<div id="__tab2" class="tab enabled">Test document</div>
+			<div id="__tab3" class="tab enabled">Setttings</div>
 		</div>
 
 		<div class="tab-content">
-			<div data-tab="tab1" class="tab-pane active">
+			<div data-tab="__tab1" class="tab-pane active">
 				<div class="mod-header-padding mod-form-top-bottom-padding">
 
 					<div id="__orgContent" class="CoveoSearchInterface" data-enable-history="false" data-design="new" data-endpoint="orgContent">
@@ -99,7 +100,7 @@
 
 				</div>
 			</div>
-			<div data-tab="tab2" class="tab-pane">
+			<div data-tab="__tab2" class="tab-pane">
 				<div class="mod-header-padding mod-form-top-bottom-padding">
 					<div class="coveo-form">
 						<label>Document unique ID</label>
@@ -117,27 +118,55 @@
 					</div>
 				</div>
 			</div>
+			<div data-tab="__tab3" class="tab-pane">
+				<div class="mod-header-padding mod-form-top-bottom-padding">
+					<div class="coveo-form">
+						<label>API Key</label>
+						<fieldset class="input-field form-group">
+							<input type="text" id="__testApiKey" placeholder="API Key">
+						</fieldset>
+						<fieldset class="form-group">
+							<button id="__saveSettings" class="btn mod-primary">Save</button>
+						</fieldset>
+					</div>
+				</div>
+			</div>
 		</div>
 
 		<script type="text/javascript">
-			var tab1 = $("#tab1");
-			var tab2 = $("#tab2");
-			var tabpane1 = $("[data-tab=tab1]");
-			var tabpane2 = $("[data-tab=tab2]");
+			var tab1 = $('#__tab1');
+			var tab2 = $('#__tab2');
+			var tab3 = $('#__tab3');
+			var tabpane1 = $('[data-tab=__tab1]');
+			var tabpane2 = $('[data-tab=__tab2]');
+			var tabpane3 = $('[data-tab=__tab3]');
 
-			tab1.on("click", function () {
+			function resetTabs(){
+				tab1.removeClass('active');
+				tab2.removeClass('active');
+				tab3.removeClass('active');
+				tabpane1.removeClass('active');
+				tabpane2.removeClass('active');
+				tabpane3.removeClass('active');
+			}
+
+			tab1.on('click', function () {
+				resetTabs();
 				tab1.addClass("active");
-				tab2.removeClass("active");
-				tabpane1.addClass("active");
-				tabpane2.removeClass("active");
+				tabpane1.addClass("active");				
 			});
 
 			tab2.on("click", function () {
-				tab1.removeClass("active");
+				resetTabs();
 				tab2.addClass("active");
-				tabpane1.removeClass("active");
 				tabpane2.addClass("active");
 				$('#__testResults').text('');
+			});
+
+			tab3.on('click', function () {
+				resetTabs();
+				tab3.addClass("active");
+				tabpane3.addClass("active");				
 			});
 		</script>
 

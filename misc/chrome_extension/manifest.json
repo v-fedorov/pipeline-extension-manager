@@ -41,7 +41,7 @@
   ],
   "web_accessible_resources": [
     "/html/extension-search.html",
-    "/html/extension-test.html",
+    "/html/extension-test-button.html",
     "/html/content-search.html"
   ]
 }

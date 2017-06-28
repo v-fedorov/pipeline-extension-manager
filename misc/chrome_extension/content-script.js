@@ -12,11 +12,26 @@ var addTestButtonDelay;
 var fixTestButtonDelay;
 let apiTestsKey = 'xxde8a49ae-62ac-47c3-9ab2-ca8fd2fdbca9';
 
+
+
+
+
+
+
+
+
+
+/*
+ *	EXTENSION GALLERY
+ *
+ */
+
+
 /**
  * Sets up the javascript for the modal
  * 
  */
-function setupModal() {
+function setupExtensionGalleryModal() {
 
 	let svgButton = `
 	<svg height='18' width='18' style='
@@ -73,14 +88,13 @@ function setupModal() {
 
 }
 
-
 /**
  * The onclick function for the extension search result link
  * 
  * @param {event} e - The event
  * @param {object} result - The search result
  */
-function extensionSearchOnClick(e, result) {
+function extensionGalleryOnClick(e, result) {
 	let title = result.title;
 	let description = result.raw.extdescription;
 	let reqData = result.raw.extrequired;
@@ -122,7 +136,7 @@ function extensionSearchOnClick(e, result) {
  * Creates the modal componant of the page along with the button
  * 
  */
-function createModal() {
+function createExtensionGalleryModal() {
 	let editorElement = $('#EditExtensionComponent > div > div > form > div:nth-child(2)')[0];
 	//Get the HTML data
 	$.get(chrome.extension.getURL('/html/extension-search.html'), function (data) {
@@ -140,12 +154,12 @@ function createModal() {
 			ResultLink: {
 				onClick: function (e, result) {
 					e.preventDefault();
-					extensionSearchOnClick(e, result);
+					extensionGalleryOnClick(e, result);
 				}
 			}
 		});
 
-		setupModal();
+		setupExtensionGalleryModal();
 	});
 }
 
@@ -202,11 +216,29 @@ function addExtensionSearchToPage() {
 	addTimeOut = setTimeout(function () {
 		if ($('#EditExtensionComponent').length && !$('#__modalButton')[0]) {
 
-			createModal();
+			createExtensionGalleryModal();
 
 		}
 	}, 350);
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* 
+ * EXTENSION TESTER
+ * 
+ */
+
 
 /**
  * The onclick for the test button
@@ -215,7 +247,7 @@ function addExtensionSearchToPage() {
  */
 function testOnClick(element) {
 	let extId = $('.extension-name .second-row', element).text().trim();
-	$('#tab1').click();
+	$('#__tab1').click();
 	$('#__testDocId').val('');
 	launchTestModal(extId);
 }
@@ -229,9 +261,13 @@ function launchTestModal(extensionId) {
 	let modal = document.getElementById('__contentModal');
 	modal.style.display = 'block';
 	$('#__currentExtension').text(extensionId);
-	console.log(Coveo.SearchEndpoint.endpoints);
 }
 
+
+/**
+ * Add test modal to page
+ * 
+ */
 function addTestModal() {
 	$.get(chrome.extension.getURL('/html/content-search.html'), function (data) {
 		$('#extensions').append(data);
@@ -264,7 +300,7 @@ function addTestModal() {
 				onClick: function (e, result) {
 					e.preventDefault();
 					$('#__testDocId').val(result.uniqueId);
-					$('#tab2').click();
+					$('#__tab2').click();
 					$('#__runTests').click();
 				}
 			}
@@ -279,6 +315,7 @@ function addTestModal() {
  * 
  */
 function runTest() {
+	$('#__testResults').text('');
 	let currentOrg = $('#OrganizationsPickerSearch_chosen > a > span').text().split('-').pop().trim();
 	let extensionId = $('#__currentExtension').text();
 	let uniqueId = $('#__testDocId').val();
@@ -297,6 +334,8 @@ function runTest() {
 		},
 		"parameters": {}
 	}
+
+	//Get the document metadata
 	$.ajax({
 		url: documentUrl,
 		headers: {
@@ -306,11 +345,13 @@ function runTest() {
 		method: 'GET',
 		dataType: 'json',
 		success: function (data) {
+			//StatusCode would mean an error
 			if ('statusCode' in data) {
 				$('#__testResults').text('Failed to fetch document\n' + JSON.stringify(data, null, 2));
 			}
 			else {
 
+				//Build the document metadata
 				for (let value in data) {
 					if (value === 'raw') {
 						for (let rawValues in data[value]) {
@@ -332,6 +373,7 @@ function runTest() {
 					}
 				}
 
+				//Test the document with the extension
 				$.ajax({
 					url: testUrl,
 					headers: {
@@ -363,7 +405,7 @@ function addTestButtonsToPage() {
 	//before the async function is done below
 	//This is to ensure we don't get multiple columns
 	$('#extensions').attr('__modified', true);
-	$.get(chrome.extension.getURL('/html/extension-test.html'), function (data) {
+	$.get(chrome.extension.getURL('/html/extension-test-button.html'), function (data) {
 		if ($('#__testHeader').length == 0) {
 			$($('#extensions')[0].children[0].children[0]).append('<th id="__testHeader">Tests</th>');
 		}
@@ -378,6 +420,21 @@ function addTestButtonsToPage() {
 		}
 	});
 }
+
+
+
+
+
+
+
+
+
+
+
+/*
+ * OTHER
+ * 
+ */
 
 
 /**
