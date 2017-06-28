@@ -87,6 +87,7 @@ function setupExtensionGalleryModal() {
 
 }
 
+
 /**
  * The onclick function for the extension search result link
  * 
@@ -130,6 +131,7 @@ function extensionGalleryOnClick(e, result) {
 	}
 	$('#__myModal')[0].style.display = 'none';
 }
+
 
 /**
  * Creates the modal componant of the page along with the button
@@ -450,7 +452,7 @@ function saveTestsKey() {
 	let jsonToSave = {};
 	let currentOrg = $('#OrganizationsPickerSearch_chosen > a > span').text().split('-').pop().trim();
 	let platform = location.host.split('.')[0];
-	jsonToGet[`__testsApiKey_${currentOrg}_${platform}`] = $('#__testApiKey').val();
+	jsonToSave[`__testsApiKey_${currentOrg}_${platform}`] = $('#__testApiKey').val();
 	chrome.storage.local.set(jsonToSave, function () {
 		location.reload();
 	});
