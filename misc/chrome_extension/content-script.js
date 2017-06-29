@@ -49,20 +49,20 @@ function setupExtensionGalleryModal() {
 	let span = $('.__close');
 
 	// When the user clicks the button, open the modal 
-	$('#__modalButton').on('click', function(){
+	$('#__modalButton').on('click', function () {
 		modal.css('display', 'block');
 	});
 
 	// When the user clicks on <span> (x), close the modal
 	for (var i = 0; i < span.length; i++) {
 		var element = span[i];
-		$(element).on('click', function(){
+		$(element).on('click', function () {
 			modal.css('display', 'none');
 		});
 	}
 
 	// When the user clicks anywhere outside of the modal, close it
-	modal.on('click', function(event){
+	modal.on('click', function (event) {
 		if (event.target == modal[0]) {
 			modal.css('display', 'none');
 		}
@@ -283,15 +283,17 @@ function addTestModal() {
  * 
  */
 function runTest() {
+	//Show the loading bubbles
 	let testElement = $('#__testLoading');
 	testElement.css('display', 'block');
+
 	$('#__testResults').text('');
 	let apiTestsKey = $('#__testApiKey').val();
 	let currentOrg = $('#OrganizationsPickerSearch_chosen > a > span').text().split('-').pop().trim();
 	let extensionId = $('#__currentExtension').text();
 	let uniqueId = $('#__testDocId').val();
 	let testUrl = `https://${location.host}/rest/organizations/${currentOrg}/extensions/${extensionId}/test`;
-	let documentUrl = `https://${location.host}/rest/search/document?uniqueId=${uniqueId}&access_token=${apiTestsKey}&organizationId=${currentOrg}`;
+	let documentUrl = `https://${location.host}/rest/search/document?uniqueId=${encodeURIComponent(uniqueId)}&access_token=${apiTestsKey}&organizationId=${currentOrg}`;
 	let toSendData = {
 		"document": {
 			"permissions": [],
@@ -324,25 +326,28 @@ function runTest() {
 			else {
 
 				//Build the document metadata
-				for (let value in data) {
-					if (value === 'raw') {
-						for (let rawValues in data[value]) {
-							if (data[value][rawValues] != null) {
-								if (data[value][rawValues].length != 0) {
-									toSendData.document.metadata[0].Values[rawValues] = [data[value][rawValues]];
+				for (let key in data) {
+
+					function addToJson(valueToAdd, addKey) {
+						if (valueToAdd != null) {
+							if (valueToAdd.length != 0) {
+								if (valueToAdd.constructor === Array) {
+									toSendData.document.metadata[0].Values[addKey] = valueToAdd;
+								}
+								else if (valueToAdd.constructor === Object) {
+									for(let ckey in valueToAdd){
+										addToJson(valueToAdd[ckey], ckey);
+									}
+								}
+								else {
+									toSendData.document.metadata[0].Values[addKey] = [valueToAdd];
 								}
 							}
 						}
 					}
-					else {
-						//Double 'if' because JS doesnt seem to stop on the first FALSE it gets
-						//Why JS, so much performance to gain
-						if (data[value] != null) {
-							if (data[value].length != 0) {
-								toSendData.document.metadata[0].Values[value] = [data[value]];
-							}
-						}
-					}
+
+					addToJson(data[key], key);
+
 				}
 
 				//Test the document with the extension
