@@ -19,7 +19,7 @@
 		<div class="tab-content">
 			<div data-tab="__tab1" class="tab-pane active">
 				<div class="mod-header-padding mod-form-top-bottom-padding">
-					
+
 					<div class='sync-feedback mod-error mt2' id="__apiKeyWarning" style="display:none;">
 						<span class='sync-feedback-icon'>
 							<svg class='icon' viewBox='0 0 10 10'>
@@ -120,6 +120,18 @@
 						<fieldset class="form-group">
 							<button id="__runTests" class="btn mod-primary">Test</button>
 						</fieldset>
+
+						<div class="loading-prompt" id="__testLoading" style="display:none;">
+							<div>Running test. Please wait.</div>
+							<div class="spinner">
+								<div class="bounce1"></div>
+								<div class="bounce2"></div>
+								<div class="bounce3"></div>
+							</div>
+						</div>
+
+						<br>
+
 						<fieldset class="form-group">
 							<pre id="__testResults" style="white-space: pre-wrap; word-wrap:break-word;"></pre>
 						</fieldset>

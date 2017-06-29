@@ -283,6 +283,8 @@ function addTestModal() {
  * 
  */
 function runTest() {
+	let testElement = $('#__testLoading');
+	testElement.css('display', 'block');
 	$('#__testResults').text('');
 	let apiTestsKey = $('#__testApiKey').val();
 	let currentOrg = $('#OrganizationsPickerSearch_chosen > a > span').text().split('-').pop().trim();
@@ -317,6 +319,7 @@ function runTest() {
 			//StatusCode would mean an error
 			if ('statusCode' in data) {
 				$('#__testResults').text('Failed to fetch document\n' + JSON.stringify(data, null, 2));
+				testElement.css('display', 'none');
 			}
 			else {
 
@@ -355,12 +358,14 @@ function runTest() {
 					data: JSON.stringify(toSendData, null, 0),
 					complete: function (data) {
 						$('#__testResults').text(JSON.stringify(data.responseJSON, null, 2));
+						testElement.css('display', 'none');
 					}
 				});
 			}
 		},
 		error: function (data) {
 			$('#__testResults').text(JSON.stringify(data.responseJSON, null, 2));
+			testElement.css('display', 'none');
 		}
 	})
 }
