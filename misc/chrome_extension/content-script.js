@@ -50,8 +50,8 @@ function setupExtensionGalleryModal() {
 			clearTimeout(fixTestButtonDelay);
 		}
 		fixTestButtonDelay = setTimeout(function () {
-			addTestButtonsToPage();
-		}, 400);
+			//addTestButtonsToPage();
+		}, 500);
 	});
 
 	// Get the modal
@@ -219,6 +219,11 @@ function addExtensionSearchToPage() {
 
 			createExtensionGalleryModal();
 
+		}
+		else if ($('#EditExtensionComponent').length == 0 && !$('#__modalButton')[0]) {
+			setTimeout(function () {
+				addTestButtonsToPage();
+			}, 200);
 		}
 	}, 350);
 }
@@ -442,7 +447,7 @@ function addTestButtonsToPage() {
 			}
 			//Changes the length of "No extensions found" TD when found to occupy space of "Tests" TH
 			//Makes it look better basicly
-			else if($(element).hasClass('empty')){
+			else if ($(element).hasClass('empty')) {
 				let tdElement = $(element).find('td');
 				tdElement.attr('colspan', tdElement.attr('colspan') + 1);
 			}
