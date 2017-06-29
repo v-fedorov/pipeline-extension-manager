@@ -13,6 +13,11 @@ This is what is looks like:
 When clicked on, a Coveo seach pops up with a list of availible extensions. The extensions are added by the python script portion of the repo.
 ![extension gallery search](https://user-images.githubusercontent.com/17149559/27692821-abeb7b88-5cb5-11e7-8b81-17793b94eb6f.png)
 
+#### Additional notes
+If the search does not work, the org may have changed place in the future/does not exist anymore.
+It is currently living in the CoveoStageing in platformqa.
+To change where where the content is being taken, head to chrome://extensions/ and click on the options dialog.
+
 ### The tester
 'Test' buttons can be found beside every extension
 ![test buttons](https://user-images.githubusercontent.com/17149559/27692869-cd622802-5cb5-11e7-8c69-f93b6b88c5f1.png)
