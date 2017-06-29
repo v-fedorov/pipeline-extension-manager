@@ -7,9 +7,6 @@ var apiKey;
 var url;
 //Add button delay for the test buttons
 var addTestButtonDelay;
-//Delay for the save extension button
-//Since it breaks it when you save
-var fixTestButtonDelay;
 
 
 
@@ -32,7 +29,7 @@ var fixTestButtonDelay;
  */
 function setupExtensionGalleryModal() {
 
-	let svgButton = `
+	let svgButtonHTML = `
 	<svg height='18' width='18' style='
 	    position: absolute;
 	    top:50%;
@@ -43,47 +40,33 @@ function setupExtensionGalleryModal() {
 	</svg>
 	`;
 
-	$('#__search > div.coveo-search-section > div > a').html(svgButton);
-
-	$('#CreateExtension').on('click', function () {
-		if (fixTestButtonDelay) {
-			clearTimeout(fixTestButtonDelay);
-		}
-		fixTestButtonDelay = setTimeout(function () {
-			//addTestButtonsToPage();
-		}, 500);
-	});
+	$('#__search > div.coveo-search-section > div > a').html(svgButtonHTML);
 
 	// Get the modal
-	let modal = document.getElementById('__myModal');
-
-	// Get the button that opens the modal
-	let btn = document.getElementById('__modalButton');
+	let modal = $('#__extensionsGalleryModal');
 
 	// Get the <span> element that closes the modal
-	let span = document.getElementsByClassName('__close');
-
-	let resultList = document.getElementById('__resultList');
+	let span = $('.__close');
 
 	// When the user clicks the button, open the modal 
-	btn.onclick = function () {
-		modal.style.display = 'block';
-	}
+	$('#__modalButton').on('click', function(){
+		modal.css('display', 'block');
+	});
 
 	// When the user clicks on <span> (x), close the modal
 	for (var i = 0; i < span.length; i++) {
 		var element = span[i];
-		element.onclick = function () {
-			modal.style.display = 'none';
-		}
+		$(element).on('click', function(){
+			modal.css('display', 'none');
+		});
 	}
 
 	// When the user clicks anywhere outside of the modal, close it
-	window.onclick = function (event) {
-		if (event.target == modal) {
-			modal.style.display = 'none';
+	modal.on('click', function(event){
+		if (event.target == modal[0]) {
+			modal.css('display', 'none');
 		}
-	}
+	});
 
 }
 
@@ -129,7 +112,7 @@ function extensionGalleryOnClick(e, result) {
 			element === 'Original file' ? $('#FileBinaryStream').attr('checked', true) : false;
 		}, this);
 	}
-	$('#__myModal')[0].style.display = 'none';
+	$('#__extensionsGalleryModal').css('display', 'none');
 }
 
 
@@ -166,46 +149,6 @@ function createExtensionGalleryModal() {
 
 
 /**
- * The onchange function of the select
- * sets the title, description, checkboxes and editor values
- * 
- */
-function extensionChooserOnChange() {
-	let index = $(this).val();
-
-	setAceEditorValue('');
-	$('#BodyTextDataStream').attr('checked', false);
-	$('#BodyHTMLDataStream').attr('checked', false);
-	$('#ThumbnailDataStream').attr('checked', false);
-	$('#FileBinaryStream').attr('checked', false);
-	$('#ExtensionName').val('');
-	$('#ExtensionDescription').val('');
-
-	if (options[index]) {
-		setAceEditorValue(atob(options[index].content));
-		$('#ExtensionName').val(options[index].value)
-		$('#ExtensionDescription').val(options[index].desc);
-		if (options[index].reqData) {
-			options[index].reqData.split(';').forEach(function (element) {
-				if (element === 'Body text') {
-					$('#BodyTextDataStream').attr('checked', true);
-				}
-				else if (element === 'Body HTML') {
-					$('#BodyHTMLDataStream').attr('checked', true);
-				}
-				else if (element === 'Thumbnail') {
-					$('#ThumbnailDataStream').attr('checked', true);
-				}
-				else if (element === 'Original file') {
-					$('#FileBinaryStream').attr('checked', true);
-				}
-			}, this);
-		}
-	}
-}
-
-
-/**
  * Adds the select with options to the page
  * after 350 ms the edit modal started appearing
  * 
@@ -215,11 +158,13 @@ function addExtensionSearchToPage() {
 		clearTimeout(addTimeOut);
 	}
 	addTimeOut = setTimeout(function () {
+		//If its opening
 		if ($('#EditExtensionComponent').length && !$('#__modalButton')[0]) {
 
 			createExtensionGalleryModal();
 
 		}
+		//If its closing
 		else if ($('#EditExtensionComponent').length == 0 && !$('#__modalButton')[0]) {
 			setTimeout(function () {
 				addTestButtonsToPage();
@@ -251,7 +196,7 @@ function addExtensionSearchToPage() {
  * 
  * @param {object} element - The row element
  */
-function testOnClick(element) {
+function testButtonsOnClick(element) {
 	let extId = $('.extension-name .second-row', element).text().trim();
 	$('#__tab1').click();
 	$('#__testDocId').val('');
@@ -290,9 +235,7 @@ function addTestModal() {
 		chrome.storage.local.get(jsonToGet, function (items) {
 			//Set it for later
 			let testApiKey = items[`__testsApiKey_${currentOrg}_${platform}`];
-			console.log(items);
 			$('#__testApiKey').val(testApiKey);
-			console.log(testApiKey);
 			if (testApiKey == '' || testApiKey == undefined) {
 				$('#__apiKeyWarning').css('display', 'block');
 			}
@@ -441,9 +384,9 @@ function addTestButtonsToPage() {
 			//If a button is not found and there is an extension present
 			if ($(element).find('.btn').length == 0 && !$(element).hasClass('empty')) {
 				$(element).append(data);
-				$(element).find('.btn')[0].onclick = function () {
-					testOnClick(element);
-				}
+				$(element).find('.btn').on('click', function () {
+					testButtonsOnClick(element);
+				});
 			}
 			//Changes the length of "No extensions found" TD when found to occupy space of "Tests" TH
 			//Makes it look better basicly
