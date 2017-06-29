@@ -21,7 +21,7 @@ Clicking on a 'Test' button will bring up the test interface
 Simply clicking on the document you want to test will start the test and the results will appear
 
 #### !!Warning!!
-Before you can search documents and test extesions, one MUST provide an API with valid permissions.
+Before you can search documents and test extensions, one MUST provide an API with valid permissions.
 Instructions are be found in the 'Settings' tab of the tester
 
 #### Additional notes about the tester
