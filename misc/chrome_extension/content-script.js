@@ -160,15 +160,7 @@ function addExtensionSearchToPage() {
 	addTimeOut = setTimeout(function () {
 		//If its opening
 		if ($('#EditExtensionComponent').length && !$('#__modalButton')[0]) {
-
 			createExtensionGalleryModal();
-
-		}
-		//If its closing
-		else if ($('#EditExtensionComponent').length == 0 && !$('#__modalButton')[0]) {
-			setTimeout(function () {
-				addTestButtonsToPage();
-			}, 200);
 		}
 	}, 350);
 }
@@ -335,7 +327,7 @@ function runTest() {
 									toSendData.document.metadata[0].Values[addKey] = valueToAdd;
 								}
 								else if (valueToAdd.constructor === Object) {
-									for(let ckey in valueToAdd){
+									for (let ckey in valueToAdd) {
 										addToJson(valueToAdd[ckey], ckey);
 									}
 								}
@@ -472,6 +464,11 @@ window.onload = function () {
 				addTestButtonDelay = setTimeout(function () {
 					addTestButtonsToPage();
 					addTestModal();
+					
+					//If a row is added later on, add the buttons
+					$('#extensions').on("DOMNodeInserted", "tr", function () {
+						addTestButtonsToPage();
+					});
 				}, 100);
 			}
 		});
