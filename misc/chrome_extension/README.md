@@ -37,7 +37,8 @@ These features will come in the future when the extension tester API is updated.
 1. Download/clone git repo
 2. Turn on developer mode in chrome
 3. Load unpacked extension
-4. Find the "chrome_extension" folder in the repo
+4. Find the `chrome_extension` folder in the repo under the `misc` folder
+5. Don't forget to add the API key in the `settings` tab of the tester
 
 ## How to run
 Head to the Coveo Cloud Platform extension's tab
