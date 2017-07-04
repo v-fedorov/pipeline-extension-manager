@@ -295,7 +295,14 @@ function runTest() {
 
 					}
 				}
-			]
+			],
+			"dataStreams": [
+				{
+					"values": {
+						"BODY_TEXT": { "inlineContent": `${btoa(strEncodeUTF16('Test all éé the ĉ ȩ è'))}` }
+					}
+				}
+			],
 		},
 		"parameters": {}
 	}
@@ -305,7 +312,7 @@ function runTest() {
 		url: documentUrl,
 		headers: {
 			'Accept': 'application/json',
-			'Content-Type': 'application/json'
+			'Content-Type': 'application/json;charset=UTF-8'
 		},
 		method: 'GET',
 		dataType: 'json',
@@ -451,12 +458,12 @@ window.onload = function () {
 
 		var observer = new MutationObserver(function (mutations, observer) {
 			// If the EditExtensionComponent appears
-			if (document.getElementById('EditExtensionComponent')) {
+			if ($('#EditExtensionComponent').length) {
 				addExtensionSearchToPage();
 			}
 
 			// If extensions appears AND it wasn't already modified by this script
-			if (document.getElementById('extensions') && !$('#extensions').attr('__modified')) {
+			if ($('#extensions').length && !$('#extensions').attr('__modified')) {
 
 				if (addTestButtonDelay) {
 					clearTimeout(addTestButtonDelay);
@@ -464,7 +471,7 @@ window.onload = function () {
 				addTestButtonDelay = setTimeout(function () {
 					addTestButtonsToPage();
 					addTestModal();
-					
+
 					//If a row is added later on, add the buttons
 					$('#extensions').on("DOMNodeInserted", "tr", function () {
 						addTestButtonsToPage();
@@ -501,4 +508,45 @@ function setAceEditorValue(stringToSet) {
 
 	$('#tmpScript').remove();
 
+}
+
+//https://stackoverflow.com/questions/24379446/utf-8-to-utf-16le-javascript
+function strEncodeUTF16(str) {
+	// var out, i, len, c;
+    // var char2, char3;
+
+    // out = "";
+    // len = str.length;
+    // i = 0;
+    // while(i < len) {
+    //     c = str.charCodeAt(i++);
+    //     switch(c >> 4)
+    //     { 
+    //       case 0: case 1: case 2: case 3: case 4: case 5: case 6: case 7:
+    //         // 0xxxxxxx
+    //         out += str.charAt(i-1);
+    //         break;
+    //       case 12: case 13:
+    //         // 110x xxxx   10xx xxxx
+    //         char2 = str.charCodeAt(i++);
+    //         out += String.fromCharCode(((c & 0x1F) << 6) | (char2 & 0x3F));
+    //         out += str.charAt(i-1);
+    //         break;
+    //       case 14:
+    //         // 1110 xxxx  10xx xxxx  10xx xxxx
+    //         char2 = str.charCodeAt(i++);
+    //         char3 = str.charCodeAt(i++);
+    //         out += String.fromCharCode(((c & 0x0F) << 12) | ((char2 & 0x3F) << 6) | ((char3 & 0x3F) << 0));
+    //         break;
+    //     }
+    // }
+
+    // var byteArray = new Uint8Array(out.length * 2);
+    // for (var i = 0; i < out.length; i++) {
+    //     byteArray[i*2] = out.charCodeAt(i); // & 0xff;
+    //     byteArray[i*2+1] = out.charCodeAt(i) >> 8; // & 0xff;
+    // }
+
+    // return String.fromCharCode.apply( String, byteArray );
+	return str.split('').join('\0')+'\0';
 }
