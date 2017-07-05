@@ -299,7 +299,7 @@ function runTest() {
 			"dataStreams": [
 				{
 					"values": {
-						"BODY_TEXT": { "inlineContent": `${btoa(strEncodeUTF16('Test all éé the ĉ ȩ è'))}` }
+						"BODY_TEXT": { "inlineContent": `${btoa(unicodeEscape('Hello world!'))}` }
 					}
 				}
 			],
@@ -512,41 +512,24 @@ function setAceEditorValue(stringToSet) {
 
 //https://stackoverflow.com/questions/24379446/utf-8-to-utf-16le-javascript
 function strEncodeUTF16(str) {
-	// var out, i, len, c;
-    // var char2, char3;
 
-    // out = "";
-    // len = str.length;
-    // i = 0;
-    // while(i < len) {
-    //     c = str.charCodeAt(i++);
-    //     switch(c >> 4)
-    //     { 
-    //       case 0: case 1: case 2: case 3: case 4: case 5: case 6: case 7:
-    //         // 0xxxxxxx
-    //         out += str.charAt(i-1);
-    //         break;
-    //       case 12: case 13:
-    //         // 110x xxxx   10xx xxxx
-    //         char2 = str.charCodeAt(i++);
-    //         out += String.fromCharCode(((c & 0x1F) << 6) | (char2 & 0x3F));
-    //         out += str.charAt(i-1);
-    //         break;
-    //       case 14:
-    //         // 1110 xxxx  10xx xxxx  10xx xxxx
-    //         char2 = str.charCodeAt(i++);
-    //         char3 = str.charCodeAt(i++);
-    //         out += String.fromCharCode(((c & 0x0F) << 12) | ((char2 & 0x3F) << 6) | ((char3 & 0x3F) << 0));
-    //         break;
-    //     }
-    // }
+	return str.split('').join('\0') + '\0';
+}
 
-    // var byteArray = new Uint8Array(out.length * 2);
-    // for (var i = 0; i < out.length; i++) {
-    //     byteArray[i*2] = out.charCodeAt(i); // & 0xff;
-    //     byteArray[i*2+1] = out.charCodeAt(i) >> 8; // & 0xff;
-    // }
+//https://gist.github.com/mathiasbynens/1243213
+function unicodeEscape(str) {
+	return str.replace(/[\s\S]/g, function (escape) {
+		let code = ('0000' + escape.charCodeAt().toString(16)).slice(-4);
+		code = hex2a(code.substr(2,2) + code.substr(0,2)); 
+		return code;
+	});
+}
 
-    // return String.fromCharCode.apply( String, byteArray );
-	return str.split('').join('\0')+'\0';
+//https://stackoverflow.com/questions/3745666/how-to-convert-from-hex-to-ascii-in-javascript
+function hex2a(hexx) {
+    var hex = hexx.toString();//force conversion
+    var str = '';
+    for (var i = 0; i < hex.length; i += 2)
+        str += String.fromCharCode(parseInt(hex.substr(i, 2), 16));
+    return str;
 }
