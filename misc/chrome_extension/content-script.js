@@ -343,6 +343,10 @@ function runTest() {
 				requestsReady[1] = true;
 			}
 			requests.push(setDocumentMetadata());
+		},
+		error: function(data){
+			addError('Failed to fetch extension, stopping');
+			testElement.css('display', 'none');
 		}
 	}).done(function () {
 		$.when.apply($, requests).done(function () {
