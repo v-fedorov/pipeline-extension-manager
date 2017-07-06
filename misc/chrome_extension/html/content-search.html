@@ -122,7 +122,14 @@
 						</fieldset>
 
 						<fieldset class="form-group">
-							<p style="color:red;" title="Example: Youtube has a mapping for the meta coveo_likecount and maps it to the field (meta) ytlikecount, if you were to use coveo_likecount in your script, you wouldn't get a value" data-placement="down">Warning: not all metadata is present compared to a real extension, only indexed metadata is used</p>
+							<div class='banner flex center-align bg-yellow'>
+								<div class="banner-description">
+									<p title="Example: Youtube has a mapping for the meta coveo_likecount and maps it to the field (meta) ytlikecount, if you were to use coveo_likecount in your script, you wouldn't get a value"
+									 data-placement="down">Warning: not all metadata is present compared to a real extension, only indexed metadata can be used (hover for example)</p>
+								</div>
+							</div>
+							<div id="__extensionTesterErrors"></div>
+
 						</fieldset>
 
 						<div class="loading-prompt" id="__testLoading" style="display:none;">
@@ -160,6 +167,7 @@
 						<li>1. Create a new API key</li>
 						<li>2. Give the privileges of
 							<ul class="bullet-list">
+								<li>Content > Extensions > View</li>
 								<li>Content > Extensions > Edit</li>
 								<li>Search > Execute queries > Enable</li>
 							</ul>

@@ -286,92 +286,215 @@ function runTest() {
 	let uniqueId = $('#__testDocId').val();
 	let testUrl = `https://${location.host}/rest/organizations/${currentOrg}/extensions/${extensionId}/test`;
 	let documentUrl = `https://${location.host}/rest/search/document?uniqueId=${encodeURIComponent(uniqueId)}&access_token=${apiTestsKey}&organizationId=${currentOrg}`;
-	let toSendData = {
+	let extensionSettingsUrl = `https://${location.host}/rest/organizations/${currentOrg}/extensions/${extensionId}`;
+	let errorBannerElement = $('#__extensionTesterErrors');
+	errorBannerElement.empty();
+	var toSendData = {
 		"document": {
 			"permissions": [],
 			"metadata": [
 				{
 					"Values": {
 
-					}
+					},
+					"origin": "Extension tester"
 				}
 			],
 			"dataStreams": [
 				{
 					"values": {
-						"BODY_TEXT": { "inlineContent": `${btoa(unicodeEscape('Hello world!'))}` }
-					}
+
+					},
+					"origin": "Extension tester"
 				}
 			],
 		},
 		"parameters": {}
 	}
 
-	//Get the document metadata
+	let requests = [];
+	let requestsReady = [false, false, false];
 	$.ajax({
-		url: documentUrl,
+		url: extensionSettingsUrl,
 		headers: {
+			'Authorization': `Bearer ${apiTestsKey}`,
 			'Accept': 'application/json',
-			'Content-Type': 'application/json;charset=UTF-8'
+			'Content-Type': 'application/json'
 		},
 		method: 'GET',
 		dataType: 'json',
-		success: function (data) {
-			//StatusCode would mean an error
-			if ('statusCode' in data) {
-				$('#__testResults').text('Failed to fetch document\n' + JSON.stringify(data, null, 2));
-				testElement.css('display', 'none');
+		complete: function (data) {
+			if (data.responseJSON.requiredDataStreams) {
+				if ($.inArray('BODY_TEXT', data.responseJSON.requiredDataStreams) != -1) {
+					requests.push(setBodyText());
+				}
+				else {
+					requestsReady[0] = true;
+				}
+				if ($.inArray('BODY_HTML', data.responseJSON.requiredDataStreams) != -1) {
+					requests.push(setBodyHTML());
+				}
+				else {
+					requestsReady[1] = true;
+				}
 			}
 			else {
+				requestsReady[0] = true;
+				requestsReady[1] = true;
+			}
+			requests.push(setDocumentMetadata());
+		}
+	}).done(function () {
+		$.when.apply($, requests).done(function () {
+			function wait() {
+				if (requestsReady.every(function (element) {
+					return element === true
+				})) {
+					runTestAjax();
+				}
+				else {
+					setTimeout(wait, 100);
+				}
+			}
+			wait();
+		});
+	});
 
-				//Build the document metadata
-				for (let key in data) {
+	function setBodyText() {
+		return $.ajax({
+			url: `https://${location.host}/rest/search/text?access_token=${apiTestsKey}&organizationId=${currentOrg}&uniqueId=${encodeURIComponent(uniqueId)}`,
+			headers: {
+				'Accept': 'application/json',
+				'Content-Type': 'application/json'
+			},
+			method: 'GET',
+			dataType: 'json',
+			complete: function (data) {
+				if (data.responseJSON) {
+					//If it find no statusCode, meaning it was successful
+					if (!checkNested(data, 'responseJSON', 'statusCode')) {
+						toSendData.document.dataStreams[0].values['BODY_TEXT'] = {
+							'inlineContent': btoa(unicodeEscape(data.responseJSON.content))
+						}
+					}
+					else {
+						addError('Extension called for "Body TEXT", but no Body Text exists for this document');
+					}
+				}
+				requestsReady[0] = true;
+			}
+		})
+	}
 
-					function addToJson(valueToAdd, addKey) {
-						if (valueToAdd != null) {
-							if (valueToAdd.length != 0) {
-								if (valueToAdd.constructor === Array) {
-									toSendData.document.metadata[0].Values[addKey] = valueToAdd;
-								}
-								else if (valueToAdd.constructor === Object) {
-									for (let ckey in valueToAdd) {
-										addToJson(valueToAdd[ckey], ckey);
+	function setBodyHTML() {
+		return $.ajax({
+			url: `https://${location.host}/rest/search/html?access_token=${apiTestsKey}&organizationId=${currentOrg}&uniqueId=${encodeURIComponent(uniqueId)}`,
+			headers: {
+				'Accept': 'application/json',
+				'Content-Type': 'application/json'
+			},
+			method: 'GET',
+			dataType: 'json',
+			complete: function (data) {
+				if (data.responseText) {
+					//If it find no statusCode, meaning it was successful
+					if (!checkNested(data, 'responseJSON', 'statusCode')) {
+						toSendData.document.dataStreams[0].values['BODY_HTML'] = {
+							'inlineContent': btoa(unicodeEscape(data.responseText))
+						}
+					}
+					else {
+						addError('Extension called for "Body HTML", but no Body HTML exists for this document');
+					}
+				}
+				requestsReady[1] = true;
+			}
+		})
+	}
+
+	function setDocumentMetadata() {
+
+		//Get the document metadata
+		return $.ajax({
+			url: documentUrl,
+			headers: {
+				'Accept': 'application/json',
+				'Content-Type': 'application/json'
+			},
+			method: 'GET',
+			dataType: 'json',
+			success: function (data) {
+				//StatusCode would mean an error
+				if ('statusCode' in data) {
+					$('#__testResults').text('Failed to fetch document\n' + JSON.stringify(data, null, 2));
+					testElement.css('display', 'none');
+				}
+				else {
+					//Build the document metadata
+					for (let key in data) {
+
+						function addToJson(valueToAdd, addKey) {
+							if (valueToAdd != null) {
+								if (valueToAdd.length != 0) {
+									if (valueToAdd.constructor === Array) {
+										toSendData.document.metadata[0].Values[addKey] = valueToAdd;
 									}
-								}
-								else {
-									toSendData.document.metadata[0].Values[addKey] = [valueToAdd];
+									else if (valueToAdd.constructor === Object) {
+										for (let ckey in valueToAdd) {
+											addToJson(valueToAdd[ckey], ckey);
+										}
+									}
+									else {
+										toSendData.document.metadata[0].Values[addKey] = [valueToAdd];
+									}
 								}
 							}
 						}
+
+						addToJson(data[key], key);
+
 					}
 
-					addToJson(data[key], key);
-
+					requestsReady[2] = true;
 				}
-
-				//Test the document with the extension
-				$.ajax({
-					url: testUrl,
-					headers: {
-						'Authorization': `Bearer ${apiTestsKey}`,
-						'Accept': 'application/json',
-						'Content-Type': 'application/json'
-					},
-					method: 'POST',
-					dataType: 'json',
-					data: JSON.stringify(toSendData, null, 0),
-					complete: function (data) {
-						$('#__testResults').text(JSON.stringify(data.responseJSON, null, 2));
-						testElement.css('display', 'none');
-					}
-				});
+			},
+			error: function (data) {
+				$('#__testResults').text(JSON.stringify(data.responseJSON, null, 2));
+				testElement.css('display', 'none');
+				requestsReady[2] = true;
 			}
-		},
-		error: function (data) {
-			$('#__testResults').text(JSON.stringify(data.responseJSON, null, 2));
-			testElement.css('display', 'none');
-		}
-	})
+		})
+	}
+
+	function runTestAjax() {
+		$.ajax({
+			url: testUrl,
+			headers: {
+				'Authorization': `Bearer ${apiTestsKey}`,
+				'Accept': 'application/json',
+				'Content-Type': 'application/json'
+			},
+			method: 'POST',
+			dataType: 'json',
+			data: JSON.stringify(toSendData, null, 0),
+			complete: function (data) {
+				$('#__testResults').text(JSON.stringify(data.responseJSON, null, 2));
+				testElement.css('display', 'none');
+			}
+		});
+	}
+
+	function addError(str){
+		let message  = 
+		`
+		<div class='banner flex center-align bg-red'>
+			<div class="banner-description">
+				<p>${str}</p>
+			</div>
+		</div>
+		`;
+		errorBannerElement.append(message);
+	}
 }
 
 
@@ -520,16 +643,29 @@ function strEncodeUTF16(str) {
 function unicodeEscape(str) {
 	return str.replace(/[\s\S]/g, function (escape) {
 		let code = ('0000' + escape.charCodeAt().toString(16)).slice(-4);
-		code = hex2a(code.substr(2,2) + code.substr(0,2)); 
+		code = hex2a(code.substr(2, 2) + code.substr(0, 2));
 		return code;
 	});
 }
 
 //https://stackoverflow.com/questions/3745666/how-to-convert-from-hex-to-ascii-in-javascript
 function hex2a(hexx) {
-    var hex = hexx.toString();//force conversion
-    var str = '';
-    for (var i = 0; i < hex.length; i += 2)
-        str += String.fromCharCode(parseInt(hex.substr(i, 2), 16));
-    return str;
+	var hex = hexx.toString();//force conversion
+	var str = '';
+	for (var i = 0; i < hex.length; i += 2)
+		str += String.fromCharCode(parseInt(hex.substr(i, 2), 16));
+	return str;
+}
+
+//https://stackoverflow.com/questions/2631001/javascript-test-for-existence-of-nested-object-key
+function checkNested(obj /*, level1, level2, ... levelN*/) {
+  var args = Array.prototype.slice.call(arguments, 1);
+
+  for (var i = 0; i < args.length; i++) {
+    if (!obj || !obj.hasOwnProperty(args[i])) {
+      return false;
+    }
+    obj = obj[args[i]];
+  }
+  return true;
 }
