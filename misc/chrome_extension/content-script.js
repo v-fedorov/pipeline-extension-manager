@@ -276,8 +276,8 @@ function addTestModal() {
  */
 function runTest() {
 	//Show the loading bubbles
-	let testElement = $('#__testLoading');
-	testElement.css('display', 'block');
+	let loadingElement = $('#__testLoading');
+	loadingElement.css('display', 'block');
 
 	$('#__testResults').text('');
 	let apiTestsKey = $('#__testApiKey').val();
@@ -313,7 +313,7 @@ function runTest() {
 	}
 
 	let requests = [];
-	let requestsReady = [false, false, false];
+	let requestsReady = [false, false, false, false];
 	$.ajax({
 		url: extensionSettingsUrl,
 		headers: {
@@ -324,27 +324,43 @@ function runTest() {
 		method: 'GET',
 		dataType: 'json',
 		complete: function () {
-			$.when.apply(null, requests).then(function () {
-				runTestAjax();
-				console.log('sent');
-			});
+			function wait() {
+				console.log('Waited');
+				if (requestsReady.every(function (element) { return element })) {
+					runTestAjax();
+					console.log('sent');
+				}
+				else{
+					setTimeout(wait, 100);
+				}
+			}
+			wait();
 		},
 		error: function (data) {
 			addError('Failed to fetch extension, stopping');
-			testElement.css('display', 'none');
+			loadingElement.css('display', 'none');
 		}
 	}).done(function (data) {
 		if (data.requiredDataStreams) {
 			if ($.inArray('BODY_TEXT', data.requiredDataStreams) != -1) {
 				requests.push(setBodyText());
 			}
+			else {
+				requestsReady[0] = true;
+			}
 
 			if ($.inArray('BODY_HTML', data.requiredDataStreams) != -1) {
 				requests.push(setBodyHTML());
 			}
+			else {
+				requestsReady[1] = true;
+			}
 
 			if ($.inArray('THUMBNAIL', data.requiredDataStreams) != -1) {
 				requests.push(setThumbnail());
+			}
+			else {
+				requestsReady[2] = true;
 			}
 		}
 		requests.push(setDocumentMetadata());
@@ -376,6 +392,9 @@ function runTest() {
 			},
 			error: function (data) {
 				addError('No Body Text found/failed');
+			},
+			complete: function (data) {
+				requestsReady[0] = true;
 			}
 		})
 	}
@@ -410,6 +429,9 @@ function runTest() {
 			},
 			error: function (data) {
 				addError('No Body HTML found/failed');
+			},
+			complete: function (data) {
+				requestsReady[1] = true;
 			}
 		})
 	}
@@ -430,7 +452,7 @@ function runTest() {
 				if (data) {
 					//If it find no statusCode, meaning it was successful
 					if (!data.status) {
-						toSendData.document.dataStreams[0].Values['BODY_HTML'] = {
+						toSendData.document.dataStreams[0].Values['THUMBNAIL'] = {
 							'inlineContent': btoa(unicodeEscape(data)),
 							'compression': 'UNCOMPRESSED'
 						}
@@ -443,6 +465,9 @@ function runTest() {
 			},
 			error: function (data) {
 				addError('No Thumbnail found/failed');
+			},
+			complete: function (data) {
+				requestsReady[2] = true;
 			}
 		})
 	}
@@ -462,7 +487,7 @@ function runTest() {
 				//StatusCode would mean an error
 				if ('statusCode' in data) {
 					$('#__testResults').text('Failed to fetch document\n' + JSON.stringify(data, null, 2));
-					testElement.css('display', 'none');
+					loadingElement.css('display', 'none');
 				}
 				else {
 					//Build the document metadata
@@ -494,7 +519,9 @@ function runTest() {
 			},
 			error: function (data) {
 				$('#__testResults').text(JSON.stringify(data.responseJSON, null, 2));
-				testElement.css('display', 'none');
+			},
+			complete: function (data) {
+				requestsReady[3] = true;
 			}
 		})
 	}
@@ -512,7 +539,7 @@ function runTest() {
 			data: JSON.stringify(toSendData, null, 0),
 			complete: function (data) {
 				$('#__testResults').text(JSON.stringify(data.responseJSON, null, 2));
-				testElement.css('display', 'none');
+				loadingElement.css('display', 'none');
 			}
 		});
 	}
