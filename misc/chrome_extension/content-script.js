@@ -324,7 +324,7 @@ function runTest() {
 		method: 'GET',
 		dataType: 'json',
 		complete: function () {
-			$.when.apply($, requests).done(function () {
+			$.when.apply(null, requests).then(function () {
 				runTestAjax();
 				console.log('sent');
 			});
@@ -341,6 +341,10 @@ function runTest() {
 
 			if ($.inArray('BODY_HTML', data.requiredDataStreams) != -1) {
 				requests.push(setBodyHTML());
+			}
+
+			if ($.inArray('THUMBNAIL', data.requiredDataStreams) != -1) {
+				requests.push(setThumbnail());
 			}
 		}
 		requests.push(setDocumentMetadata());
@@ -406,6 +410,39 @@ function runTest() {
 			},
 			error: function (data) {
 				addError('No Body HTML found/failed');
+			}
+		})
+	}
+
+	function setThumbnail() {
+		function handleResponse(data) {
+
+		}
+
+		return $.ajax({
+			url: `https://${location.host}/rest/search/datastream?access_token=${apiTestsKey}&organizationId=${currentOrg}&contentType=application%2Fbinary&dataStream=%24Thumbnail%24&uniqueId=${encodeURIComponent(uniqueId)}`,
+			headers: {
+				'Accept': 'application/json',
+				'Content-Type': 'application/json'
+			},
+			method: 'GET',
+			success: function (data) {
+				if (data) {
+					//If it find no statusCode, meaning it was successful
+					if (!data.status) {
+						toSendData.document.dataStreams[0].Values['BODY_HTML'] = {
+							'inlineContent': btoa(unicodeEscape(data)),
+							'compression': 'UNCOMPRESSED'
+						}
+					}
+					else {
+						addError('Extension called for "Thumbnail", but no Thumbnail exists for this document');
+					}
+				}
+				console.log('Done Thumbnail');
+			},
+			error: function (data) {
+				addError('No Thumbnail found/failed');
 			}
 		})
 	}
