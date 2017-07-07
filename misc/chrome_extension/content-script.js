@@ -302,7 +302,7 @@ function runTest() {
 			],
 			"dataStreams": [
 				{
-					"values": {
+					"Values": {
 
 					},
 					"origin": "Extension tester"
@@ -323,45 +323,27 @@ function runTest() {
 		},
 		method: 'GET',
 		dataType: 'json',
-		complete: function (data) {
-			if (data.responseJSON.requiredDataStreams) {
-				if ($.inArray('BODY_TEXT', data.responseJSON.requiredDataStreams) != -1) {
-					requests.push(setBodyText());
-				}
-				else {
-					requestsReady[0] = true;
-				}
-				if ($.inArray('BODY_HTML', data.responseJSON.requiredDataStreams) != -1) {
-					requests.push(setBodyHTML());
-				}
-				else {
-					requestsReady[1] = true;
-				}
-			}
-			else {
-				requestsReady[0] = true;
-				requestsReady[1] = true;
-			}
-			requests.push(setDocumentMetadata());
+		complete: function () {
+			$.when.apply($, requests).done(function () {
+				runTestAjax();
+				console.log('sent');
+			});
 		},
-		error: function(data){
+		error: function (data) {
 			addError('Failed to fetch extension, stopping');
 			testElement.css('display', 'none');
 		}
-	}).done(function () {
-		$.when.apply($, requests).done(function () {
-			function wait() {
-				if (requestsReady.every(function (element) {
-					return element === true
-				})) {
-					runTestAjax();
-				}
-				else {
-					setTimeout(wait, 100);
-				}
+	}).done(function (data) {
+		if (data.requiredDataStreams) {
+			if ($.inArray('BODY_TEXT', data.requiredDataStreams) != -1) {
+				requests.push(setBodyText());
 			}
-			wait();
-		});
+
+			if ($.inArray('BODY_HTML', data.requiredDataStreams) != -1) {
+				requests.push(setBodyHTML());
+			}
+		}
+		requests.push(setDocumentMetadata());
 	});
 
 	function setBodyText() {
@@ -373,24 +355,32 @@ function runTest() {
 			},
 			method: 'GET',
 			dataType: 'json',
-			complete: function (data) {
-				if (data.responseJSON) {
+			success: function (data) {
+				if (data.content) {
 					//If it find no statusCode, meaning it was successful
-					if (!checkNested(data, 'responseJSON', 'statusCode')) {
-						toSendData.document.dataStreams[0].values['BODY_TEXT'] = {
-							'inlineContent': btoa(unicodeEscape(data.responseJSON.content))
+					if (!data.status) {
+						toSendData.document.dataStreams[0].Values['BODY_TEXT'] = {
+							'inlineContent': btoa(unicodeEscape(data.content)),
+							'compression': 'UNCOMPRESSED'
 						}
 					}
 					else {
 						addError('Extension called for "Body TEXT", but no Body Text exists for this document');
 					}
 				}
-				requestsReady[0] = true;
+				console.log('Done Text');
+			},
+			error: function (data) {
+				addError('No Body Text found/failed');
 			}
 		})
 	}
 
 	function setBodyHTML() {
+		function handleResponse(data) {
+
+		}
+
 		return $.ajax({
 			url: `https://${location.host}/rest/search/html?access_token=${apiTestsKey}&organizationId=${currentOrg}&uniqueId=${encodeURIComponent(uniqueId)}`,
 			headers: {
@@ -398,20 +388,24 @@ function runTest() {
 				'Content-Type': 'application/json'
 			},
 			method: 'GET',
-			dataType: 'json',
-			complete: function (data) {
-				if (data.responseText) {
+			dataType: 'html',
+			success: function (data) {
+				if (data) {
 					//If it find no statusCode, meaning it was successful
-					if (!checkNested(data, 'responseJSON', 'statusCode')) {
-						toSendData.document.dataStreams[0].values['BODY_HTML'] = {
-							'inlineContent': btoa(unicodeEscape(data.responseText))
+					if (!data.status) {
+						toSendData.document.dataStreams[0].Values['BODY_HTML'] = {
+							'inlineContent': btoa(unicodeEscape(data)),
+							'compression': 'UNCOMPRESSED'
 						}
 					}
 					else {
 						addError('Extension called for "Body HTML", but no Body HTML exists for this document');
 					}
 				}
-				requestsReady[1] = true;
+				console.log('Done HTML');
+			},
+			error: function (data) {
+				addError('No Body HTML found/failed');
 			}
 		})
 	}
@@ -458,14 +452,12 @@ function runTest() {
 						addToJson(data[key], key);
 
 					}
-
-					requestsReady[2] = true;
+					console.log('Done meta');
 				}
 			},
 			error: function (data) {
 				$('#__testResults').text(JSON.stringify(data.responseJSON, null, 2));
 				testElement.css('display', 'none');
-				requestsReady[2] = true;
 			}
 		})
 	}
@@ -488,9 +480,9 @@ function runTest() {
 		});
 	}
 
-	function addError(str){
-		let message  = 
-		`
+	function addError(str) {
+		let message =
+			`
 		<div class='banner flex center-align bg-red'>
 			<div class="banner-description">
 				<p>${str}</p>
@@ -663,13 +655,13 @@ function hex2a(hexx) {
 
 //https://stackoverflow.com/questions/2631001/javascript-test-for-existence-of-nested-object-key
 function checkNested(obj /*, level1, level2, ... levelN*/) {
-  var args = Array.prototype.slice.call(arguments, 1);
+	var args = Array.prototype.slice.call(arguments, 1);
 
-  for (var i = 0; i < args.length; i++) {
-    if (!obj || !obj.hasOwnProperty(args[i])) {
-      return false;
-    }
-    obj = obj[args[i]];
-  }
-  return true;
+	for (var i = 0; i < args.length; i++) {
+		if (!obj || !obj.hasOwnProperty(args[i])) {
+			return false;
+		}
+		obj = obj[args[i]];
+	}
+	return true;
 }
