@@ -271,7 +271,7 @@ function addTestModal() {
 
 
 /**
- * Run the extension test
+ * Runs the extension test
  * 
  */
 function runTest() {
@@ -312,7 +312,10 @@ function runTest() {
 		"parameters": {}
 	}
 
+	//The ajax requests to run sync
 	let requests = [];
+	//When all of these are true, fire the extension test
+	//Each will be set to true when it finishes the async
 	let requestsReady = [false, false, false, false];
 	$.ajax({
 		url: extensionSettingsUrl,
@@ -324,13 +327,19 @@ function runTest() {
 		method: 'GET',
 		dataType: 'json',
 		complete: function () {
+			let counter = 0;
+			let displayedError = false;
 			function wait() {
-				console.log('Waited');
-				if (requestsReady.every(function (element) { return element })) {
+				//Wait until all true
+				if (requestsReady.every(function (e) { return e })) {
 					runTestAjax();
-					console.log('sent');
 				}
-				else{
+				else {
+					counter++;
+					if (counter > 500 && !displayedError) {
+						addError('Something might have gone wrong, check the console for errors');
+						displayedError = true;
+					}
 					setTimeout(wait, 100);
 				}
 			}
@@ -341,6 +350,7 @@ function runTest() {
 			loadingElement.css('display', 'none');
 		}
 	}).done(function (data) {
+		//Adds the metadata that the extension requires
 		if (data.requiredDataStreams) {
 			if ($.inArray('BODY_TEXT', data.requiredDataStreams) != -1) {
 				requests.push(setBodyText());
@@ -357,15 +367,27 @@ function runTest() {
 			}
 
 			if ($.inArray('THUMBNAIL', data.requiredDataStreams) != -1) {
-				requests.push(setThumbnail());
+				//requests.push(setThumbnail());
+				addWarning('"Thumbnail" was called by the extension, but it is unavailable')
+				requestsReady[2] = true;
 			}
 			else {
 				requestsReady[2] = true;
+			}
+
+			if ($.inArray('DOCUMENT_DATA', data.requiredDataStreams) != -1) {
+				addWarning('"Orignal file" was called by the extension, but it is unavailable')
 			}
 		}
 		requests.push(setDocumentMetadata());
 	});
 
+
+	/**
+	 * Adds the Body Text data to the data to send
+	 * 
+	 * @returns The ajax request
+	 */
 	function setBodyText() {
 		return $.ajax({
 			url: `https://${location.host}/rest/search/text?access_token=${apiTestsKey}&organizationId=${currentOrg}&uniqueId=${encodeURIComponent(uniqueId)}`,
@@ -385,13 +407,12 @@ function runTest() {
 						}
 					}
 					else {
-						addError('Extension called for "Body TEXT", but no Body Text exists for this document');
+						addError('Extension called for "Body text", but no Body Text exists for this document');
 					}
 				}
-				console.log('Done Text');
 			},
 			error: function (data) {
-				addError('No Body Text found/failed');
+				addError('Extension called for "Body text", but no Body Text exists for this document');
 			},
 			complete: function (data) {
 				requestsReady[0] = true;
@@ -399,11 +420,13 @@ function runTest() {
 		})
 	}
 
+
+	/**
+	 * Adds the HTML data to the data to send
+	 * 
+	 * @returns The ajax request
+	 */
 	function setBodyHTML() {
-		function handleResponse(data) {
-
-		}
-
 		return $.ajax({
 			url: `https://${location.host}/rest/search/html?access_token=${apiTestsKey}&organizationId=${currentOrg}&uniqueId=${encodeURIComponent(uniqueId)}`,
 			headers: {
@@ -425,10 +448,9 @@ function runTest() {
 						addError('Extension called for "Body HTML", but no Body HTML exists for this document');
 					}
 				}
-				console.log('Done HTML');
 			},
 			error: function (data) {
-				addError('No Body HTML found/failed');
+				addError('Extension called for "Body HTML", but no Body HTML exists for this document');
 			},
 			complete: function (data) {
 				requestsReady[1] = true;
@@ -436,11 +458,14 @@ function runTest() {
 		})
 	}
 
+
+	/**
+	 * Turn off for now
+	 * Adds the Thumbnail data to the data to send
+	 * 
+	 * @returns The ajax request
+	 */
 	function setThumbnail() {
-		function handleResponse(data) {
-
-		}
-
 		return $.ajax({
 			url: `https://${location.host}/rest/search/datastream?access_token=${apiTestsKey}&organizationId=${currentOrg}&contentType=application%2Fbinary&dataStream=%24Thumbnail%24&uniqueId=${encodeURIComponent(uniqueId)}`,
 			headers: {
@@ -453,7 +478,7 @@ function runTest() {
 					//If it find no statusCode, meaning it was successful
 					if (!data.status) {
 						toSendData.document.dataStreams[0].Values['THUMBNAIL'] = {
-							'inlineContent': btoa(unicodeEscape(data)),
+							'inlineContent': '',
 							'compression': 'UNCOMPRESSED'
 						}
 					}
@@ -461,10 +486,9 @@ function runTest() {
 						addError('Extension called for "Thumbnail", but no Thumbnail exists for this document');
 					}
 				}
-				console.log('Done Thumbnail');
 			},
 			error: function (data) {
-				addError('No Thumbnail found/failed');
+				addError('Extension called for "Thumbnail", but no Thumbnail exists for this document');
 			},
 			complete: function (data) {
 				requestsReady[2] = true;
@@ -472,8 +496,13 @@ function runTest() {
 		})
 	}
 
-	function setDocumentMetadata() {
 
+	/**
+	 * Adds the metadata of the document to test to the data to send
+	 * 
+	 * @returns The ajax request
+	 */
+	function setDocumentMetadata() {
 		//Get the document metadata
 		return $.ajax({
 			url: documentUrl,
@@ -491,34 +520,30 @@ function runTest() {
 				}
 				else {
 					//Build the document metadata
-					for (let key in data) {
 
-						function addToJson(valueToAdd, addKey) {
-							if (valueToAdd != null) {
-								if (valueToAdd.length != 0) {
-									if (valueToAdd.constructor === Array) {
-										toSendData.document.metadata[0].Values[addKey] = valueToAdd;
+					function addToJson(valueToAdd, addKey) {
+						if (valueToAdd != null) {
+							if (valueToAdd.length != 0) {
+								if (valueToAdd.constructor === Array) {
+									toSendData.document.metadata[0].Values[addKey] = valueToAdd;
+								}
+								else if (valueToAdd.constructor === Object) {
+									for (let ckey in valueToAdd) {
+										addToJson(valueToAdd[ckey], ckey);
 									}
-									else if (valueToAdd.constructor === Object) {
-										for (let ckey in valueToAdd) {
-											addToJson(valueToAdd[ckey], ckey);
-										}
-									}
-									else {
-										toSendData.document.metadata[0].Values[addKey] = [valueToAdd];
-									}
+								}
+								else {
+									toSendData.document.metadata[0].Values[addKey] = [valueToAdd];
 								}
 							}
 						}
-
-						addToJson(data[key], key);
-
 					}
-					console.log('Done meta');
+					addToJson(data);
 				}
 			},
 			error: function (data) {
-				$('#__testResults').text(JSON.stringify(data.responseJSON, null, 2));
+				//$('#__testResults').text(JSON.stringify(data.responseJSON, null, 2));
+				addError('Failed to fetch document metadata');
 			},
 			complete: function (data) {
 				requestsReady[3] = true;
@@ -526,6 +551,12 @@ function runTest() {
 		})
 	}
 
+
+	/**
+	 * Sends the ajax request to the extension tester with
+	 * all the metadata added
+	 * 
+	 */
 	function runTestAjax() {
 		$.ajax({
 			url: testUrl,
@@ -544,10 +575,34 @@ function runTest() {
 		});
 	}
 
+
+	/**
+	 * Add an error message to the test
+	 * 
+	 * @param {string} str - The error message
+	 */
 	function addError(str) {
 		let message =
 			`
 		<div class='banner flex center-align bg-red'>
+			<div class="banner-description">
+				<p>${str}</p>
+			</div>
+		</div>
+		`;
+		errorBannerElement.append(message);
+	}
+
+
+	/**
+	 * Add a warning message to the test
+	 * 
+	 * @param {string} str - The warning message
+	 */
+	function addWarning(str) {
+		let message =
+			`
+		<div class='banner flex center-align bg-yellow'>
 			<div class="banner-description">
 				<p>${str}</p>
 			</div>
@@ -693,13 +748,17 @@ function setAceEditorValue(stringToSet) {
 
 }
 
-//https://stackoverflow.com/questions/24379446/utf-8-to-utf-16le-javascript
-function strEncodeUTF16(str) {
 
-	return str.split('').join('\0') + '\0';
-}
-
-//https://gist.github.com/mathiasbynens/1243213
+/**
+ * Converts a UTF-8 string into UTF-16LE
+ * while staying in a UTF-8 context
+ * 
+ * Inspired from
+ * https://gist.github.com/mathiasbynens/1243213
+ * 
+ * @param {string} str - The string to convert 
+ * @returns The UTF-16LE string
+ */
 function unicodeEscape(str) {
 	return str.replace(/[\s\S]/g, function (escape) {
 		let code = ('0000' + escape.charCodeAt().toString(16)).slice(-4);
@@ -708,24 +767,18 @@ function unicodeEscape(str) {
 	});
 }
 
-//https://stackoverflow.com/questions/3745666/how-to-convert-from-hex-to-ascii-in-javascript
+
+/**
+ * Converts hex to ascii
+ * https://stackoverflow.com/questions/3745666/how-to-convert-from-hex-to-ascii-in-javascript
+ * 
+ * @param {string} hexx - the hex 
+ * @returns ascii value
+ */
 function hex2a(hexx) {
 	var hex = hexx.toString();//force conversion
 	var str = '';
 	for (var i = 0; i < hex.length; i += 2)
 		str += String.fromCharCode(parseInt(hex.substr(i, 2), 16));
 	return str;
-}
-
-//https://stackoverflow.com/questions/2631001/javascript-test-for-existence-of-nested-object-key
-function checkNested(obj /*, level1, level2, ... levelN*/) {
-	var args = Array.prototype.slice.call(arguments, 1);
-
-	for (var i = 0; i < args.length; i++) {
-		if (!obj || !obj.hasOwnProperty(args[i])) {
-			return false;
-		}
-		obj = obj[args[i]];
-	}
-	return true;
 }
