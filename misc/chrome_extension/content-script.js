@@ -368,8 +368,6 @@ function runTest() {
 
 			if ($.inArray('THUMBNAIL', data.requiredDataStreams) != -1) {
 				requests.push(setThumbnail());
-				//addWarning('"Thumbnail" was called by the extension, but it is unavailable')
-				//requestsReady[2] = true;
 			}
 			else {
 				requestsReady[2] = true;
@@ -460,10 +458,8 @@ function runTest() {
 
 
 	/**
-	 * Turn off for now
 	 * Adds the Thumbnail data to the data to send
 	 * 
-	 * @returns The ajax request
 	 */
 	function setThumbnail() {
 
@@ -483,35 +479,6 @@ function runTest() {
 			}
 			requestsReady[2] = true;
 		});
-
-		// $.ajax({
-		// 	url: `https://${location.host}/rest/search/datastream?access_token=${apiTestsKey}&organizationId=${currentOrg}&contentType=application%2Fbinary&dataStream=%24Thumbnail%24&uniqueId=${encodeURIComponent(uniqueId)}`,
-		// 	headers: {
-		// 		'Accept': 'application/json',
-		// 		'Content-Type': 'application/json'
-		// 	},
-		// 	method: 'GET',
-		// 	success: function (data) {
-		// 		if (data) {
-		// 			//If it find no statusCode, meaning it was successful
-		// 			if (!data.status) {
-		// 				toSendData.document.dataStreams[0].Values['THUMBNAIL'] = {
-		// 					'inlineContent': btoa(data),
-		// 					'compression': 'UNCOMPRESSED'
-		// 				}
-		// 			}
-		// 			else {
-		// 				addError('Extension called for "Thumbnail", but no Thumbnail exists for this document');
-		// 			}
-		// 		}
-		// 	},
-		// 	error: function (data) {
-		// 		addError('Extension called for "Thumbnail", but no Thumbnail exists for this document');
-		// 	},
-		// 	complete: function (data) {
-		// 		requestsReady[2] = true;
-		// 	}
-		// })
 	}
 
 
