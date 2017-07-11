@@ -367,9 +367,9 @@ function runTest() {
 			}
 
 			if ($.inArray('THUMBNAIL', data.requiredDataStreams) != -1) {
-				//requests.push(setThumbnail());
-				addWarning('"Thumbnail" was called by the extension, but it is unavailable')
-				requestsReady[2] = true;
+				requests.push(setThumbnail());
+				//addWarning('"Thumbnail" was called by the extension, but it is unavailable')
+				//requestsReady[2] = true;
 			}
 			else {
 				requestsReady[2] = true;
@@ -440,7 +440,7 @@ function runTest() {
 					//If it find no statusCode, meaning it was successful
 					if (!data.status) {
 						toSendData.document.dataStreams[0].Values['BODY_HTML'] = {
-							'inlineContent': btoa(unicodeEscape(data)),
+							'inlineContent': btoa(data),
 							'compression': 'UNCOMPRESSED'
 						}
 					}
@@ -466,34 +466,52 @@ function runTest() {
 	 * @returns The ajax request
 	 */
 	function setThumbnail() {
-		return $.ajax({
-			url: `https://${location.host}/rest/search/datastream?access_token=${apiTestsKey}&organizationId=${currentOrg}&contentType=application%2Fbinary&dataStream=%24Thumbnail%24&uniqueId=${encodeURIComponent(uniqueId)}`,
-			headers: {
-				'Accept': 'application/json',
-				'Content-Type': 'application/json'
-			},
-			method: 'GET',
-			success: function (data) {
-				if (data) {
-					//If it find no statusCode, meaning it was successful
-					if (!data.status) {
-						toSendData.document.dataStreams[0].Values['THUMBNAIL'] = {
-							'inlineContent': '',
-							'compression': 'UNCOMPRESSED'
-						}
-					}
-					else {
-						addError('Extension called for "Thumbnail", but no Thumbnail exists for this document');
-					}
+
+		let url = `https://${location.host}/rest/search/datastream?access_token=${apiTestsKey}&organizationId=${currentOrg}&contentType=application%2Fbinary&dataStream=%24Thumbnail%24&uniqueId=${encodeURIComponent(uniqueId)}`;
+
+		fetchBlob(url, function (blob) {
+			// Array buffer to Base64:
+			if (blob) {
+				let str = btoa(String.fromCharCode.apply(null, new Uint8Array(blob)));
+				toSendData.document.dataStreams[0].Values['THUMBNAIL'] = {
+					'inlineContent': str,
+					'compression': 'UNCOMPRESSED'
 				}
-			},
-			error: function (data) {
-				addError('Extension called for "Thumbnail", but no Thumbnail exists for this document');
-			},
-			complete: function (data) {
-				requestsReady[2] = true;
 			}
-		})
+			else{
+				addError('Extension called for "Thumbnail", but no Thumbnail exists for this document');
+			}
+			requestsReady[2] = true;
+		});
+
+		// $.ajax({
+		// 	url: `https://${location.host}/rest/search/datastream?access_token=${apiTestsKey}&organizationId=${currentOrg}&contentType=application%2Fbinary&dataStream=%24Thumbnail%24&uniqueId=${encodeURIComponent(uniqueId)}`,
+		// 	headers: {
+		// 		'Accept': 'application/json',
+		// 		'Content-Type': 'application/json'
+		// 	},
+		// 	method: 'GET',
+		// 	success: function (data) {
+		// 		if (data) {
+		// 			//If it find no statusCode, meaning it was successful
+		// 			if (!data.status) {
+		// 				toSendData.document.dataStreams[0].Values['THUMBNAIL'] = {
+		// 					'inlineContent': btoa(data),
+		// 					'compression': 'UNCOMPRESSED'
+		// 				}
+		// 			}
+		// 			else {
+		// 				addError('Extension called for "Thumbnail", but no Thumbnail exists for this document');
+		// 			}
+		// 		}
+		// 	},
+		// 	error: function (data) {
+		// 		addError('Extension called for "Thumbnail", but no Thumbnail exists for this document');
+		// 	},
+		// 	complete: function (data) {
+		// 		requestsReady[2] = true;
+		// 	}
+		// })
 	}
 
 
@@ -782,3 +800,25 @@ function hex2a(hexx) {
 		str += String.fromCharCode(parseInt(hex.substr(i, 2), 16));
 	return str;
 }
+
+//https://stackoverflow.com/questions/23013871/how-to-parse-into-base64-string-the-binary-image-from-response
+function fetchBlob(uri, callback) {
+	var xhr = new XMLHttpRequest();
+	xhr.open('GET', uri, true);
+	xhr.responseType = 'arraybuffer';
+
+	xhr.onload = function (e) {
+		if (this.status == 200) {
+			var blob = this.response;
+			if (callback) {
+				callback(blob);
+			}
+		}
+		else {
+			if (callback) {
+				callback();
+			}
+		}
+	};
+	xhr.send();
+};
