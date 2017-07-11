@@ -438,7 +438,7 @@ function runTest() {
 					//If it find no statusCode, meaning it was successful
 					if (!data.status) {
 						toSendData.document.dataStreams[0].Values['BODY_HTML'] = {
-							'inlineContent': btoa(data),
+							'inlineContent': btoa(unescape(encodeURIComponent(data))),
 							'compression': 'UNCOMPRESSED'
 						}
 					}
