@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<title>My Test Extension Options</title>
+	<style>
+		body {
+			padding: 10px;
+			padding-top: 5px;
+		}
+		input{
+			width:100%;
+		}
+		h4{
+			margin-top: 0;
+			margin-bottom: 2px;
+		}
+	</style>
+</head>
+
+<body>
+	<h4>Extension gallery settings</h4>
+	<label>
+		API key
+    	<input type="text" id="apikey">
+  	</label>
+	<br>
+	<label>
+		Target URL
+    	<input type="text" id="target">
+  	</label>
+	<br>
+	<div id="status"></div>
+	<button id="save">Save</button>
+
+	<script src="/js/options.js"></script>
+</body>
+
+</html>

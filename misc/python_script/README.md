@@ -4,9 +4,10 @@ It looks in every repo of the user and looks for an 'extensions' folder
 If a folder is found, it takes all the `.py` files and indexes them
 
 ## Organization setup
-1. Map extrawfilename with %[rawfilename]
-2. Map extrequired with %[required]
-3. Map extdescription with %[description]
+1. Create a PUSH source with the name: `extensions-coveo-lab`
+2. Map extrawfilename with %[rawfilename]
+3. Map extrequired with %[required]
+4. Map extdescription with %[description]
 
 ## How to use
 1. Get the python dependencies
