@@ -220,7 +220,7 @@ function addTestModal() {
 		$('#__saveSettings').on('click', saveTestsKey);
 
 		let jsonToGet = {};
-		let currentOrg = $('#OrganizationsPickerSearch_chosen > a > span').text().split('-').pop().trim();
+		let currentOrg = getCurrentOrg();
 		let platform = location.host.split('.')[0];
 		jsonToGet[`__testsApiKey_${currentOrg}_${platform}`] = '';
 		//Get the API key
@@ -281,7 +281,7 @@ function runTest() {
 
 	$('#__testResults').text('');
 	let apiTestsKey = $('#__testApiKey').val();
-	let currentOrg = $('#OrganizationsPickerSearch_chosen > a > span').text().split('-').pop().trim();
+	let currentOrg = getCurrentOrg();
 	let extensionId = $('#__currentExtension').text();
 	let uniqueId = $('#__testDocId').val();
 	let testUrl = `https://${location.host}/rest/organizations/${currentOrg}/extensions/${extensionId}/test`;
@@ -620,7 +620,7 @@ function addTestButtonsToPage() {
  */
 function saveTestsKey() {
 	let jsonToSave = {};
-	let currentOrg = $('#OrganizationsPickerSearch_chosen > a > span').text().split('-').pop().trim();
+	let currentOrg = getCurrentOrg();
 	let platform = location.host.split('.')[0];
 	jsonToSave[`__testsApiKey_${currentOrg}_${platform}`] = $('#__testApiKey').val();
 	chrome.storage.local.set(jsonToSave, function () {
@@ -790,3 +790,7 @@ function fetchBlob(uri, callback) {
 	};
 	xhr.send();
 };
+
+function getCurrentOrg(){
+	return window.location.hash.substring(1).split('/')[0];
+}
