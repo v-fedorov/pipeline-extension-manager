@@ -651,7 +651,7 @@ function saveTestsKey() {
 window.onload = function () {
 
 	$.get(chrome.extension.getURL('/config/config.json'), function (data) {
-
+		data = JSON.parse(data);
 		//Default values if no values are found
 		chrome.storage.local.get({
 			// Public key with only search enabled
