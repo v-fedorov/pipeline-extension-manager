@@ -19,14 +19,20 @@ function save_options() {
 // stored in chrome.storage.
 function restore_options() {
 	// Use default value
-	chrome.storage.local.get({
-		//Public key with only search enabled
-		__publicApiKey: 'xx0b957ee7-8846-4b6c-b4c3-6f88362e601f',
-		__searchURL: 'https://platformqa.cloud.coveo.com/'
-	}, function (items) {
-		document.getElementById('apikey').value= items.__publicApiKey;
-		document.getElementById('target').value = items.__searchURL;
-	});
+	let xhr = new XMLHttpRequest();
+	xhr.onreadystatechange = function() {
+		let data = JSON.parse(xhr.responseText);
+		chrome.storage.local.get({
+			//Public key with only search enabled
+			__publicApiKey: data['apiKey'],
+			__searchURL: data['url']
+		}, function (items) {
+			document.getElementById('apikey').value = items.__publicApiKey;
+			document.getElementById('target').value = items.__searchURL;
+		});
+	};
+	xhr.open('GET', '/config/config.json', false);
+	xhr.send();
 }
 document.addEventListener('DOMContentLoaded', restore_options);
 document.getElementById('save').addEventListener('click',

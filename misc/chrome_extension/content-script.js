@@ -337,7 +337,7 @@ function runTest() {
 				else {
 					counter++;
 					if (counter > 500 && !displayedError) {
-						addError('Something might have gone wrong, check the console for errors');
+						addMessage('Something might have gone wrong, check the console for errors');
 						displayedError = true;
 					}
 					setTimeout(wait, 100);
@@ -346,7 +346,7 @@ function runTest() {
 			wait();
 		},
 		error: function (data) {
-			addError('Failed to fetch extension, stopping');
+			addMessage('Failed to fetch extension, stopping');
 			loadingElement.css('display', 'none');
 		}
 	}).done(function (data) {
@@ -374,7 +374,7 @@ function runTest() {
 			}
 
 			if ($.inArray('DOCUMENT_DATA', data.requiredDataStreams) != -1) {
-				addWarning('"Orignal file" was called by the extension, but it is unavailable')
+				addMessage('"Orignal file" was called by the extension, but it is unavailable', true)
 			}
 		}
 		requests.push(setDocumentMetadata());
@@ -405,12 +405,12 @@ function runTest() {
 						}
 					}
 					else {
-						addError('Extension called for "Body text", but no Body Text exists for this document');
+						addMessage('Extension called for "Body text", but no Body Text exists for this document');
 					}
 				}
 			},
 			error: function (data) {
-				addError('Extension called for "Body text", but no Body Text exists for this document');
+				addMessage('Extension called for "Body text", but no Body Text exists for this document');
 			},
 			complete: function (data) {
 				requestsReady[0] = true;
@@ -443,12 +443,12 @@ function runTest() {
 						}
 					}
 					else {
-						addError('Extension called for "Body HTML", but no Body HTML exists for this document');
+						addMessage('Extension called for "Body HTML", but no Body HTML exists for this document');
 					}
 				}
 			},
 			error: function (data) {
-				addError('Extension called for "Body HTML", but no Body HTML exists for this document');
+				addMessage('Extension called for "Body HTML", but no Body HTML exists for this document');
 			},
 			complete: function (data) {
 				requestsReady[1] = true;
@@ -474,8 +474,8 @@ function runTest() {
 					'compression': 'UNCOMPRESSED'
 				}
 			}
-			else{
-				addError('Extension called for "Thumbnail", but no Thumbnail exists for this document');
+			else {
+				addMessage('Extension called for "Thumbnail", but no Thumbnail exists for this document');
 			}
 			requestsReady[2] = true;
 		});
@@ -528,7 +528,7 @@ function runTest() {
 			},
 			error: function (data) {
 				//$('#__testResults').text(JSON.stringify(data.responseJSON, null, 2));
-				addError('Failed to fetch document metadata');
+				addMessage('Failed to fetch document metadata');
 			},
 			complete: function (data) {
 				requestsReady[3] = true;
@@ -564,32 +564,15 @@ function runTest() {
 	/**
 	 * Add an error message to the test
 	 * 
-	 * @param {string} str - The error message
+	 * @param {string} msg - The error message
+	 * @param {string} isWarning - If the message is a warning or not
 	 */
-	function addError(str) {
+	function addMessage(msg, isWarning) {
 		let message =
 			`
-		<div class='banner flex center-align bg-red'>
+		<div class='banner flex center-align bg-${isWarning === true ? 'yellow' : 'red'}'>
 			<div class="banner-description">
-				<p>${str}</p>
-			</div>
-		</div>
-		`;
-		errorBannerElement.append(message);
-	}
-
-
-	/**
-	 * Add a warning message to the test
-	 * 
-	 * @param {string} str - The warning message
-	 */
-	function addWarning(str) {
-		let message =
-			`
-		<div class='banner flex center-align bg-yellow'>
-			<div class="banner-description">
-				<p>${str}</p>
+				<p>${msg}</p>
 			</div>
 		</div>
 		`;
@@ -667,47 +650,50 @@ function saveTestsKey() {
  */
 window.onload = function () {
 
-	//Default values if no values are found
-	chrome.storage.local.get({
-		// Public key with only search enabled
-		__publicApiKey: 'xx0b957ee7-8846-4b6c-b4c3-6f88362e601f',
-		__searchURL: 'https://platformqa.cloud.coveo.com/'
-	}, function (items) {
-		apiKey = items.__publicApiKey;
-		url = items.__searchURL;
+	$.get(chrome.extension.getURL('/config/config.json'), function (data) {
 
-		//Checks if there were changes on the page
-		MutationObserver = window.MutationObserver || window.WebKitMutationObserver;
+		//Default values if no values are found
+		chrome.storage.local.get({
+			// Public key with only search enabled
+			__publicApiKey: data['apiKey'],
+			__searchURL: data['url']
+		}, function (items) {
+			apiKey = items.__publicApiKey;
+			url = items.__searchURL;
 
-		var observer = new MutationObserver(function (mutations, observer) {
-			// If the EditExtensionComponent appears
-			if ($('#EditExtensionComponent').length) {
-				addExtensionSearchToPage();
-			}
+			//Checks if there were changes on the page
+			MutationObserver = window.MutationObserver || window.WebKitMutationObserver;
 
-			// If extensions appears AND it wasn't already modified by this script
-			if ($('#extensions').length && !$('#extensions').attr('__modified')) {
-
-				if (addTestButtonDelay) {
-					clearTimeout(addTestButtonDelay);
+			var observer = new MutationObserver(function (mutations, observer) {
+				// If the EditExtensionComponent appears
+				if ($('#EditExtensionComponent').length) {
+					addExtensionSearchToPage();
 				}
-				addTestButtonDelay = setTimeout(function () {
-					addTestButtonsToPage();
-					addTestModal();
 
-					//If a row is added later on, add the buttons
-					$('#extensions').on("DOMNodeInserted", "tr", function () {
+				// If extensions appears AND it wasn't already modified by this script
+				if ($('#extensions').length && !$('#extensions').attr('__modified')) {
+
+					if (addTestButtonDelay) {
+						clearTimeout(addTestButtonDelay);
+					}
+					addTestButtonDelay = setTimeout(function () {
 						addTestButtonsToPage();
-					});
-				}, 100);
-			}
-		});
+						addTestModal();
 
-		// define what element should be observed by the observer
-		// and what types of mutations trigger the callback
-		observer.observe(document, {
-			subtree: true,
-			attributes: true
+						//If a row is added later on, add the buttons
+						$('#extensions').on("DOMNodeInserted", "tr", function () {
+							addTestButtonsToPage();
+						});
+					}, 100);
+				}
+			});
+
+			// define what element should be observed by the observer
+			// and what types of mutations trigger the callback
+			observer.observe(document, {
+				subtree: true,
+				attributes: true
+			});
 		});
 	});
 };
@@ -737,6 +723,21 @@ function setAceEditorValue(stringToSet) {
 /**
  * Converts a UTF-8 string into UTF-16LE
  * while staying in a UTF-8 context
+ * 
+ * Example:
+ * Let's say you have the string "aaaa"
+ * The extension tester would take the two first letters and merge them into a chinese symbol
+ * So it would look like this: 慡慡
+ * When you look at the unicode of those characters, it comes out to: \u6161
+ * "61" being the hex of a
+ * To combat this, one needs to take the string and add another UTF-8 character to it,
+ * so if I wanted the string "aaaa" to appear, I would need to pass the string: "a\0a\0a\0a\0"
+ * This string would get converted into the unicode \u6100, which is the letter "a" we're looking for
+ * So this code creates a UTF-16 string: \u0061
+ * It flips the character: \u6100
+ * Encodes each character into ascii: a  (The   being \0)
+ * Then it sends it back.
+ * This also works with any valid unicode character, so encoding issues shouldn't be present
  * 
  * Inspired from
  * https://gist.github.com/mathiasbynens/1243213

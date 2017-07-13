@@ -15,7 +15,7 @@ When clicked on, a Coveo seach pops up with a list of availible extensions. The 
 
 #### Additional notes
 If the search does not work, the org may have changed place in the future/does not exist anymore.
-It is currently living in the CoveoStageing in platformqa.
+It is currently living in the Coveo's staging platform (QA).
 To change where where the content is being taken, head to chrome://extensions/ and click on the options dialog.
 
 ### The tester
