@@ -53,3 +53,5 @@ Demo of adding a new extesion then testing it immediately with an existing docum
 
 ## Notes
 This was tested on Chromium 58.0 running Ubuntu 16.04
+
+No additional support will be provided by the Coveo-Labs team
