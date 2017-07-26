@@ -591,27 +591,31 @@ function addTestButtonsToPage() {
 	//before the async function is done below
 	//This is to ensure we don't get multiple columns
 	$('#extensions').attr('__modified', true);
-	$.get(chrome.extension.getURL('/html/extension-test-button.html'), function (data) {
-		if ($('#__testHeader').length == 0) {
-			$($('#extensions')[0].children[0].children[0]).append('<th id="__testHeader">Tests</th>');
+	if ($('#__testHeader').length == 0) {
+		$($('#extensions')[0].children[0].children[0]).append('<th id="__testHeader">Tests</th>');
+	}
+	for (let i = 0; i < $('#extensions')[0].children[1].children.length; i++) {
+		let element = $('#extensions')[0].children[1].children[i];
+		//If a button is not found and there is an extension present
+		if ($(element).find('.btn').length == 0 && !$(element).hasClass('empty')) {
+			$(element).append(`
+				<td class="col">
+					<div class="wrapper">
+						<div class="btn">Test</div>
+					</div>
+				</td>
+				`);
+			$(element).find('.btn').on('click', function () {
+				testButtonsOnClick(element);
+			});
 		}
-		for (let i = 0; i < $('#extensions')[0].children[1].children.length; i++) {
-			let element = $('#extensions')[0].children[1].children[i];
-			//If a button is not found and there is an extension present
-			if ($(element).find('.btn').length == 0 && !$(element).hasClass('empty')) {
-				$(element).append(data);
-				$(element).find('.btn').on('click', function () {
-					testButtonsOnClick(element);
-				});
-			}
-			//Changes the length of "No extensions found" TD when found to occupy space of "Tests" TH
-			//Makes it look better basicly
-			else if ($(element).hasClass('empty')) {
-				let tdElement = $(element).find('td');
-				tdElement.attr('colspan', tdElement.attr('colspan') + 1);
-			}
+		//Changes the length of "No extensions found" TD when found to occupy space of "Tests" TH
+		//Makes it look better basicly
+		else if ($(element).hasClass('empty')) {
+			let tdElement = $(element).find('td');
+			tdElement.attr('colspan', tdElement.attr('colspan') + 1);
 		}
-	});
+	}
 }
 
 
