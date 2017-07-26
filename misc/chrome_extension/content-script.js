@@ -215,58 +215,59 @@ function launchTestModal(extensionId) {
 function addTestModal() {
 	$.get(chrome.extension.getURL('/html/content-search.html'), function (data) {
 		$('#extensions').append(data);
-
 		$('#__runTests').click(runTest);
-		$('#__saveSettings').on('click', saveTestsKey);
 
-		let jsonToGet = {};
 		let currentOrg = getCurrentOrg();
 		let platform = location.host.split('.')[0];
-		jsonToGet[`__testsApiKey_${currentOrg}_${platform}`] = '';
-		//Get the API key
-		chrome.storage.local.get(jsonToGet, function (items) {
-			//Set it for later
-			let testApiKey = items[`__testsApiKey_${currentOrg}_${platform}`];
-			$('#__testApiKey').val(testApiKey);
-			if (testApiKey == '' || testApiKey == undefined) {
-				$('#__apiKeyWarning').css('display', 'block');
+		let modal = document.getElementById('__contentModal');
+		let span = document.getElementsByClassName('__close');
+
+		for (var i = 0; i < span.length; i++) {
+			var element = span[i];
+			element.onclick = function () {
+				modal.style.display = 'none';
 			}
+		}
 
-			let modal = document.getElementById('__contentModal');
-			let span = document.getElementsByClassName('__close');
-
-			for (var i = 0; i < span.length; i++) {
-				var element = span[i];
-				element.onclick = function () {
-					modal.style.display = 'none';
-				}
+		modal.onclick = function (event) {
+			if (event.target == modal) {
+				modal.style.display = 'none';
 			}
+		}
 
-			modal.onclick = function (event) {
-				if (event.target == modal) {
-					modal.style.display = 'none';
-				}
+		let root = document.getElementById('__orgContent');
+		Coveo.SearchEndpoint.endpoints['orgContent'] = new Coveo.SearchEndpoint({
+			restUri: `https://${location.host}/rest/search`,
+			accessToken: getCookieApiKey(),
+			anonymous: false,
+			isGuestUser: false,
+			queryStringArguments: {
+				organizationId: currentOrg
 			}
-
-			let root = document.getElementById('__orgContent');
-			Coveo.SearchEndpoint.endpoints['orgContent'] = new Coveo.SearchEndpoint({
-				restUri: `https://${location.host}/rest/search`,
-				accessToken: testApiKey
-			});
-			Coveo.init(root, {
-				ResultLink: {
-					onClick: function (e, result) {
-						e.preventDefault();
-						$('#__testDocId').val(result.uniqueId);
-						$('#__tab2').click();
-						$('#__runTests').click();
-					}
-				}
-			});
 		});
-
-
+		Coveo.init(root, {
+			ResultLink: {
+				onClick: function (e, result) {
+					e.preventDefault();
+					$('#__testDocId').val(result.uniqueId);
+					$('#__tab2').click();
+					$('#__runTests').click();
+				}
+			}
+		});
 	});
+}
+
+/**
+ * Gets the access token of the user from the document cookies
+ * 
+ * https://stackoverflow.com/questions/5142337/read-a-javascript-cookie-by-name
+ * 
+ * @returns The access token
+ */
+function getCookieApiKey() {
+	let cookiestring = RegExp('' + 'access_token' + '[^;]+').exec(document.cookie);
+	return unescape(!!cookiestring ? cookiestring.toString().replace(/^[^=]+./, '') : '');
 }
 
 
@@ -280,7 +281,7 @@ function runTest() {
 	loadingElement.css('display', 'block');
 
 	$('#__testResults').text('');
-	let apiTestsKey = $('#__testApiKey').val();
+	let apiTestsKey = getCookieApiKey();
 	let currentOrg = getCurrentOrg();
 	let extensionId = $('#__currentExtension').text();
 	let uniqueId = $('#__testDocId').val();
@@ -614,21 +615,6 @@ function addTestButtonsToPage() {
 }
 
 
-/**
- * Saves the test api key to the chrome storage
- * 
- */
-function saveTestsKey() {
-	let jsonToSave = {};
-	let currentOrg = getCurrentOrg();
-	let platform = location.host.split('.')[0];
-	jsonToSave[`__testsApiKey_${currentOrg}_${platform}`] = $('#__testApiKey').val();
-	chrome.storage.local.set(jsonToSave, function () {
-		location.reload();
-	});
-}
-
-
 
 
 
@@ -791,6 +777,12 @@ function fetchBlob(uri, callback) {
 	xhr.send();
 };
 
-function getCurrentOrg(){
+
+/**
+ * Gets the current org from the url
+ * 
+ * @returns {string} The org string
+ */
+function getCurrentOrg() {
 	return window.location.hash.substring(1).split('/')[0];
 }
