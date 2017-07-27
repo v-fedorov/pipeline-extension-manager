@@ -13,7 +13,6 @@
 		<div class="tab-navigation">
 			<div id="__tab1" class="tab enabled active">Select document</div>
 			<div id="__tab2" class="tab enabled">Test document</div>
-			<div id="__tab3" class="tab enabled">Settings</div>
 		</div>
 
 		<div class="tab-content">
@@ -150,50 +149,19 @@
 					</div>
 				</div>
 			</div>
-			<div data-tab="__tab3" class="tab-pane">
-				<div class="mod-header-padding mod-form-top-bottom-padding">
-					<div class="coveo-form">
-						<label>API Key</label>
-						<fieldset class="input-field form-group">
-							<input type="text" id="__testApiKey" placeholder="API Key">
-						</fieldset>
-						<fieldset class="form-group">
-							<button id="__saveSettings" class="btn mod-primary">Save</button>
-						</fieldset>
-					</div>
-					<br>
-					<h4>How to get the API key:</h4>
-					<ol>
-						<li>1. Create a new API key</li>
-						<li>2. Give the privileges of:
-							<ul class="bullet-list">
-								<li>Content > Extensions > View</li>
-								<li>Content > Extensions > Edit</li>
-								<li>Search > Execute queries > Enable</li>
-							</ul>
-						</li>
-						<li>3. Paste the key above and save</li>
-						<li>4. After clicking the save button, the page will reload and the search should work</li>
-					</ol>
-				</div>
-			</div>
 		</div>
 
 		<script type="text/javascript">
 			var tab1 = $('#__tab1');
 			var tab2 = $('#__tab2');
-			var tab3 = $('#__tab3');
 			var tabpane1 = $('[data-tab=__tab1]');
 			var tabpane2 = $('[data-tab=__tab2]');
-			var tabpane3 = $('[data-tab=__tab3]');
 
 			function resetTabs() {
 				tab1.removeClass('active');
 				tab2.removeClass('active');
-				tab3.removeClass('active');
 				tabpane1.removeClass('active');
 				tabpane2.removeClass('active');
-				tabpane3.removeClass('active');
 			}
 
 			tab1.on('click', function () {
@@ -207,12 +175,6 @@
 				tab2.addClass("active");
 				tabpane2.addClass("active");
 				$('#__testResults').text('');
-			});
-
-			tab3.on('click', function () {
-				resetTabs();
-				tab3.addClass("active");
-				tabpane3.addClass("active");
 			});
 		</script>
 
