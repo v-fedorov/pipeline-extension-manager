@@ -313,8 +313,6 @@ function runTest() {
 		"parameters": {}
 	}
 
-	//The ajax requests to run sync
-	let requests = [];
 	//When all of these are true, fire the extension test
 	//Each will be set to true when it finishes the async
 	let requestsReady = [false, false, false, false];
@@ -346,40 +344,40 @@ function runTest() {
 			}
 			wait();
 		},
+		success: function(data){
+			if (data.requiredDataStreams) {
+				if ($.inArray('BODY_TEXT', data.requiredDataStreams) != -1) {
+					setBodyText();
+				}
+				else {
+					requestsReady[0] = true;
+				}
+	
+				if ($.inArray('BODY_HTML', data.requiredDataStreams) != -1) {
+					setBodyHTML();
+				}
+				else {
+					requestsReady[1] = true;
+				}
+	
+				if ($.inArray('THUMBNAIL', data.requiredDataStreams) != -1) {
+					setThumbnail();
+				}
+				else {
+					requestsReady[2] = true;
+				}
+	
+				if ($.inArray('DOCUMENT_DATA', data.requiredDataStreams) != -1) {
+					addMessage('"Original file" was called by the extension, but it is unavailable', true)
+				}
+			}
+			setDocumentMetadata();
+		},
 		error: function (data) {
 			addMessage('Failed to fetch extension, stopping');
 			loadingElement.css('display', 'none');
 		}
-	}).done(function (data) {
-		//Adds the metadata that the extension requires
-		if (data.requiredDataStreams) {
-			if ($.inArray('BODY_TEXT', data.requiredDataStreams) != -1) {
-				requests.push(setBodyText());
-			}
-			else {
-				requestsReady[0] = true;
-			}
-
-			if ($.inArray('BODY_HTML', data.requiredDataStreams) != -1) {
-				requests.push(setBodyHTML());
-			}
-			else {
-				requestsReady[1] = true;
-			}
-
-			if ($.inArray('THUMBNAIL', data.requiredDataStreams) != -1) {
-				requests.push(setThumbnail());
-			}
-			else {
-				requestsReady[2] = true;
-			}
-
-			if ($.inArray('DOCUMENT_DATA', data.requiredDataStreams) != -1) {
-				addMessage('"Original file" was called by the extension, but it is unavailable', true)
-			}
-		}
-		requests.push(setDocumentMetadata());
-	});
+	})
 
 
 	/**
