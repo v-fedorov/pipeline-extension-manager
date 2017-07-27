@@ -656,7 +656,7 @@ window.onload = function () {
 
 			var observer = new MutationObserver(function (mutations, observer) {
 				// If the EditExtensionComponent appears
-				if ($('#EditExtensionComponent').length) {
+				if ($('#EditExtensionComponent').length && $('#CreateExtension').length) {
 					addExtensionSearchToPage();
 				}
 
