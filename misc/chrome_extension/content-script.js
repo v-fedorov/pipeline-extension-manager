@@ -375,7 +375,7 @@ function runTest() {
 			}
 
 			if ($.inArray('DOCUMENT_DATA', data.requiredDataStreams) != -1) {
-				addMessage('"Orignal file" was called by the extension, but it is unavailable', true)
+				addMessage('"Original file" was called by the extension, but it is unavailable', true)
 			}
 		}
 		requests.push(setDocumentMetadata());
