@@ -14,9 +14,8 @@ When clicked on, a Coveo seach pops up with a list of availible extensions. The 
 ![extension gallery search](https://user-images.githubusercontent.com/17149559/27692821-abeb7b88-5cb5-11e7-8b81-17793b94eb6f.png)
 
 #### Additional notes
-If the search does not work, the org may have changed place in the future/does not exist anymore.
-It is currently living in the Coveo's staging platform (QA).
-To change where where the content is being taken, head to chrome://extensions/ and click on the options dialog.
+You can setup your own extension gallery, simply follow the instructions in the python section of this repo, then
+change where where the content is being taken. Head to chrome://extensions/ and click on the options dialog.
 
 ### The tester
 'Test' buttons can be found beside every extension
@@ -25,20 +24,11 @@ Clicking on a 'Test' button will bring up the test interface
 ![test interace](https://user-images.githubusercontent.com/17149559/27692962-0a287034-5cb6-11e7-8922-e645696dad24.png)
 Simply clicking on the document you want to test will start the test and the results will appear
 
-#### !!Warning!!
-Before you can search documents and test extensions, one MUST provide an API with valid permissions.
-Instructions are be found in the 'Settings' tab of the tester
-
-#### Additional notes about the tester
-This will ONLY test metadata, it does not include permissions and datastreams.
-These features will come in the future when the extension tester API is updated.
-
 ## How to build
 1. Download/clone git repo
 2. Turn on developer mode in chrome
 3. Load unpacked extension
 4. Find the `chrome_extension` folder in the repo under the `misc` folder
-5. Don't forget to add the API key in the `settings` tab of the tester
 
 ## How to run
 Head to the Coveo Cloud Platform extension's tab
@@ -52,6 +42,12 @@ Demo of adding a new extesion then testing it immediately with an existing docum
 
 
 ## Notes
+The tester is only capable of getting indexed metadata, Body Text, Body HTML and Thumbnail.
+Some metadata only exists when a real extension is being ran, so results may vary.
+So in some cases, it's better to test with re-building a source.
+
+It is currently not possible to test with a datastream in prod. The next rollout (August 5th, 2017) will allow this feature to work.
+
 This was tested on Chromium 58.0 running Ubuntu 16.04
 
 No additional support will be provided by the Coveo-Labs team
