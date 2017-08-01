@@ -553,7 +553,10 @@ function runTest() {
 			dataType: 'json',
 			data: JSON.stringify(toSendData, null, 0),
 			complete: function (data) {
-				$('#__testResults').text(JSON.stringify(data.responseJSON, null, 2));
+				if(data.responseJSON.result.reason){
+					data.responseJSON.result.reason = unescape(data.responseJSON.result.reason)
+				}
+				$('#__testResults').text(unescape(JSON.stringify(data.responseJSON, null, 2).replace(/\\\\n/g, '\n').replace(/\\\\\\"/g, '\"')));
 				loadingElement.css('display', 'none');
 			}
 		});
