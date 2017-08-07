@@ -109,13 +109,14 @@
 				</div>
 			</div>
 			<div data-tab="__tab2" class="tab-pane">
-				<div class="mod-header-padding mod-form-top-bottom-padding">
+				<div id="__testSection" data-endpoint="orgContent" class="mod-header-padding mod-form-top-bottom-padding">
 					<div class="coveo-form">
-						<label>Document unique ID</label>
 						<fieldset class="input-field form-group">
-							<input type="text" id="__testDocId" placeholder="uniqueId">
+							<input type="text" id="__testDocId" required placeholder="uniqueId">
+							<label>Document unique ID</label>
 							<input type="hidden" id="__currentExtension">
 						</fieldset>
+						<div class="CoveoParameterList"></div>
 						<fieldset class="form-group">
 							<button id="__runTests" class="btn mod-primary">Test</button>
 						</fieldset>
