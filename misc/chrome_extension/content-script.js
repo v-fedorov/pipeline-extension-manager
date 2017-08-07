@@ -25,7 +25,7 @@ var addTestButtonDelay;
 
 /**
  * Sets up the javascript for the modal
- * 
+ *
  */
 function setupExtensionGalleryModal() {
 
@@ -48,7 +48,7 @@ function setupExtensionGalleryModal() {
 	// Get the <span> element that closes the modal
 	let span = $('.__close');
 
-	// When the user clicks the button, open the modal 
+	// When the user clicks the button, open the modal
 	$('#__modalButton').on('click', function () {
 		modal.css('display', 'block');
 	});
@@ -73,7 +73,7 @@ function setupExtensionGalleryModal() {
 
 /**
  * The onclick function for the extension search result link
- * 
+ *
  * @param {event} e - The event
  * @param {object} result - The search result
  */
@@ -118,7 +118,7 @@ function extensionGalleryOnClick(e, result) {
 
 /**
  * Creates the modal componant of the page along with the button
- * 
+ *
  */
 function createExtensionGalleryModal() {
 	let editorElement = $('#EditExtensionComponent > div > div > form > div:nth-child(2)')[0];
@@ -151,7 +151,7 @@ function createExtensionGalleryModal() {
 /**
  * Adds the select with options to the page
  * after 350 ms the edit modal started appearing
- * 
+ *
  */
 function addExtensionSearchToPage() {
 	if (addTimeOut) {
@@ -177,15 +177,15 @@ function addExtensionSearchToPage() {
 
 
 
-/* 
+/*
  * EXTENSION TESTER
- * 
+ *
  */
 
 
 /**
  * The onclick for the test button
- * 
+ *
  * @param {object} element - The row element
  */
 function testButtonsOnClick(element) {
@@ -198,7 +198,7 @@ function testButtonsOnClick(element) {
 
 /**
  * Opens the testing modal with the specific extension to test
- * 
+ *
  * @param {string} extensionId - The extension id
  */
 function launchTestModal(extensionId) {
@@ -210,7 +210,7 @@ function launchTestModal(extensionId) {
 
 /**
  * Add test modal to page
- * 
+ *
  */
 function addTestModal() {
 	$.get(chrome.extension.getURL('/html/content-search.html'), function (data) {
@@ -251,18 +251,21 @@ function addTestModal() {
 					e.preventDefault();
 					$('#__testDocId').val(result.uniqueId);
 					$('#__tab2').click();
-					$('#__runTests').click();
+					// Give the option to pass parameters before triggering the test
+					// $('#__runTests').click();
 				}
 			}
 		});
+		let testSection = document.getElementById('__testSection');
+		Coveo.init(testSection);
 	});
 }
 
 /**
  * Gets the access token of the user from the document cookies
- * 
+ *
  * https://stackoverflow.com/questions/5142337/read-a-javascript-cookie-by-name
- * 
+ *
  * @returns The access token
  */
 function getCookieApiKey() {
@@ -273,7 +276,7 @@ function getCookieApiKey() {
 
 /**
  * Runs the extension test
- * 
+ *
  */
 function runTest() {
 	//Show the loading bubbles
@@ -352,21 +355,21 @@ function runTest() {
 				else {
 					requestsReady[0] = true;
 				}
-	
+
 				if ($.inArray('BODY_HTML', data.requiredDataStreams) != -1) {
 					setBodyHTML();
 				}
 				else {
 					requestsReady[1] = true;
 				}
-	
+
 				if ($.inArray('THUMBNAIL', data.requiredDataStreams) != -1) {
 					setThumbnail();
 				}
 				else {
 					requestsReady[2] = true;
 				}
-	
+
 				if ($.inArray('DOCUMENT_DATA', data.requiredDataStreams) != -1) {
 					addMessage('"Original file" was called by the extension, but it is unavailable', true)
 				}
@@ -382,7 +385,7 @@ function runTest() {
 
 	/**
 	 * Adds the Body Text data to the data to send
-	 * 
+	 *
 	 * @returns The ajax request
 	 */
 	function setBodyText() {
@@ -420,7 +423,7 @@ function runTest() {
 
 	/**
 	 * Adds the HTML data to the data to send
-	 * 
+	 *
 	 * @returns The ajax request
 	 */
 	function setBodyHTML() {
@@ -458,7 +461,7 @@ function runTest() {
 
 	/**
 	 * Adds the Thumbnail data to the data to send
-	 * 
+	 *
 	 */
 	function setThumbnail() {
 
@@ -483,7 +486,7 @@ function runTest() {
 
 	/**
 	 * Adds the metadata of the document to test to the data to send
-	 * 
+	 *
 	 * @returns The ajax request
 	 */
 	function setDocumentMetadata() {
@@ -508,6 +511,10 @@ function runTest() {
 					function addToJson(valueToAdd, addKey) {
 						if (valueToAdd != null) {
 							if (valueToAdd.length != 0) {
+								let parameters = $('.CoveoParameterList').coveo('get');
+								if (parameters) {
+									toSendData.parameters = parameters.getParameterPayload();
+								}
 								if (valueToAdd.constructor === Array) {
 									toSendData.document.metadata[0].Values[addKey] = valueToAdd;
 								}
@@ -539,7 +546,7 @@ function runTest() {
 	/**
 	 * Sends the ajax request to the extension tester with
 	 * all the metadata added
-	 * 
+	 *
 	 */
 	function runTestAjax() {
 		$.ajax({
@@ -553,7 +560,9 @@ function runTest() {
 			dataType: 'json',
 			data: JSON.stringify(toSendData, null, 0),
 			complete: function (data) {
-				if(data.responseJSON.result.reason){
+				if (data.status === 400) {
+					addMessage(data.responseJSON.errorCode);
+				} else if(data.responseJSON.result && data.responseJSON.result.reason){
 					data.responseJSON.result.reason = unescape(data.responseJSON.result.reason)
 				}
 				$('#__testResults').text(unescape(JSON.stringify(data.responseJSON, null, 2).replace(/\\\\n/g, '\n').replace(/\\\\\\"/g, '\"')));
@@ -565,7 +574,7 @@ function runTest() {
 
 	/**
 	 * Add an error message to the test
-	 * 
+	 *
 	 * @param {string} msg - The error message
 	 * @param {string} isWarning - If the message is a warning or not
 	 */
@@ -585,7 +594,7 @@ function runTest() {
 
 /**
  * Adds the Test buttons in the table of the extensions
- * 
+ *
  */
 function addTestButtonsToPage() {
 	//Do this first, since it will be called multiple times
@@ -630,14 +639,14 @@ function addTestButtonsToPage() {
 
 /*
  * OTHER
- * 
+ *
  */
 
 
 /**
  * The 'init' function of the script
  * Loads the values from the config and inits the mutation obs
- * 
+ *
  */
 window.onload = function () {
 
@@ -694,7 +703,7 @@ window.onload = function () {
  * WHY JS, WHY
  * but it works...
  * https://stackoverflow.com/questions/3955803/page-variables-in-content-script
- * 
+ *
  * @param {string} stringToSet - The string to set
  */
 function setAceEditorValue(stringToSet) {
@@ -714,7 +723,7 @@ function setAceEditorValue(stringToSet) {
 /**
  * Converts a UTF-8 string into UTF-16LE
  * while staying in a UTF-8 context
- * 
+ *
  * Example:
  * Let's say you have the string "aaaa"
  * The extension tester would take the two first letters and merge them into a chinese symbol
@@ -729,11 +738,11 @@ function setAceEditorValue(stringToSet) {
  * Encodes each character into ascii: a  (The   being \0)
  * Then it sends it back.
  * This also works with any valid unicode character, so encoding issues shouldn't be present
- * 
+ *
  * Inspired from
  * https://gist.github.com/mathiasbynens/1243213
- * 
- * @param {string} str - The string to convert 
+ *
+ * @param {string} str - The string to convert
  * @returns The UTF-16LE string
  */
 function unicodeEscape(str) {
@@ -748,8 +757,8 @@ function unicodeEscape(str) {
 /**
  * Converts hex to ascii
  * https://stackoverflow.com/questions/3745666/how-to-convert-from-hex-to-ascii-in-javascript
- * 
- * @param {string} hexx - the hex 
+ *
+ * @param {string} hexx - the hex
  * @returns ascii value
  */
 function hex2a(hexx) {
@@ -785,7 +794,7 @@ function fetchBlob(uri, callback) {
 
 /**
  * Gets the current org from the url
- * 
+ *
  * @returns {string} The org string
  */
 function getCurrentOrg() {
