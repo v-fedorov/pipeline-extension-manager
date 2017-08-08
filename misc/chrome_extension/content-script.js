@@ -192,6 +192,7 @@ function testButtonsOnClick(element) {
 	let extId = $('.extension-name .second-row', element).text().trim();
 	$('#__tab1').click();
 	$('#__testDocId').val('');
+	$('#__extName').text($('.extension-name .first-row', element).text().trim())
 	launchTestModal(extId);
 }
 
