@@ -80,3 +80,7 @@
 #__orgContent.CoveoSearchInterface .coveo-results-column{
 	width: auto;
 }
+
+#__orgContent.CoveoSearchInterface .coveo-search-section{
+	margin-top: 20px;
+}
