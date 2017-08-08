@@ -68,6 +68,15 @@
 }
 
 #__testResults{
-	background-color: #efefef;
-	padding: 5px;
+	border: 1px solid lightgray;
+    border-radius: 5px;
+    padding: 10px;
+}
+
+#__testResults span{
+	white-space: pre-line;
+}
+
+#__orgContent.CoveoSearchInterface .coveo-results-column{
+	width: auto;
 }

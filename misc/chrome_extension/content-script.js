@@ -347,7 +347,7 @@ function runTest() {
 			}
 			wait();
 		},
-		success: function(data){
+		success: function (data) {
 			if (data.requiredDataStreams) {
 				if ($.inArray('BODY_TEXT', data.requiredDataStreams) != -1) {
 					setBodyText();
@@ -562,10 +562,12 @@ function runTest() {
 			complete: function (data) {
 				if (data.status === 400) {
 					addMessage(data.responseJSON.errorCode);
-				} else if(data.responseJSON.result && data.responseJSON.result.reason){
+				} else if (data.responseJSON.result && data.responseJSON.result.reason) {
 					data.responseJSON.result.reason = unescape(data.responseJSON.result.reason)
 				}
-				$('#__testResults').text(unescape(JSON.stringify(data.responseJSON, null, 2).replace(/\\\\n/g, '\n').replace(/\\\\\\"/g, '\"')));
+				//$('#__testResults').text(unescape(JSON.stringify(data.responseJSON, null, 2).replace(/\\\\n/g, '\n').replace(/\\\\\\"/g, '\"')));
+				let formatter = new JSONFormatter(data.responseJSON, Infinity, { hoverPreviewEnabled: false });
+				$('#__testResults').html(formatter.render())
 				loadingElement.css('display', 'none');
 			}
 		});
@@ -663,6 +665,8 @@ window.onload = function () {
 
 			//Checks if there were changes on the page
 			MutationObserver = window.MutationObserver || window.WebKitMutationObserver;
+
+			console.log(window.JSONFormatter);
 
 			var observer = new MutationObserver(function (mutations, observer) {
 				// If the EditExtensionComponent appears
