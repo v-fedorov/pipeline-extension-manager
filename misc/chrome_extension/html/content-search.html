@@ -128,6 +128,9 @@
 						<fieldset class="form-group">
 							<button id="__runTests" class="btn mod-primary">Test</button>
 						</fieldset>
+						<fieldset class="form-group">
+							<div id="__originalFile"></div>
+						</fieldset>
 
 						<fieldset class="form-group">
 							<div class='banner flex center-align bg-yellow'>
@@ -139,7 +142,6 @@
 								</div>
 							</div>
 							<div id="__extensionTesterErrors"></div>
-
 						</fieldset>
 
 						<div class="loading-prompt" id="__testLoading" style="display:none;">
@@ -163,10 +165,10 @@
 		</div>
 
 		<script type="text/javascript">
-			var tab1 = $('#__tab1');
-			var tab2 = $('#__tab2');
-			var tabpane1 = $('[data-tab=__tab1]');
-			var tabpane2 = $('[data-tab=__tab2]');
+			let tab1 = $('#__tab1');
+			let tab2 = $('#__tab2');
+			let tabpane1 = $('[data-tab=__tab1]');
+			let tabpane2 = $('[data-tab=__tab2]');
 
 			function resetTabs() {
 				tab1.removeClass('active');

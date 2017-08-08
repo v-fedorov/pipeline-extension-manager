@@ -1,0 +1,38 @@
+
+	<div class="tab-navigation">
+		<div id="__useFile" class="tab enabled active">Use File</div>
+		<div id="__useLink" class="tab enabled">Use Link</div>
+	</div>
+	<div class="tab-content">
+		<div data-tab="__useFile" class="tab-pane active">
+			<div class="mod-header-padding mod-form-top-bottom-padding">
+				Content of Tab 1
+			</div>
+		</div>
+		<div data-tab="__useLink" class="tab-pane">
+			<div class="mod-header-padding mod-form-top-bottom-padding">
+				Content of Tab 2
+			</div>
+		</div>
+	</div>
+
+	<script type="text/javascript">
+		let tab11 = $("#__useFile");
+		let tab22 = $("#__useLink");
+		let tabpane11 = $("[data-tab=__useFile]");
+		let tabpane22 = $("[data-tab=__useLink]");
+
+		tab11.on("click", function () {
+			tab11.addClass("active");
+			tab22.removeClass("active");
+			tabpane11.addClass("active");
+			tabpane22.removeClass("active");
+		});
+
+		tab22.on("click", function () {
+			tab11.removeClass("active");
+			tab22.addClass("active");
+			tabpane11.removeClass("active");
+			tabpane22.addClass("active");
+		});
+	</script>

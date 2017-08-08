@@ -308,7 +308,10 @@ function runTest() {
 			"dataStreams": [
 				{
 					"Values": {
-
+						"DOCUMENT_DATA":{
+							'inlineContent': "YXNkYXM=",
+							'compression': 'UNCOMPRESSED'
+						}
 					},
 					"origin": "Extension tester"
 				}
@@ -319,7 +322,7 @@ function runTest() {
 
 	//When all of these are true, fire the extension test
 	//Each will be set to true when it finishes the async
-	let requestsReady = [false, false, false, false];
+	let requestsReady = [false, false, false, false, false];
 	$.ajax({
 		url: extensionSettingsUrl,
 		headers: {
@@ -372,7 +375,10 @@ function runTest() {
 				}
 
 				if ($.inArray('DOCUMENT_DATA', data.requiredDataStreams) != -1) {
-					addMessage('"Original file" was called by the extension, but it is unavailable', true)
+					addOriginalFile();
+				}
+				else{
+					requestsReady[4] = true;
 				}
 			}
 			setDocumentMetadata();
@@ -383,6 +389,13 @@ function runTest() {
 		}
 	})
 
+	function addOriginalFile(){
+		$.get(chrome.extension.getURL('/html/originalFile.html'), function (data) {
+			let originalFileElement = $('#__originalFile');
+			originalFileElement.html(data);
+		});
+		requestsReady[4] = true;
+	}
 
 	/**
 	 * Adds the Body Text data to the data to send
@@ -666,8 +679,6 @@ window.onload = function () {
 
 			//Checks if there were changes on the page
 			MutationObserver = window.MutationObserver || window.WebKitMutationObserver;
-
-			console.log(window.JSONFormatter);
 
 			var observer = new MutationObserver(function (mutations, observer) {
 				// If the EditExtensionComponent appears
