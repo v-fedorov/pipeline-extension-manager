@@ -507,14 +507,14 @@ function runTest() {
 				}
 				else {
 					//Build the document metadata
+					let parameters = $('.CoveoParameterList').coveo('get');
+					if (parameters) {
+						toSendData.parameters = parameters.getParameterPayload();
+					}
 
 					function addToJson(valueToAdd, addKey) {
 						if (valueToAdd != null) {
 							if (valueToAdd.length != 0) {
-								let parameters = $('.CoveoParameterList').coveo('get');
-								if (parameters) {
-									toSendData.parameters = parameters.getParameterPayload();
-								}
 								if (valueToAdd.constructor === Array) {
 									toSendData.document.metadata[0].Values[addKey] = valueToAdd;
 								}
