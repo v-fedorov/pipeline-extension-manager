@@ -28,24 +28,6 @@
 					</div>
 				</div>
 			</div>
-			<script>
-				$('input[type=file]').change(function () {
-					var fileValue = this.files.length ? this.files[0].name : '';
-					var $input = $(this).closest('.file-input').find('.file-path');
-					$input.val(fileValue);
-					$input.toggleClass('has-file', !!fileValue);
-					$(this).closest('.file-input').find('.clear-file').toggleClass('hidden', !fileValue);
-				});
-				$('.clear-file').click(function () {
-					var $input = $(this).closest('.file-input');
-					var $path = $input.find('.file-path');
-
-					$input.find('input[type=file]').val('');
-					$path.val('');
-					$path.removeClass('hasFile');
-					$(this).addClass('hidden');
-				});
-			</script>
 
 		</div>
 	</div>
@@ -62,25 +44,3 @@
 		</div>
 	</div>
 </div>
-
-<script type="text/javascript">
-				let tab11 = $("#__useFile");
-				let tab22 = $("#__useLink");
-				let tabpane11 = $("[data-tab=__useFile]");
-				let tabpane22 = $("[data-tab=__useLink]");
-
-				tab11.on("click", function () {
-					tab11.addClass("active");
-					tab22.removeClass("active");
-					tabpane11.addClass("active");
-					tabpane22.removeClass("active");
-				});
-
-				tab22.on("click", function () {
-					tab11.removeClass("active");
-					tab22.addClass("active");
-					tabpane11.removeClass("active");
-					tabpane22.addClass("active");
-				});
-
-</script>

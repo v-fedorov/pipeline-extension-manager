@@ -217,6 +217,31 @@ function launchTestModal(extensionId) {
 function addTestModal() {
 	$.get(chrome.extension.getURL('/html/content-search.html'), function (data) {
 		$('body').append(data);
+
+		let tab1 = $('#__tab1');
+		let tab2 = $('#__tab2');
+		let tabpane1 = $('[data-tab=__tab1]');
+		let tabpane2 = $('[data-tab=__tab2]');
+
+		function resetTabs() {
+			tab1.removeClass('active');
+			tab2.removeClass('active');
+			tabpane1.removeClass('active');
+			tabpane2.removeClass('active');
+		}
+
+		tab1.on('click', function () {
+			resetTabs();
+			tab1.addClass("active");
+			tabpane1.addClass("active");
+		});
+
+		tab2.on("click", function () {
+			resetTabs();
+			tab2.addClass("active");
+			tabpane2.addClass("active");
+		});
+
 		$('#__runTests').click(runTest);
 
 		let currentOrg = getCurrentOrg();
@@ -409,6 +434,45 @@ function runTest() {
 		$.get(chrome.extension.getURL('/html/originalFile.html'), function (data) {
 			let originalFileElement = $('#__originalFile');
 			originalFileElement.html(data);
+
+			//Coveo things
+			$('input[type=file]').change(function () {
+				var fileValue = this.files.length ? this.files[0].name : '';
+				var $input = $(this).closest('.file-input').find('.file-path');
+				$input.val(fileValue);
+				$input.toggleClass('has-file', !!fileValue);
+				$(this).closest('.file-input').find('.clear-file').toggleClass('hidden', !fileValue);
+			});
+			$('.clear-file').click(function () {
+				var $input = $(this).closest('.file-input');
+				var $path = $input.find('.file-path');
+
+				$input.find('input[type=file]').val('');
+				$path.val('');
+				$path.removeClass('hasFile');
+				$(this).addClass('hidden');
+			});
+
+			let tab11 = $("#__useFile");
+			let tab22 = $("#__useLink");
+			let tabpane11 = $("[data-tab=__useFile]");
+			let tabpane22 = $("[data-tab=__useLink]");
+
+			tab11.on("click", function () {
+				tab11.addClass("active");
+				tab22.removeClass("active");
+				tabpane11.addClass("active");
+				tabpane22.removeClass("active");
+			});
+
+			tab22.on("click", function () {
+				tab11.removeClass("active");
+				tab22.addClass("active");
+				tabpane11.removeClass("active");
+				tabpane22.addClass("active");
+			});
+			//Coveo things
+
 			$('#__uploadedFile').on('change', handleFileChange);
 		});
 		//requestsReady[4] = true;
@@ -733,7 +797,9 @@ window.onload = function () {
 					}
 					addTestButtonDelay = setTimeout(function () {
 						addTestButtonsToPage();
-						addTestModal();
+						if(!$('#__contentModal').length){
+							addTestModal();
+						}
 
 						//If a row is added later on, add the buttons
 						$('#extensions').on("DOMNodeInserted", "tr", function () {
