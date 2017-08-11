@@ -138,6 +138,7 @@ function createExtensionGalleryModal() {
 			ResultLink: {
 				onClick: function (e, result) {
 					e.preventDefault();
+					resetTestEnv();
 					extensionGalleryOnClick(e, result);
 				}
 			}
@@ -215,7 +216,7 @@ function launchTestModal(extensionId) {
  */
 function addTestModal() {
 	$.get(chrome.extension.getURL('/html/content-search.html'), function (data) {
-		$('#extensions').append(data);
+		$('body').append(data);
 		$('#__runTests').click(runTest);
 
 		let currentOrg = getCurrentOrg();
@@ -251,6 +252,7 @@ function addTestModal() {
 				onClick: function (e, result) {
 					e.preventDefault();
 					$('#__testDocId').val(result.uniqueId);
+					resetTestEnv();
 					$('#__tab2').click();
 					// Give the option to pass parameters before triggering the test
 					// $('#__runTests').click();
@@ -275,11 +277,26 @@ function getCookieApiKey() {
 }
 
 
+
+/**
+ * Resets the results of the previous tests
+ * 
+ */
+function resetTestEnv() {
+	$('#__testResults').text('');
+	$('#__originalFile').html('');
+	$('#__extensionTesterErrors').html('');
+}
+
+
 /**
  * Runs the extension test
  *
  */
 function runTest() {
+
+	resetTestEnv();
+
 	//Show the loading bubbles
 	let loadingElement = $('#__testLoading');
 	loadingElement.css('display', 'block');
@@ -308,10 +325,7 @@ function runTest() {
 			"dataStreams": [
 				{
 					"Values": {
-						"DOCUMENT_DATA":{
-							'inlineContent': "YXNkYXM=",
-							'compression': 'UNCOMPRESSED'
-						}
+
 					},
 					"origin": "Extension tester"
 				}
@@ -338,6 +352,8 @@ function runTest() {
 			function wait() {
 				//Wait until all true
 				if (requestsReady.every(function (e) { return e })) {
+					//Clears the original file selector, since we already have the extracted data
+					$('#__originalFile').html('');
 					runTestAjax();
 				}
 				else {
@@ -377,7 +393,7 @@ function runTest() {
 				if ($.inArray('DOCUMENT_DATA', data.requiredDataStreams) != -1) {
 					addOriginalFile();
 				}
-				else{
+				else {
 					requestsReady[4] = true;
 				}
 			}
@@ -389,12 +405,35 @@ function runTest() {
 		}
 	})
 
-	function addOriginalFile(){
+	function addOriginalFile() {
 		$.get(chrome.extension.getURL('/html/originalFile.html'), function (data) {
 			let originalFileElement = $('#__originalFile');
 			originalFileElement.html(data);
+			$('#__uploadedFile').on('change', handleFileChange);
 		});
-		requestsReady[4] = true;
+		//requestsReady[4] = true;
+	}
+
+	//https://stackoverflow.com/questions/16505333/get-the-data-of-uploaded-file-in-javascript
+	function handleFileChange(evt) {
+		let files = evt.target.files; // FileList object
+
+		// use the 1st file from the list
+		let f = files[0];
+
+		let reader = new FileReader();
+
+		// Closure to capture the file information.
+		reader.addEventListener("load", function () {
+			toSendData.document.dataStreams[0].Values['DOCUMENT_DATA'] = {
+				'inlineContent': reader.result.split(',').slice(1).join(','),
+				'compression': 'UNCOMPRESSED'
+			}
+			requestsReady[4] = true;
+		}, false);
+
+		// Read in the image file as a data URL.
+		reader.readAsDataURL(f);
 	}
 
 	/**

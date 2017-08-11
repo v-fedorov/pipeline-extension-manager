@@ -1,38 +1,86 @@
+<p>Oops! It seems like you tried using an extension that uses "Original File". Sadly I am unable to fully complete this since
+	the index does not keep the file. But if you happen to have the original file on hand, you can upload it and use it just
+	like you would. You can also pass the link and it will try to download the webpage, but don't rely on it, since due to saftey
+	settings, you won't be able to download all the webpages.
+</p>
+<div class="tab-navigation">
+	<div id="__useFile" class="tab enabled active">Use File</div>
+	<div id="__useLink" class="tab enabled">Use Link</div>
+</div>
+<div class="tab-content">
+	<div data-tab="__useFile" class="tab-pane active">
+		<div class="mod-header-padding mod-form-top-bottom-padding">
 
-	<div class="tab-navigation">
-		<div id="__useFile" class="tab enabled active">Use File</div>
-		<div id="__useLink" class="tab enabled">Use Link</div>
-	</div>
-	<div class="tab-content">
-		<div data-tab="__useFile" class="tab-pane active">
-			<div class="mod-header-padding mod-form-top-bottom-padding">
-				Content of Tab 1
+			<div class="coveo-form">
+				<div class="file-input">
+					<div class="input-field file-path-wrapper">
+						<input class="file-path" required placeholder="Placeholder text" type="text">
+						<label>File input</label>
+						<span class="hidden clear-file" title="Clear file">
+							<span class="icon fill-medium-grey">
+							<svg viewbox="0 0 10 10"><path d="M9.79.212A.72.72 0 0 0 8.77.211L5 3.981 1.229.211A.717.717 0 0 0 .211.212H.21A.72.72 0 0 0 .211 1.23l3.771 3.769L.211 8.77a.718.718 0 0 0 0 1.018.718.718 0 0 0 1.018 0L5 6.017l3.771 3.771A.72.72 0 0 0 9.789 8.77L6.018 4.999 9.789 1.23A.72.72 0 0 0 9.79.212"/></svg>
+							</span>
+						</span>
+					</div>
+					<div class="btn">
+						<span>Choose file</span>
+						<input type="file" id="__uploadedFile" />
+					</div>
+				</div>
 			</div>
-		</div>
-		<div data-tab="__useLink" class="tab-pane">
-			<div class="mod-header-padding mod-form-top-bottom-padding">
-				Content of Tab 2
-			</div>
+			<script>
+				$('input[type=file]').change(function () {
+					var fileValue = this.files.length ? this.files[0].name : '';
+					var $input = $(this).closest('.file-input').find('.file-path');
+					$input.val(fileValue);
+					$input.toggleClass('has-file', !!fileValue);
+					$(this).closest('.file-input').find('.clear-file').toggleClass('hidden', !fileValue);
+				});
+				$('.clear-file').click(function () {
+					var $input = $(this).closest('.file-input');
+					var $path = $input.find('.file-path');
+
+					$input.find('input[type=file]').val('');
+					$path.val('');
+					$path.removeClass('hasFile');
+					$(this).addClass('hidden');
+				});
+			</script>
+
 		</div>
 	</div>
+	<div data-tab="__useLink" class="tab-pane">
+		<div class="mod-header-padding mod-form-top-bottom-padding">
 
-	<script type="text/javascript">
-		let tab11 = $("#__useFile");
-		let tab22 = $("#__useLink");
-		let tabpane11 = $("[data-tab=__useFile]");
-		let tabpane22 = $("[data-tab=__useLink]");
+			<div class="coveo-form">
+				<div class="input-field form-group">
+					<input type="text" value="My valid value" required placeholder="Placeholder text" />
+					<label>Enabled valid input</label>
+				</div>
+			</div>
 
-		tab11.on("click", function () {
-			tab11.addClass("active");
-			tab22.removeClass("active");
-			tabpane11.addClass("active");
-			tabpane22.removeClass("active");
-		});
+		</div>
+	</div>
+</div>
 
-		tab22.on("click", function () {
-			tab11.removeClass("active");
-			tab22.addClass("active");
-			tabpane11.removeClass("active");
-			tabpane22.addClass("active");
-		});
-	</script>
+<script type="text/javascript">
+				let tab11 = $("#__useFile");
+				let tab22 = $("#__useLink");
+				let tabpane11 = $("[data-tab=__useFile]");
+				let tabpane22 = $("[data-tab=__useLink]");
+
+				tab11.on("click", function () {
+					tab11.addClass("active");
+					tab22.removeClass("active");
+					tabpane11.addClass("active");
+					tabpane22.removeClass("active");
+				});
+
+				tab22.on("click", function () {
+					tab11.removeClass("active");
+					tab22.addClass("active");
+					tabpane11.removeClass("active");
+					tabpane22.addClass("active");
+				});
+
+</script>
