@@ -455,25 +455,43 @@ function runTest() {
 
 			let tab11 = $("#__useFile");
 			let tab22 = $("#__useLink");
+			let tab33 = $("#__useNothing");
 			let tabpane11 = $("[data-tab=__useFile]");
 			let tabpane22 = $("[data-tab=__useLink]");
+			let tabpane33 = $("[data-tab=__useNothing]");
 
 			tab11.on("click", function () {
 				tab11.addClass("active");
 				tab22.removeClass("active");
+				tab33.removeClass("active");
 				tabpane11.addClass("active");
 				tabpane22.removeClass("active");
+				tabpane33.removeClass("active");
 			});
 
 			tab22.on("click", function () {
 				tab11.removeClass("active");
 				tab22.addClass("active");
+				tab33.removeClass("active");
 				tabpane11.removeClass("active");
 				tabpane22.addClass("active");
+				tabpane33.removeClass("active");
+			});
+
+			tab33.on("click", function () {
+				tab11.removeClass("active");
+				tab22.removeClass("active");
+				tab33.addClass("active");
+				tabpane11.removeClass("active");
+				tabpane22.removeClass("active");
+				tabpane33.addClass("active");
 			});
 			//Coveo things
 
 			$('#__uploadedFile').on('change', handleFileChange);
+			$('#__noFile').click(function(){
+				requestsReady[4] = true;
+			})
 		});
 		//requestsReady[4] = true;
 	}
