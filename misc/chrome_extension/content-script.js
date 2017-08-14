@@ -138,6 +138,7 @@ function createExtensionGalleryModal() {
 			ResultLink: {
 				onClick: function (e, result) {
 					e.preventDefault();
+					resetTestEnv();
 					extensionGalleryOnClick(e, result);
 				}
 			}
@@ -192,6 +193,7 @@ function testButtonsOnClick(element) {
 	let extId = $('.extension-name .second-row', element).text().trim();
 	$('#__tab1').click();
 	$('#__testDocId').val('');
+	$('#__extName').text($('.extension-name .first-row', element).text().trim())
 	launchTestModal(extId);
 }
 
@@ -214,7 +216,14 @@ function launchTestModal(extensionId) {
  */
 function addTestModal() {
 	$.get(chrome.extension.getURL('/html/content-search.html'), function (data) {
-		$('#extensions').append(data);
+		$('body').append(data);
+
+		let activateTab = id => {
+			$('.__selector > .tab-navigation .tab.active, .__selector > .tab-content .tab-pane.active').removeClass('active');
+			$(`#${id},[data-tab=${id}]`).addClass('active');
+		};
+		$('.__selector > .tab-navigation .tab.enabled').on('click', data => { activateTab(data.target.id) });
+
 		$('#__runTests').click(runTest);
 
 		let currentOrg = getCurrentOrg();
@@ -250,6 +259,7 @@ function addTestModal() {
 				onClick: function (e, result) {
 					e.preventDefault();
 					$('#__testDocId').val(result.uniqueId);
+					resetTestEnv();
 					$('#__tab2').click();
 					// Give the option to pass parameters before triggering the test
 					// $('#__runTests').click();
@@ -274,11 +284,26 @@ function getCookieApiKey() {
 }
 
 
+
+/**
+ * Resets the results of the previous tests
+ * 
+ */
+function resetTestEnv() {
+	$('#__testResults').text('');
+	$('#__originalFile').html('');
+	$('#__extensionTesterErrors').html('');
+}
+
+
 /**
  * Runs the extension test
  *
  */
 function runTest() {
+
+	resetTestEnv();
+
 	//Show the loading bubbles
 	let loadingElement = $('#__testLoading');
 	loadingElement.css('display', 'block');
@@ -291,6 +316,7 @@ function runTest() {
 	let testUrl = `https://${location.host}/rest/organizations/${currentOrg}/extensions/${extensionId}/test`;
 	let documentUrl = `https://${location.host}/rest/search/document?uniqueId=${encodeURIComponent(uniqueId)}&access_token=${apiTestsKey}&organizationId=${currentOrg}`;
 	let extensionSettingsUrl = `https://${location.host}/rest/organizations/${currentOrg}/extensions/${extensionId}`;
+	let docUri = "";
 	let errorBannerElement = $('#__extensionTesterErrors');
 	errorBannerElement.empty();
 	var toSendData = {
@@ -318,7 +344,13 @@ function runTest() {
 
 	//When all of these are true, fire the extension test
 	//Each will be set to true when it finishes the async
-	let requestsReady = [false, false, false, false];
+	let requestsReady = {
+		'bodyText': false,
+		'bodyHTML': false,
+		'thumbnail': false,
+		'metadata': false,
+		'documentData': false
+	}
 	$.ajax({
 		url: extensionSettingsUrl,
 		headers: {
@@ -333,7 +365,9 @@ function runTest() {
 			let displayedError = false;
 			function wait() {
 				//Wait until all true
-				if (requestsReady.every(function (e) { return e })) {
+				if (Object.keys(requestsReady).every(k => { return requestsReady[k] })) {
+					//Clears the original file selector, since we already have the extracted data
+					$('#__originalFile').html('');
 					runTestAjax();
 				}
 				else {
@@ -347,31 +381,34 @@ function runTest() {
 			}
 			wait();
 		},
-		success: function(data){
+		success: function (data) {
 			if (data.requiredDataStreams) {
 				if ($.inArray('BODY_TEXT', data.requiredDataStreams) != -1) {
 					setBodyText();
 				}
 				else {
-					requestsReady[0] = true;
+					requestsReady.bodyText = true;
 				}
 
 				if ($.inArray('BODY_HTML', data.requiredDataStreams) != -1) {
 					setBodyHTML();
 				}
 				else {
-					requestsReady[1] = true;
+					requestsReady.bodyHTML = true;
 				}
 
 				if ($.inArray('THUMBNAIL', data.requiredDataStreams) != -1) {
 					setThumbnail();
 				}
 				else {
-					requestsReady[2] = true;
+					requestsReady.thumbnail = true;
 				}
 
 				if ($.inArray('DOCUMENT_DATA', data.requiredDataStreams) != -1) {
-					addMessage('"Original file" was called by the extension, but it is unavailable', true)
+					addOriginalFile();
+				}
+				else {
+					requestsReady.documentData = true;
 				}
 			}
 			setDocumentMetadata();
@@ -382,6 +419,113 @@ function runTest() {
 		}
 	})
 
+
+
+	/**
+	 * Adds an original file selector
+	 * 
+	 */
+	function addOriginalFile() {
+		$.get(chrome.extension.getURL('/html/originalFile.html'), function (data) {
+			let originalFileElement = $('#__originalFile');
+			originalFileElement.html(data);
+
+			//Coveo things (vapor css)
+			$('input[type=file]').change(function () {
+				var fileValue = this.files.length ? this.files[0].name : '';
+				var $input = $(this).closest('.file-input').find('.file-path');
+				$input.val(fileValue);
+				$input.toggleClass('has-file', !!fileValue);
+				$(this).closest('.file-input').find('.clear-file').toggleClass('hidden', !fileValue);
+			});
+			$('.clear-file').click(function () {
+				var $input = $(this).closest('.file-input');
+				var $path = $input.find('.file-path');
+
+				$input.find('input[type=file]').val('');
+				$path.val('');
+				$path.removeClass('hasFile');
+				$(this).addClass('hidden');
+			});
+
+			let activateTab = id => {
+				$('#__originalFile > .tab-navigation .tab.active, #__originalFile > .tab-content .tab-pane.active').removeClass('active');
+				$(`#${id},[data-tab=${id}]`).addClass('active');
+			};
+			$('#__originalFile > .tab-navigation .tab.enabled').on('click', data => { activateTab(data.target.id) });
+			//Coveo things
+
+			$('#__uploadedFile').on('change', handleFileChange);
+			$('#__noFile').click(function () {
+				requestsReady.documentData = true;
+			});
+			if (docUri !== "") {
+				$('#__originalLink').val(docUri);
+			}
+			$('#__useLinkBtn').on('click', useLinkOnClick);
+		});
+	}
+
+
+	/**
+	 * The onclick function for the 'use original link'
+	 * This sends out an ajax request to the URL in question
+	 * and adds the resulting HTMl to the document data of the tester
+	 * 
+	 */
+	function useLinkOnClick() {
+		$.ajax({
+			url: $('#__originalLink').val(),
+			headers: {
+				'Access-Control-Allow-Origin': '*'
+			},
+			method: 'GET',
+			dataType: 'html',
+			success: function (data) {
+				toSendData.document.dataStreams[0].Values['DOCUMENT_DATA'] = {
+					'inlineContent': base64Encode(data),
+					'compression': 'UNCOMPRESSED'
+				}
+			},
+			error: function (data) {
+				addMessage(`Failed to get URL content: ${data}`)
+			},
+			complete: function (data) {
+				requestsReady.documentData = true;
+			}
+
+		});
+	}
+
+
+	/**
+	 * The onchange function for the uploaded file for the original
+	 * file tester.
+	 * 
+	 * https://stackoverflow.com/questions/16505333/get-the-data-of-uploaded-file-in-javascript
+	 * 
+	 * @param {event} evt 
+	 */
+	function handleFileChange(evt) {
+		let files = evt.target.files; // FileList object
+
+		// use the 1st file from the list
+		let f = files[0];
+
+		let reader = new FileReader();
+
+		// Closure to capture the file information.
+		reader.addEventListener("load", function () {
+			toSendData.document.dataStreams[0].Values['DOCUMENT_DATA'] = {
+				'inlineContent': reader.result.split(',').slice(1).join(','),
+				'compression': 'UNCOMPRESSED'
+			}
+			requestsReady.documentData = true;
+		}, false);
+
+		// Read in the image file as a data URL.
+		reader.readAsDataURL(f);
+	}
 
 	/**
 	 * Adds the Body Text data to the data to send
@@ -415,7 +559,7 @@ function runTest() {
 				addMessage('Extension called for "Body text", but no Body Text exists for this document');
 			},
 			complete: function (data) {
-				requestsReady[0] = true;
+				requestsReady.bodyText = true;
 			}
 		})
 	}
@@ -453,7 +597,7 @@ function runTest() {
 				addMessage('Extension called for "Body HTML", but no Body HTML exists for this document');
 			},
 			complete: function (data) {
-				requestsReady[1] = true;
+				requestsReady.bodyHTML = true;
 			}
 		})
 	}
@@ -479,7 +623,7 @@ function runTest() {
 			else {
 				addMessage('Extension called for "Thumbnail", but no Thumbnail exists for this document');
 			}
-			requestsReady[2] = true;
+			requestsReady.thumbnail = true;
 		});
 	}
 
@@ -506,6 +650,10 @@ function runTest() {
 					loadingElement.css('display', 'none');
 				}
 				else {
+					docUri = data.printableUri;
+					if ($('#__originalLink').length) {
+						$('#__originalLink').val(docUri);
+					}
 					//Build the document metadata
 					let parameters = $('.CoveoParameterList').coveo('get');
 					if (parameters) {
@@ -537,7 +685,7 @@ function runTest() {
 				addMessage('Failed to fetch document metadata');
 			},
 			complete: function (data) {
-				requestsReady[3] = true;
+				requestsReady.metadata = true;
 			}
 		})
 	}
@@ -562,10 +710,12 @@ function runTest() {
 			complete: function (data) {
 				if (data.status === 400) {
 					addMessage(data.responseJSON.errorCode);
-				} else if(data.responseJSON.result && data.responseJSON.result.reason){
+				} else if (data.responseJSON.result && data.responseJSON.result.reason) {
 					data.responseJSON.result.reason = unescape(data.responseJSON.result.reason)
 				}
-				$('#__testResults').text(unescape(JSON.stringify(data.responseJSON, null, 2).replace(/\\\\n/g, '\n').replace(/\\\\\\"/g, '\"')));
+				//$('#__testResults').text(unescape(JSON.stringify(data.responseJSON, null, 2).replace(/\\\\n/g, '\n').replace(/\\\\\\"/g, '\"')));
+				let formatter = new JSONFormatter(data.responseJSON, Infinity, { hoverPreviewEnabled: false });
+				$('#__testResults').html(formatter.render())
 				loadingElement.css('display', 'none');
 			}
 		});
@@ -576,7 +726,7 @@ function runTest() {
 	 * Add an error message to the test
 	 *
 	 * @param {string} msg - The error message
-	 * @param {string} isWarning - If the message is a warning or not
+	 * @param {boolean} isWarning - True if is warning, else error
 	 */
 	function addMessage(msg, isWarning) {
 		let message =
@@ -678,7 +828,9 @@ window.onload = function () {
 					}
 					addTestButtonDelay = setTimeout(function () {
 						addTestButtonsToPage();
-						addTestModal();
+						if (!$('#__contentModal').length) {
+							addTestModal();
+						}
 
 						//If a row is added later on, add the buttons
 						$('#extensions').on("DOMNodeInserted", "tr", function () {
@@ -799,4 +951,41 @@ function fetchBlob(uri, callback) {
  */
 function getCurrentOrg() {
 	return window.location.hash.substring(1).split('/')[0];
+}
+
+
+/**
+ * A better btoa() function that doesn't crash everytime...
+ * 
+ * https://stackoverflow.com/questions/19124701/get-image-using-jquery-ajax-and-decode-it-to-base64
+ * 
+ * @param {string} str - The string to encode
+ * @returns The base64 encoded string
+ */
+function base64Encode(str) {
+	var CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+	var out = "", i = 0, len = str.length, c1, c2, c3;
+	while (i < len) {
+		c1 = str.charCodeAt(i++) & 0xff;
+		if (i == len) {
+			out += CHARS.charAt(c1 >> 2);
+			out += CHARS.charAt((c1 & 0x3) << 4);
+			out += "==";
+			break;
+		}
+		c2 = str.charCodeAt(i++);
+		if (i == len) {
+			out += CHARS.charAt(c1 >> 2);
+			out += CHARS.charAt(((c1 & 0x3) << 4) | ((c2 & 0xF0) >> 4));
+			out += CHARS.charAt((c2 & 0xF) << 2);
+			out += "=";
+			break;
+		}
+		c3 = str.charCodeAt(i++);
+		out += CHARS.charAt(c1 >> 2);
+		out += CHARS.charAt(((c1 & 0x3) << 4) | ((c2 & 0xF0) >> 4));
+		out += CHARS.charAt(((c2 & 0xF) << 2) | ((c3 & 0xC0) >> 6));
+		out += CHARS.charAt(c3 & 0x3F);
+	}
+	return out;
 }
