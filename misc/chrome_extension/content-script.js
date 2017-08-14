@@ -442,7 +442,7 @@ function runTest() {
 			let originalFileElement = $('#__originalFile');
 			originalFileElement.html(data);
 
-			//Coveo things
+			//Coveo things (vapor css)
 			$('input[type=file]').change(function () {
 				var fileValue = this.files.length ? this.files[0].name : '';
 				var $input = $(this).closest('.file-input').find('.file-path');
@@ -504,9 +504,15 @@ function runTest() {
 			}
 			$('#__useLinkBtn').on('click', useLinkOnClick);
 		});
-		//requestsReady[4] = true;
 	}
 
+
+	/**
+	 * The onclick function for the 'use original link'
+	 * This sends out an ajax request to the URL in question
+	 * and adds the resulting HTMl to the document data of the tester
+	 * 
+	 */
 	function useLinkOnClick() {
 		$.ajax({
 			url: $('#__originalLink').val(),
@@ -531,7 +537,15 @@ function runTest() {
 		});
 	}
 
-	//https://stackoverflow.com/questions/16505333/get-the-data-of-uploaded-file-in-javascript
+
+	/**
+	 * The onchange function for the uploaded file for the original
+	 * file tester.
+	 * 
+	 * https://stackoverflow.com/questions/16505333/get-the-data-of-uploaded-file-in-javascript
+	 * 
+	 * @param {event} evt 
+	 */
 	function handleFileChange(evt) {
 		let files = evt.target.files; // FileList object
 
@@ -979,7 +993,15 @@ function getCurrentOrg() {
 	return window.location.hash.substring(1).split('/')[0];
 }
 
-//https://stackoverflow.com/questions/19124701/get-image-using-jquery-ajax-and-decode-it-to-base64
+
+/**
+ * A better btoa() function that doesn't crash everytime...
+ * 
+ * https://stackoverflow.com/questions/19124701/get-image-using-jquery-ajax-and-decode-it-to-base64
+ * 
+ * @param {string} str - The string to encode
+ * @returns The base64 encoded string
+ */
 function base64Encode(str) {
 	var CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 	var out = "", i = 0, len = str.length, c1, c2, c3;
