@@ -334,6 +334,7 @@ function runTest() {
 	let testUrl = `https://${location.host}/rest/organizations/${currentOrg}/extensions/${extensionId}/test`;
 	let documentUrl = `https://${location.host}/rest/search/document?uniqueId=${encodeURIComponent(uniqueId)}&access_token=${apiTestsKey}&organizationId=${currentOrg}`;
 	let extensionSettingsUrl = `https://${location.host}/rest/organizations/${currentOrg}/extensions/${extensionId}`;
+	let docUri = "";
 	let errorBannerElement = $('#__extensionTesterErrors');
 	errorBannerElement.empty();
 	var toSendData = {
@@ -430,6 +431,12 @@ function runTest() {
 		}
 	})
 
+
+
+	/**
+	 * Adds an original file selector
+	 * 
+	 */
 	function addOriginalFile() {
 		$.get(chrome.extension.getURL('/html/originalFile.html'), function (data) {
 			let originalFileElement = $('#__originalFile');
@@ -489,11 +496,39 @@ function runTest() {
 			//Coveo things
 
 			$('#__uploadedFile').on('change', handleFileChange);
-			$('#__noFile').click(function(){
+			$('#__noFile').click(function () {
 				requestsReady[4] = true;
-			})
+			});
+			if (docUri !== "") {
+				$('#__originalLink').val(docUri);
+			}
+			$('#__useLinkBtn').on('click', useLinkOnClick);
 		});
 		//requestsReady[4] = true;
+	}
+
+	function useLinkOnClick() {
+		$.ajax({
+			url: $('#__originalLink').val(),
+			headers: {
+				'Access-Control-Allow-Origin': '*'
+			},
+			method: 'GET',
+			dataType: 'html',
+			success: function (data) {
+				toSendData.document.dataStreams[0].Values['DOCUMENT_DATA'] = {
+					'inlineContent': base64Encode(data),
+					'compression': 'UNCOMPRESSED'
+				}
+			},
+			error: function (data) {
+				addMessage(`Failed to get URL content: ${data}`)
+			},
+			complete: function (data) {
+				requestsReady[4] = true;
+			}
+
+		});
 	}
 
 	//https://stackoverflow.com/questions/16505333/get-the-data-of-uploaded-file-in-javascript
@@ -641,6 +676,10 @@ function runTest() {
 					loadingElement.css('display', 'none');
 				}
 				else {
+					docUri = data.printableUri;
+					if ($('#__originalLink').length) {
+						$('#__originalLink').val(docUri);
+					}
 					//Build the document metadata
 					let parameters = $('.CoveoParameterList').coveo('get');
 					if (parameters) {
@@ -713,7 +752,7 @@ function runTest() {
 	 * Add an error message to the test
 	 *
 	 * @param {string} msg - The error message
-	 * @param {string} isWarning - If the message is a warning or not
+	 * @param {boolean} isWarning - True if is warning, else error
 	 */
 	function addMessage(msg, isWarning) {
 		let message =
@@ -815,7 +854,7 @@ window.onload = function () {
 					}
 					addTestButtonDelay = setTimeout(function () {
 						addTestButtonsToPage();
-						if(!$('#__contentModal').length){
+						if (!$('#__contentModal').length) {
 							addTestModal();
 						}
 
@@ -938,4 +977,33 @@ function fetchBlob(uri, callback) {
  */
 function getCurrentOrg() {
 	return window.location.hash.substring(1).split('/')[0];
+}
+
+//https://stackoverflow.com/questions/19124701/get-image-using-jquery-ajax-and-decode-it-to-base64
+function base64Encode(str) {
+	var CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+	var out = "", i = 0, len = str.length, c1, c2, c3;
+	while (i < len) {
+		c1 = str.charCodeAt(i++) & 0xff;
+		if (i == len) {
+			out += CHARS.charAt(c1 >> 2);
+			out += CHARS.charAt((c1 & 0x3) << 4);
+			out += "==";
+			break;
+		}
+		c2 = str.charCodeAt(i++);
+		if (i == len) {
+			out += CHARS.charAt(c1 >> 2);
+			out += CHARS.charAt(((c1 & 0x3) << 4) | ((c2 & 0xF0) >> 4));
+			out += CHARS.charAt((c2 & 0xF) << 2);
+			out += "=";
+			break;
+		}
+		c3 = str.charCodeAt(i++);
+		out += CHARS.charAt(c1 >> 2);
+		out += CHARS.charAt(((c1 & 0x3) << 4) | ((c2 & 0xF0) >> 4));
+		out += CHARS.charAt(((c2 & 0xF) << 2) | ((c3 & 0xC0) >> 6));
+		out += CHARS.charAt(c3 & 0x3F);
+	}
+	return out;
 }
