@@ -218,29 +218,11 @@ function addTestModal() {
 	$.get(chrome.extension.getURL('/html/content-search.html'), function (data) {
 		$('body').append(data);
 
-		let tab1 = $('#__tab1');
-		let tab2 = $('#__tab2');
-		let tabpane1 = $('[data-tab=__tab1]');
-		let tabpane2 = $('[data-tab=__tab2]');
-
-		function resetTabs() {
-			tab1.removeClass('active');
-			tab2.removeClass('active');
-			tabpane1.removeClass('active');
-			tabpane2.removeClass('active');
-		}
-
-		tab1.on('click', function () {
-			resetTabs();
-			tab1.addClass("active");
-			tabpane1.addClass("active");
-		});
-
-		tab2.on("click", function () {
-			resetTabs();
-			tab2.addClass("active");
-			tabpane2.addClass("active");
-		});
+		let activateTab = id => {
+			$('.__selector > .tab-navigation .tab.active, .__selector > .tab-content .tab-pane.active').removeClass('active');
+			$(`#${id},[data-tab=${id}]`).addClass('active');
+		};
+		$('.__selector > .tab-navigation .tab.enabled').on('click', data => { activateTab(data.target.id) });
 
 		$('#__runTests').click(runTest);
 
@@ -362,7 +344,13 @@ function runTest() {
 
 	//When all of these are true, fire the extension test
 	//Each will be set to true when it finishes the async
-	let requestsReady = [false, false, false, false, false];
+	let requestsReady = {
+		'bodyText': false,
+		'bodyHTML': false,
+		'thumbnail': false,
+		'metadata': false,
+		'documentData': false
+	}
 	$.ajax({
 		url: extensionSettingsUrl,
 		headers: {
@@ -377,7 +365,7 @@ function runTest() {
 			let displayedError = false;
 			function wait() {
 				//Wait until all true
-				if (requestsReady.every(function (e) { return e })) {
+				if (Object.keys(requestsReady).every(k => { return requestsReady[k] })) {
 					//Clears the original file selector, since we already have the extracted data
 					$('#__originalFile').html('');
 					runTestAjax();
@@ -399,28 +387,28 @@ function runTest() {
 					setBodyText();
 				}
 				else {
-					requestsReady[0] = true;
+					requestsReady.bodyText = true;
 				}
 
 				if ($.inArray('BODY_HTML', data.requiredDataStreams) != -1) {
 					setBodyHTML();
 				}
 				else {
-					requestsReady[1] = true;
+					requestsReady.bodyHTML = true;
 				}
 
 				if ($.inArray('THUMBNAIL', data.requiredDataStreams) != -1) {
 					setThumbnail();
 				}
 				else {
-					requestsReady[2] = true;
+					requestsReady.thumbnail = true;
 				}
 
 				if ($.inArray('DOCUMENT_DATA', data.requiredDataStreams) != -1) {
 					addOriginalFile();
 				}
 				else {
-					requestsReady[4] = true;
+					requestsReady.documentData = true;
 				}
 			}
 			setDocumentMetadata();
@@ -460,44 +448,16 @@ function runTest() {
 				$(this).addClass('hidden');
 			});
 
-			let tab11 = $("#__useFile");
-			let tab22 = $("#__useLink");
-			let tab33 = $("#__useNothing");
-			let tabpane11 = $("[data-tab=__useFile]");
-			let tabpane22 = $("[data-tab=__useLink]");
-			let tabpane33 = $("[data-tab=__useNothing]");
-
-			tab11.on("click", function () {
-				tab11.addClass("active");
-				tab22.removeClass("active");
-				tab33.removeClass("active");
-				tabpane11.addClass("active");
-				tabpane22.removeClass("active");
-				tabpane33.removeClass("active");
-			});
-
-			tab22.on("click", function () {
-				tab11.removeClass("active");
-				tab22.addClass("active");
-				tab33.removeClass("active");
-				tabpane11.removeClass("active");
-				tabpane22.addClass("active");
-				tabpane33.removeClass("active");
-			});
-
-			tab33.on("click", function () {
-				tab11.removeClass("active");
-				tab22.removeClass("active");
-				tab33.addClass("active");
-				tabpane11.removeClass("active");
-				tabpane22.removeClass("active");
-				tabpane33.addClass("active");
-			});
+			let activateTab = id => {
+				$('#__originalFile > .tab-navigation .tab.active, #__originalFile > .tab-content .tab-pane.active').removeClass('active');
+				$(`#${id},[data-tab=${id}]`).addClass('active');
+			};
+			$('#__originalFile > .tab-navigation .tab.enabled').on('click', data => { activateTab(data.target.id) });
 			//Coveo things
 
 			$('#__uploadedFile').on('change', handleFileChange);
 			$('#__noFile').click(function () {
-				requestsReady[4] = true;
+				requestsReady.documentData = true;
 			});
 			if (docUri !== "") {
 				$('#__originalLink').val(docUri);
@@ -531,7 +491,7 @@ function runTest() {
 				addMessage(`Failed to get URL content: ${data}`)
 			},
 			complete: function (data) {
-				requestsReady[4] = true;
+				requestsReady.documentData = true;
 			}
 
 		});
@@ -560,7 +520,7 @@ function runTest() {
 				'inlineContent': reader.result.split(',').slice(1).join(','),
 				'compression': 'UNCOMPRESSED'
 			}
-			requestsReady[4] = true;
+			requestsReady.documentData = true;
 		}, false);
 
 		// Read in the image file as a data URL.
@@ -599,7 +559,7 @@ function runTest() {
 				addMessage('Extension called for "Body text", but no Body Text exists for this document');
 			},
 			complete: function (data) {
-				requestsReady[0] = true;
+				requestsReady.bodyText = true;
 			}
 		})
 	}
@@ -637,7 +597,7 @@ function runTest() {
 				addMessage('Extension called for "Body HTML", but no Body HTML exists for this document');
 			},
 			complete: function (data) {
-				requestsReady[1] = true;
+				requestsReady.bodyHTML = true;
 			}
 		})
 	}
@@ -663,7 +623,7 @@ function runTest() {
 			else {
 				addMessage('Extension called for "Thumbnail", but no Thumbnail exists for this document');
 			}
-			requestsReady[2] = true;
+			requestsReady.thumbnail = true;
 		});
 	}
 
@@ -725,7 +685,7 @@ function runTest() {
 				addMessage('Failed to fetch document metadata');
 			},
 			complete: function (data) {
-				requestsReady[3] = true;
+				requestsReady.metadata = true;
 			}
 		})
 	}
