@@ -1,7 +1,7 @@
 {
   "manifest_version": 2,
   "name": "Coveo Extension Manager",
-  "description": "Manage Coveo extensions",
+  "description": "Adds an 'Extension Gallery' to the Extensions page of CloudV2, along with a 'Test' button beside each extension.",
   "version": "0.2",
   "homepage_url": "https://platform.cloud.coveo.com",
   "options_ui": {
