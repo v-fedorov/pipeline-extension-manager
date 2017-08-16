@@ -1,9 +1,10 @@
 {
   "manifest_version": 2,
-  "name": "Coveo Extension Manager",
+  "name": "Tester for Indexing Pipeline Extensions",
+  "short_name": "Extension Tester",
   "description": "Adds an 'Extension Gallery' to the Extensions page of CloudV2, along with a 'Test' button beside each extension.",
   "version": "0.2",
-  "homepage_url": "https://platform.cloud.coveo.com",
+  "homepage_url": "https://github.com/coveo-labs/pipeline-extension-manager",
   "options_ui": {
     // Required.
     "page": "/html/options.html",
