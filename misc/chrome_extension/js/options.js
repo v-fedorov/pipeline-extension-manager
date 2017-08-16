@@ -1,3 +1,5 @@
+/*global chrome*/
+
 // Saves options to chrome.storage.sync.
 function save_options() {
 	let key = document.getElementById('apikey').value;

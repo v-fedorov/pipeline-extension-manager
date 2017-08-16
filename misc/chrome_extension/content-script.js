@@ -1,4 +1,7 @@
 'use strict';
+// jshint -W110
+/*global chrome, Coveo*/
+
 //The global timeout variable for the addToPage()
 var addTimeOut;
 //The api key
@@ -29,16 +32,10 @@ var addTestButtonDelay;
  */
 function setupExtensionGalleryModal() {
 
-	let svgButtonHTML = `
-	<svg height='18' width='18' style='
-	    position: absolute;
-	    top:50%;
-	    transform:translate(-50%, -50%);
-	'>
-		<polygon points='0,0 0,18 18,9' style='fill:#f58020;'></polygon>
-		Search
-	</svg>
-	`;
+	let svgButtonHTML = `<svg height='18' width='18' style='position: absolute; top:50%; transform:translate(-50%, -50%);'>
+			<polygon points='0,0 0,18 18,9' style='fill:#f58020;'></polygon>
+			Search
+		</svg>`;
 
 	$('#__search > div.coveo-search-section > div > a').html(svgButtonHTML);
 
@@ -53,17 +50,19 @@ function setupExtensionGalleryModal() {
 		modal.css('display', 'block');
 	});
 
+	let hideModal = ()=>{
+		modal.css('display', 'none');
+	};
+
 	// When the user clicks on <span> (x), close the modal
 	for (var i = 0; i < span.length; i++) {
 		var element = span[i];
-		$(element).on('click', function () {
-			modal.css('display', 'none');
-		});
+		$(element).on('click', hideModal);
 	}
 
 	// When the user clicks anywhere outside of the modal, close it
 	modal.on('click', function (event) {
-		if (event.target == modal[0]) {
+		if (event.target === modal[0]) {
 			modal.css('display', 'none');
 		}
 	});
@@ -96,21 +95,28 @@ function extensionGalleryOnClick(e, result) {
 			function (data) {
 				setAceEditorValue($(data).contents()[4].innerHTML);
 			}
-		)
+		);
 	}
 	if (title) {
-		$('#ExtensionName').val(title)
+		$('#ExtensionName').val(title);
 	}
 	if (description) {
 		$('#ExtensionDescription').val(description);
 	}
 	if (reqData) {
-		reqData.split(';').forEach(function (element) {
-			element === 'Body text' ? $('#BodyTextDataStream').attr('checked', true) : false;
-			element === 'Body HTML' ? $('#BodyHTMLDataStream').attr('checked', true) : false;
-			element === 'Thumbnail' ? $('#ThumbnailDataStream').attr('checked', true) : false;
-			element === 'Original file' ? $('#FileBinaryStream').attr('checked', true) : false;
-		}, this);
+		let itemToIdMap = {
+			'Body text': '#BodyTextDataStream',
+			'Body HTML': '#BodyHTMLDataStream',
+			'Thumbnail': '#ThumbnailDataStream',
+			'Original file': '#FileBinaryStream'
+		};
+		reqData.split(';').forEach(itemData => {
+			let id = itemToIdMap[itemData];
+			if (id) {
+				// if 'Body text' is in reqData, check the #BodyTextDataStream
+				$(id).attr('checked', true);
+			}
+		});
 	}
 	$('#__extensionsGalleryModal').css('display', 'none');
 }
@@ -193,7 +199,7 @@ function testButtonsOnClick(element) {
 	let extId = $('.extension-name .second-row', element).text().trim();
 	$('#__tab1').click();
 	$('#__testDocId').val('');
-	$('#__extName').text($('.extension-name .first-row', element).text().trim())
+	$('#__extName').text($('.extension-name .first-row', element).text().trim());
 	launchTestModal(extId);
 }
 
@@ -222,27 +228,30 @@ function addTestModal() {
 			$('.__selector > .tab-navigation .tab.active, .__selector > .tab-content .tab-pane.active').removeClass('active');
 			$(`#${id},[data-tab=${id}]`).addClass('active');
 		};
-		$('.__selector > .tab-navigation .tab.enabled').on('click', data => { activateTab(data.target.id) });
+		$('.__selector > .tab-navigation .tab.enabled').on('click', data => {
+			activateTab(data.target.id);
+		});
 
 		$('#__runTests').click(runTest);
 
 		let currentOrg = getCurrentOrg();
-		let platform = location.host.split('.')[0];
 		let modal = document.getElementById('__contentModal');
 		let span = document.getElementsByClassName('__close');
 
+		let hideModal = ()=>{
+			modal.style.display = 'none';
+		};
+
 		for (var i = 0; i < span.length; i++) {
 			var element = span[i];
-			element.onclick = function () {
-				modal.style.display = 'none';
-			}
+			element.onclick = hideModal;
 		}
 
 		modal.onclick = function (event) {
-			if (event.target == modal) {
-				modal.style.display = 'none';
+			if (event.target === modal) {
+				hideModal();
 			}
-		}
+		};
 
 		let root = document.getElementById('__orgContent');
 		Coveo.SearchEndpoint.endpoints['orgContent'] = new Coveo.SearchEndpoint({
@@ -287,7 +296,7 @@ function getCookieApiKey() {
 
 /**
  * Resets the results of the previous tests
- * 
+ *
  */
 function resetTestEnv() {
 	$('#__testResults').text('');
@@ -316,31 +325,23 @@ function runTest() {
 	let testUrl = `https://${location.host}/rest/organizations/${currentOrg}/extensions/${extensionId}/test`;
 	let documentUrl = `https://${location.host}/rest/search/document?uniqueId=${encodeURIComponent(uniqueId)}&access_token=${apiTestsKey}&organizationId=${currentOrg}`;
 	let extensionSettingsUrl = `https://${location.host}/rest/organizations/${currentOrg}/extensions/${extensionId}`;
-	let docUri = "";
+	let docUri = '';
 	let errorBannerElement = $('#__extensionTesterErrors');
 	errorBannerElement.empty();
 	var toSendData = {
 		"document": {
 			"permissions": [],
-			"metadata": [
-				{
-					"Values": {
-
-					},
-					"origin": "Extension tester"
-				}
-			],
-			"dataStreams": [
-				{
-					"Values": {
-
-					},
-					"origin": "Extension tester"
-				}
-			],
+			"metadata": [{
+				"Values": {},
+				"origin": "Extension tester"
+			}],
+			"dataStreams": [{
+				"Values": {},
+				"origin": "Extension tester"
+			}],
 		},
 		"parameters": {}
-	}
+	};
 
 	//When all of these are true, fire the extension test
 	//Each will be set to true when it finishes the async
@@ -350,7 +351,7 @@ function runTest() {
 		'thumbnail': false,
 		'metadata': false,
 		'documentData': false
-	}
+	};
 	$.ajax({
 		url: extensionSettingsUrl,
 		headers: {
@@ -365,7 +366,8 @@ function runTest() {
 			let displayedError = false;
 			function wait() {
 				//Wait until all true
-				if (Object.keys(requestsReady).every(k => { return requestsReady[k] })) {
+				let areAllRequestsCompleted = Object.keys(requestsReady).every(k => requestsReady[k]);
+				if (areAllRequestsCompleted) {
 					//Clears the original file selector, since we already have the extracted data
 					$('#__originalFile').html('');
 					runTestAjax();
@@ -383,28 +385,28 @@ function runTest() {
 		},
 		success: function (data) {
 			if (data.requiredDataStreams) {
-				if ($.inArray('BODY_TEXT', data.requiredDataStreams) != -1) {
+				if ($.inArray('BODY_TEXT', data.requiredDataStreams) !== -1) {
 					setBodyText();
 				}
 				else {
 					requestsReady.bodyText = true;
 				}
 
-				if ($.inArray('BODY_HTML', data.requiredDataStreams) != -1) {
+				if ($.inArray('BODY_HTML', data.requiredDataStreams) !== -1) {
 					setBodyHTML();
 				}
 				else {
 					requestsReady.bodyHTML = true;
 				}
 
-				if ($.inArray('THUMBNAIL', data.requiredDataStreams) != -1) {
+				if ($.inArray('THUMBNAIL', data.requiredDataStreams) !== -1) {
 					setThumbnail();
 				}
 				else {
 					requestsReady.thumbnail = true;
 				}
 
-				if ($.inArray('DOCUMENT_DATA', data.requiredDataStreams) != -1) {
+				if ($.inArray('DOCUMENT_DATA', data.requiredDataStreams) !== -1) {
 					addOriginalFile();
 				}
 				else {
@@ -413,17 +415,17 @@ function runTest() {
 			}
 			setDocumentMetadata();
 		},
-		error: function (data) {
+		error: function () {
 			addMessage('Failed to fetch extension, stopping');
 			loadingElement.css('display', 'none');
 		}
-	})
+	});
 
 
 
 	/**
 	 * Adds an original file selector
-	 * 
+	 *
 	 */
 	function addOriginalFile() {
 		$.get(chrome.extension.getURL('/html/originalFile.html'), function (data) {
@@ -452,7 +454,9 @@ function runTest() {
 				$('#__originalFile > .tab-navigation .tab.active, #__originalFile > .tab-content .tab-pane.active').removeClass('active');
 				$(`#${id},[data-tab=${id}]`).addClass('active');
 			};
-			$('#__originalFile > .tab-navigation .tab.enabled').on('click', data => { activateTab(data.target.id) });
+			$('#__originalFile > .tab-navigation .tab.enabled').on('click', data => {
+				activateTab(data.target.id);
+			});
 			//Coveo things
 
 			$('#__uploadedFile').on('change', handleFileChange);
@@ -471,7 +475,7 @@ function runTest() {
 	 * The onclick function for the 'use original link'
 	 * This sends out an ajax request to the URL in question
 	 * and adds the resulting HTMl to the document data of the tester
-	 * 
+	 *
 	 */
 	function useLinkOnClick() {
 		$.ajax({
@@ -485,12 +489,12 @@ function runTest() {
 				toSendData.document.dataStreams[0].Values['DOCUMENT_DATA'] = {
 					'inlineContent': base64Encode(data),
 					'compression': 'UNCOMPRESSED'
-				}
+				};
 			},
 			error: function (data) {
-				addMessage(`Failed to get URL content: ${data}`)
+				addMessage(`Failed to get URL content: ${data}`);
 			},
-			complete: function (data) {
+			complete: function () {
 				requestsReady.documentData = true;
 			}
 
@@ -501,10 +505,10 @@ function runTest() {
 	/**
 	 * The onchange function for the uploaded file for the original
 	 * file tester.
-	 * 
+	 *
 	 * https://stackoverflow.com/questions/16505333/get-the-data-of-uploaded-file-in-javascript
-	 * 
-	 * @param {event} evt 
+	 *
+	 * @param {event} evt
 	 */
 	function handleFileChange(evt) {
 		let files = evt.target.files; // FileList object
@@ -519,7 +523,7 @@ function runTest() {
 			toSendData.document.dataStreams[0].Values['DOCUMENT_DATA'] = {
 				'inlineContent': reader.result.split(',').slice(1).join(','),
 				'compression': 'UNCOMPRESSED'
-			}
+			};
 			requestsReady.documentData = true;
 		}, false);
 
@@ -548,20 +552,20 @@ function runTest() {
 						toSendData.document.dataStreams[0].Values['BODY_TEXT'] = {
 							'inlineContent': btoa(unicodeEscape(data.content)),
 							'compression': 'UNCOMPRESSED'
-						}
+						};
 					}
 					else {
 						addMessage('Extension called for "Body text", but no Body Text exists for this document');
 					}
 				}
 			},
-			error: function (data) {
+			error: function () {
 				addMessage('Extension called for "Body text", but no Body Text exists for this document');
 			},
-			complete: function (data) {
+			complete: function () {
 				requestsReady.bodyText = true;
 			}
-		})
+		});
 	}
 
 
@@ -586,20 +590,20 @@ function runTest() {
 						toSendData.document.dataStreams[0].Values['BODY_HTML'] = {
 							'inlineContent': btoa(unescape(encodeURIComponent(data))),
 							'compression': 'UNCOMPRESSED'
-						}
+						};
 					}
 					else {
 						addMessage('Extension called for "Body HTML", but no Body HTML exists for this document');
 					}
 				}
 			},
-			error: function (data) {
+			error: function () {
 				addMessage('Extension called for "Body HTML", but no Body HTML exists for this document');
 			},
-			complete: function (data) {
+			complete: function () {
 				requestsReady.bodyHTML = true;
 			}
-		})
+		});
 	}
 
 
@@ -618,7 +622,7 @@ function runTest() {
 				toSendData.document.dataStreams[0].Values['THUMBNAIL'] = {
 					'inlineContent': str,
 					'compression': 'UNCOMPRESSED'
-				}
+				};
 			}
 			else {
 				addMessage('Extension called for "Thumbnail", but no Thumbnail exists for this document');
@@ -661,33 +665,30 @@ function runTest() {
 					}
 
 					function addToJson(valueToAdd, addKey) {
-						if (valueToAdd != null) {
-							if (valueToAdd.length != 0) {
-								if (valueToAdd.constructor === Array) {
-									toSendData.document.metadata[0].Values[addKey] = valueToAdd;
+						if (valueToAdd && valueToAdd.length) {
+							if (valueToAdd.constructor === Array) {
+								toSendData.document.metadata[0].Values[addKey] = valueToAdd;
+							}
+							else if (valueToAdd.constructor === Object) {
+								for (let ckey in valueToAdd) {
+									addToJson(valueToAdd[ckey], ckey);
 								}
-								else if (valueToAdd.constructor === Object) {
-									for (let ckey in valueToAdd) {
-										addToJson(valueToAdd[ckey], ckey);
-									}
-								}
-								else {
-									toSendData.document.metadata[0].Values[addKey] = [valueToAdd];
-								}
+							}
+							else {
+								toSendData.document.metadata[0].Values[addKey] = [valueToAdd];
 							}
 						}
 					}
 					addToJson(data);
 				}
 			},
-			error: function (data) {
-				//$('#__testResults').text(JSON.stringify(data.responseJSON, null, 2));
+			error: function () {
 				addMessage('Failed to fetch document metadata');
 			},
-			complete: function (data) {
+			complete: function () {
 				requestsReady.metadata = true;
 			}
-		})
+		});
 	}
 
 
@@ -711,11 +712,11 @@ function runTest() {
 				if (data.status === 400) {
 					addMessage(data.responseJSON.errorCode);
 				} else if (data.responseJSON.result && data.responseJSON.result.reason) {
-					data.responseJSON.result.reason = unescape(data.responseJSON.result.reason)
+					data.responseJSON.result.reason = unescape(data.responseJSON.result.reason);
 				}
 				//$('#__testResults').text(unescape(JSON.stringify(data.responseJSON, null, 2).replace(/\\\\n/g, '\n').replace(/\\\\\\"/g, '\"')));
 				let formatter = new JSONFormatter(data.responseJSON, Infinity, { hoverPreviewEnabled: false });
-				$('#__testResults').html(formatter.render())
+				$('#__testResults').html(formatter.render());
 				loadingElement.css('display', 'none');
 			}
 		});
@@ -751,13 +752,13 @@ function addTestButtonsToPage() {
 	//before the async function is done below
 	//This is to ensure we don't get multiple columns
 	$('#extensions').attr('__modified', true);
-	if ($('#__testHeader').length == 0) {
+	if ($('#__testHeader').length === 0) {
 		$($('#extensions')[0].children[0].children[0]).append('<th id="__testHeader">Tests</th>');
 	}
 	for (let i = 0; i < $('#extensions')[0].children[1].children.length; i++) {
 		let element = $('#extensions')[0].children[1].children[i];
 		//If a button is not found and there is an extension present
-		if ($(element).find('.btn').length == 0 && !$(element).hasClass('empty')) {
+		if ($(element).find('.btn').length === 0 && !$(element).hasClass('empty')) {
 			$(element).append(`
 				<td class="col">
 					<div class="wrapper">
@@ -814,7 +815,7 @@ window.onload = function () {
 			//Checks if there were changes on the page
 			MutationObserver = window.MutationObserver || window.WebKitMutationObserver;
 
-			var observer = new MutationObserver(function (mutations, observer) {
+			let observer = new MutationObserver(function (/*mutations, observer*/) {
 				// If the EditExtensionComponent appears
 				if ($('#EditExtensionComponent').length && $('#CreateExtension').length) {
 					addExtensionSearchToPage();
@@ -916,8 +917,9 @@ function unicodeEscape(str) {
 function hex2a(hexx) {
 	var hex = hexx.toString();//force conversion
 	var str = '';
-	for (var i = 0; i < hex.length; i += 2)
+	for (var i = 0; i < hex.length; i += 2) {
 		str += String.fromCharCode(parseInt(hex.substr(i, 2), 16));
+	}
 	return str;
 }
 
@@ -927,8 +929,8 @@ function fetchBlob(uri, callback) {
 	xhr.open('GET', uri, true);
 	xhr.responseType = 'arraybuffer';
 
-	xhr.onload = function (e) {
-		if (this.status == 200) {
+	xhr.onload = function () {
+		if (this.status === 200) {
 			var blob = this.response;
 			if (callback) {
 				callback(blob);
@@ -941,7 +943,7 @@ function fetchBlob(uri, callback) {
 		}
 	};
 	xhr.send();
-};
+}
 
 
 /**
@@ -956,25 +958,26 @@ function getCurrentOrg() {
 
 /**
  * A better btoa() function that doesn't crash everytime...
- * 
+ *
  * https://stackoverflow.com/questions/19124701/get-image-using-jquery-ajax-and-decode-it-to-base64
- * 
+ *
  * @param {string} str - The string to encode
  * @returns The base64 encoded string
  */
 function base64Encode(str) {
+	/*jslint bitwise: true */
 	var CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 	var out = "", i = 0, len = str.length, c1, c2, c3;
 	while (i < len) {
-		c1 = str.charCodeAt(i++) & 0xff;
-		if (i == len) {
+		c1 = (str.charCodeAt(i++) & 0xff);
+		if (i === len) {
 			out += CHARS.charAt(c1 >> 2);
 			out += CHARS.charAt((c1 & 0x3) << 4);
 			out += "==";
 			break;
 		}
 		c2 = str.charCodeAt(i++);
-		if (i == len) {
+		if (i === len) {
 			out += CHARS.charAt(c1 >> 2);
 			out += CHARS.charAt(((c1 & 0x3) << 4) | ((c2 & 0xF0) >> 4));
 			out += CHARS.charAt((c2 & 0xF) << 2);
