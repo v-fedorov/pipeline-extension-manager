@@ -1,125 +1,146 @@
-#!/usr/bin/python
-import requests
+# #!/usr/bin/python
+""" Crawl a Github's user repositories to find folders with Indexing Pipeline Extensions
+    and create a scripts.json file to be imported by the Chrome extension """
+
 import json
 import base64
-import yaml
-import zlib
+import re
 import os
+import zlib
+import yaml
+import requests
 
 
-# Load config
-os.chdir(os.path.dirname(os.path.abspath(__file__)))
-config = yaml.safe_load(open("config.yml"))
+class GithubParser(object):
+    """ Parser for Github repositories and to find extensions scripts """
 
-# Check for missing config keys
-config_vars = [	'coveo_org_id',
-				'coveo_source_id',
-				'coveo_api_key',
-				'coveo_push_url',
-				'git_user',
-				'git_api_key']
-is_config_missing = False
-for config_var in config_vars:
-	if config_var not in config:
-		is_config_missing = True
-		print 'Missing key in config.yml: ' + config_var
+    def __init__(self):
+        self.config_vars = ['coveo_org_id', 'coveo_source_id', 'coveo_api_key', 'coveo_push_url']
+        self.get_config()
 
-if is_config_missing:
-	exit('Some required keys are missing from config.yml.')
+    def get_config(self):
+        """ Load and validate config """
+        os.chdir(os.path.dirname(os.path.abspath(__file__)))
+        self.config = yaml.safe_load(open("config.yml"))
 
-# Github settings
-user = config['git_user']
-git_url = "https://api.github.com/users/{0}/repos".format(user)
-git_auth = config['git_api_key']
-git_headers = {"Authorization": git_auth}
+        # Check for missing config keys
+        is_config_missing = False
+        for config_var in self.config_vars:
+            if config_var not in self.config:
+                is_config_missing = True
+                print 'Missing key in config.yml: ' + config_var
 
-# Push API settings
-org_id = config['coveo_org_id']
-source_id = config['coveo_source_id']
-coveo_auth = config['coveo_api_key']
-coveo_headers = {
-	"Accept": "application/json", 
-	"Authorization": coveo_auth, 
-	"Content-Type": "application/json"
-}
+        if is_config_missing:
+            exit('Some required keys are missing from config.yml.')
 
-# Final data variable
-data = []
+        return self.config
 
-# Get all repos for the user
-git_repo_request = requests.get(git_url, headers=git_headers)
-git_repo_data = json.loads(git_repo_request.text)
+    def request_github(self, url):
+        """ Query to Github API """
+        response = requests.get(url, headers={"Authorization": self.config['git_api_key']})
+        data = response.json()
 
-print "Found {0} repo(s) for {1}".format(len(git_repo_data), user)
+        with open('temp/%s.json' % re.sub(r'[^\w]', '_', url), 'w') as outfile:
+            json.dump(data, outfile, indent=2)
 
-# Loop through all the repos
-for repos in git_repo_data:
+        return data
 
-	print "Searching {0} for 'extensions' folder".format(repos['name'])
+    @staticmethod
+    def is_extension_folder(obj):
+        """ Validate if obj is a 'extensions' folder """
+        if not('name' in obj and obj['name'] == 'extensions'):
+            return False
+        if not('type' in obj and obj['type'] == 'dir'):
+            return False
+        return True
 
-	# Get all files in the repo
-	repo_contents_url = '/'.join(repos['contents_url'].split('/')[:-1])
-	repo_contents_request = requests.get(repo_contents_url, headers=git_headers)
-	repo_contents_data = json.loads(repo_contents_request.text)
+    def find_extension_script(self, github_file_obj):
+        """ Parse a github resource object and return JSON for the current script """
 
-	# Loop through all the files in the repo
-	for repo_content in repo_contents_data:
+        file_name = github_file_obj['name']
+        file_url = github_file_obj['url']
+        print "Found extension {}".format(file_name)
 
-		# Find the 'extensions' folder
-		if('name' in repo_content and 'type' in repo_content and repo_content['name'] == 'extensions' and repo_content['type'] == 'dir'):
-			
-			print "Found 'extensions' folder in {0}".format(repos['name'])
+        extension_file_data = self.request_github(file_url)
 
-			# Get all the content in the extensions folder
-			extension_contents_url = repo_content['url']
-			extension_contents_request = requests.get(extension_contents_url, headers = git_headers)
-			extension_contents_data = json.loads(extension_contents_request.text)
+        file_content = extension_file_data['content']
+        file_content = base64.b64decode(''.join(file_content.split('\n')))
 
-			# Loop through all the files in the extension folder
-			for extension_file in extension_contents_data:
-				
-				# Find all .py files
-				if(extension_file['name'].split(".")[-1] == "py"):
+        # Extract the metadata
+        title = []
+        description = []
+        req_data = []
 
-					print "Found extension {0}".format(extension_file['name'])
+        for line in file_content.split("\n"):
+            if "# Title: " in line:
+                title.append(line.split("# Title: ")[1])
 
-					extension_file_url = extension_file['url']
-					extension_file_request = requests.get(extension_file_url, headers = git_headers)
-					extension_file_data = json.loads(extension_file_request.text)
+            if "# Description: " in line:
+                description.append(
+                    line.split("# Description: ")[1])
 
-					extension_file_content = extension_file_data['content']
+            if "# Required data: " in line:
+                req_data.extend(line.split(
+                    "# Required data: ")[1].split(", "))
 
-					extension_file_content = base64.b64decode(''.join(extension_file_content.split('\n')))
-					
-					# Extract the metadata
-					title = []
-					description = []
-					reqData = []
-					for line in extension_file_content.split("\n"):
-						if "# Title: " in line:
-							title.append(line.split("# Title: ")[1])
+        return {
+            "rawfilename": ' '.join(file_name.split(".")[:-1]),
+            "title": ' '.join(title),
+            "description": ' '.join(description),
+            "required": req_data,
+            "CompressedBinaryData": base64.b64encode(zlib.compress(file_content)),
+            "url": github_file_obj['html_url'],
+            "FileExtension": '.py'
+        }
 
-						if "# Description: " in line:
-							description.append(line.split("# Description: ")[1])
+    def parse(self):
+        """ Queries GitHub to find Indexing Pipeling Extensions """
 
-						if "# Required data: " in line:
-							reqData.extend(line.split("# Required data: ")[1].split(", "))
-					
-					data.append({
-						"rawfilename": ' '.join(extension_file['name'].split(".")[:-1]),
-						"title": ' '.join(title), 
-						"description": ' '.join(description), 
-						"required": reqData, 
-						"CompressedBinaryData": base64.b64encode(zlib.compress(extension_file_content)),
-						"url": extension_file['html_url'],
-						"FileExtension": '.py'
-					})
+        scripts_data = []
 
-print "Sending {0} extension(s) to Coveo Index".format(len(data))
+        # Get all repos for the user
+        url = "https://api.github.com/users/{0}/repos".format(self.config['git_user'])
+        github_user_repos = self.request_github(url)
 
-# Send all results to the PUSH api
-for result in data:
-	r = requests.put("{0}/organizations/{1}/sources/{2}/documents?documentId={3}".format(config['coveo_push_url'], org_id, source_id, result['url']),
-					data=json.dumps(result), headers=coveo_headers)
+        if not isinstance(github_user_repos, list):
+            print json.dumps(github_user_repos)
+            exit()
 
-	print "{0}: {1} - {2}".format(result['rawfilename'], r.status_code, r.text)
+        print "Found {0} repo(s) for {1}".format(len(github_user_repos), self.config['git_user'])
+
+        # Loop through all the repos
+        for repo in github_user_repos:
+
+            print "Searching {} for 'extensions' folder".format(repo['name'])
+
+            # Get all files in the repo
+            repo_contents_url = '/'.join(repo['contents_url'].split('/')[:-1])
+            repo_contents = self.request_github(repo_contents_url)
+
+            # Loop through all the files in the repo
+            for repo_content in repo_contents:
+
+                # Find the 'extensions' folder
+                if self.is_extension_folder(repo_content):
+                    print "Found 'extensions' folder in {0}".format(repo['name'])
+
+                    # Get all the content in the extensions folder
+                    extension_files = self.request_github(repo_content['url'])
+
+                    # Loop through all the files in the extension folder
+                    for extension_file in extension_files:
+
+                        # Find all .py files
+                        if re.search(r'\.py$', extension_file['name']):
+                            scripts_data.append(self.find_extension_script(extension_file))
+
+        with open('scripts.json', 'w') as outfile:
+            json.dump(scripts_data, outfile, indent=2)
+
+
+def main():
+    """ Load scripts.json and push to a Coveo Push source """
+    GithubParser().parse()
+
+if __name__ == "__main__":
+    main()
