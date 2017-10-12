@@ -1,39 +1,25 @@
-# #!/usr/bin/python
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
 """ Push scripts.json to a Coveo Push source """
 
 import json
 import re
-import yaml
 import requests
+
+import config
 
 
 class PushExtensionScripts(object):
     """ Helper to push scripts to a Coveo Push Source """
 
     def __init__(self):
-        self.config_vars = ['coveo_org_id', 'coveo_source_id', 'coveo_api_key', 'coveo_push_url']
-        self.get_config()
-
-    def get_config(self):
-        """ Load and validate config """
-        self.config = yaml.safe_load(open("config.yml"))
-
-        # Check for missing config keys
-        is_config_missing = False
-        for config_var in self.config_vars:
-            if config_var not in self.config:
-                is_config_missing = True
-                print 'Missing key in config.yml: ' + config_var
-
-        if is_config_missing:
-            exit('Some required keys are missing from config.yml.')
-
+        config_vars = ['coveo_org_id', 'coveo_source_id', 'coveo_api_key', 'coveo_push_url']
+        self.config = config.get_config(config_vars)
         self.coveo_headers = {
             "Authorization": self.config['coveo_api_key'],
             "Content-Type": "application/json"
         }
-
-        return self.config
 
     def _change_status(self, state):
         """ Update status of a source. state can be REBUILD or IDLE """

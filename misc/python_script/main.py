@@ -1,39 +1,23 @@
-# #!/usr/bin/python
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
 """ Crawl a Github's user repositories to find folders with Indexing Pipeline Extensions
     and create a scripts.json file to be imported by the Chrome extension """
 
 import json
 import base64
 import re
-import os
 import zlib
-import yaml
 import requests
+
+import config
 
 
 class GithubParser(object):
     """ Parser for Github repositories and to find extensions scripts """
 
     def __init__(self):
-        self.config_vars = ['coveo_org_id', 'coveo_source_id', 'coveo_api_key', 'coveo_push_url']
-        self.get_config()
-
-    def get_config(self):
-        """ Load and validate config """
-        os.chdir(os.path.dirname(os.path.abspath(__file__)))
-        self.config = yaml.safe_load(open("config.yml"))
-
-        # Check for missing config keys
-        is_config_missing = False
-        for config_var in self.config_vars:
-            if config_var not in self.config:
-                is_config_missing = True
-                print 'Missing key in config.yml: ' + config_var
-
-        if is_config_missing:
-            exit('Some required keys are missing from config.yml.')
-
-        return self.config
+        self.config = config.get_config(['git_user', 'git_api_key'])
 
     def request_github(self, url):
         """ Query to Github API """
@@ -83,13 +67,15 @@ class GithubParser(object):
                 req_data.extend(line.split(
                     "# Required data: ")[1].split(", "))
 
+        url = github_file_obj['html_url']
         return {
+            "DocumentId": url,
             "rawfilename": ' '.join(file_name.split(".")[:-1]),
             "title": ' '.join(title),
             "description": ' '.join(description),
             "required": req_data,
             "CompressedBinaryData": base64.b64encode(zlib.compress(file_content)),
-            "url": github_file_obj['html_url'],
+            "url": url,
             "FileExtension": '.py'
         }
 
