@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+
+    <url><loc>https://raw.githubusercontent.com/coveo-labs/example-project-image-bank/master/extensions/ImageTaggingWithAWSRekognition.py</loc></url>
+    <url><loc>https://raw.githubusercontent.com/coveo-labs/example-project-image-bank/master/extensions/PPTXImageExtractor.py</loc></url>
+    <url><loc>https://raw.githubusercontent.com/coveo-labs/example-project-image-bank/master/extensions/RejectDocument.py</loc></url>
+    <url><loc>https://raw.githubusercontent.com/coveo-labs/example-project-image-bank/master/extensions/ResizeImage.py</loc></url>
+    <url><loc>https://raw.githubusercontent.com/coveo-labs/url-parser-IPE/master/extensions/url-parser.py</loc></url>
+
+</urlset>
+
