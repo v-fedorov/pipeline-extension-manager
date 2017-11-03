@@ -83,12 +83,9 @@ function extensionGalleryOnClick(e, result) {
 	let uniqueId = result.uniqueId;
 
 	setAceEditorValue('');
-	$('#BodyTextDataStream').attr('checked', false);
-	$('#BodyHTMLDataStream').attr('checked', false);
-	$('#ThumbnailDataStream').attr('checked', false);
-	$('#FileBinaryStream').attr('checked', false);
-	$('#ExtensionName').val('');
-	$('#ExtensionDescription').val('');
+
+	$('#BodyTextDataStream, #BodyHTMLDataStream, #ThumbnailDataStream, #FileBinaryStream').attr('checked', false);
+	$('#ExtensionName, #ExtensionDescription').val('');
 
 	if (uniqueId) {
 		$.get(`${url}/rest/search/v2/html?organizationId=extensions&uniqueId=${uniqueId}&access_token=${apiKey}`,
@@ -190,6 +187,20 @@ function addExtensionSearchToPage() {
  */
 
 
+let validateDocId = ()=>{
+	if ($('#__testDocId').val()) {
+		$('#__runTests').removeAttr('disabled');
+	}
+	else {
+		$('#__runTests').prop('disabled', 'disabled');
+	}
+};
+
+let setDocId = docId=> {
+	$('#__testDocId').val(docId);
+	validateDocId();
+};
+
 /**
  * The onclick for the test button
  *
@@ -197,28 +208,18 @@ function addExtensionSearchToPage() {
  */
 function testButtonsOnClick(element) {
 	let extId = $('.extension-name .second-row', element).text().trim();
-	$('#__tab1').click();
-	$('#__testDocId').val('');
+	$('#__tab-select-document').click();
+	setDocId('');
 	$('#__extName').text($('.extension-name .first-row', element).text().trim());
-	launchTestModal(extId);
-}
 
-
-/**
- * Opens the testing modal with the specific extension to test
- *
- * @param {string} extensionId - The extension id
- */
-function launchTestModal(extensionId) {
-	let modal = document.getElementById('__contentModal');
-	modal.style.display = 'block';
-	$('#__currentExtension').text(extensionId);
+	// Show modal
+	$('#__contentModal').show();
+	$('#__currentExtension').text(extId);
 }
 
 
 /**
  * Add test modal to page
- *
  */
 function addTestModal() {
 	$.get(chrome.extension.getURL('/html/content-search.html'), function (data) {
@@ -267,9 +268,9 @@ function addTestModal() {
 			ResultLink: {
 				onClick: function (e, result) {
 					e.preventDefault();
-					$('#__testDocId').val(result.uniqueId);
+					setDocId(result.uniqueId);
 					resetTestEnv();
-					$('#__tab2').click();
+					$('#__tab-test').click();
 					// Give the option to pass parameters before triggering the test
 					// $('#__runTests').click();
 				}
@@ -277,8 +278,11 @@ function addTestModal() {
 		});
 		let testSection = document.getElementById('__testSection');
 		Coveo.init(testSection);
+
+		$('#__testDocId').on('input', validateDocId);
 	});
 }
+
 
 /**
  * Gets the access token of the user from the document cookies
@@ -300,8 +304,7 @@ function getCookieApiKey() {
  */
 function resetTestEnv() {
 	$('#__testResults').text('');
-	$('#__originalFile').html('');
-	$('#__extensionTesterErrors').html('');
+	$('#__originalFile, #__extensionTesterErrors').html('');
 }
 
 
@@ -658,11 +661,19 @@ function runTest() {
 					if ($('#__originalLink').length) {
 						$('#__originalLink').val(docUri);
 					}
-					//Build the document metadata
-					let parameters = $('.CoveoParameterList').coveo('get');
-					if (parameters) {
-						toSendData.parameters = parameters.getParameterPayload();
+					try {
+						toSendData.parameters = JSON.parse($('.ParametersJson').val());
 					}
+					catch(e) {
+						console.warn(e);
+						let parameters = $('.CoveoParameterList').coveo('get');
+						if (parameters) {
+							toSendData.parameters = parameters.getParameterPayload();
+						}
+					}
+
+					//Build the document metadata
+					console.log('PARAMETERS: ', toSendData.parameters);
 
 					function addToJson(valueToAdd, addKey) {
 						if (valueToAdd && valueToAdd.length) {
@@ -800,7 +811,6 @@ function addTestButtonsToPage() {
  *
  */
 window.onload = function () {
-
 	$.get(chrome.extension.getURL('/config/config.json'), function (data) {
 		data = JSON.parse(data);
 		//Default values if no values are found

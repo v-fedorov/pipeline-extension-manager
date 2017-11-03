@@ -24,12 +24,10 @@
       "js": [
         "js/jquery-3.2.1.min.js",
         "js/CoveoJsSearch.min.js",
-        "js/parameterList.js",
         "js/json-formatter.js",
         "content-script.js"
       ],
       "css": [
-        "css/parameterList.css",
         "css/inject.css"
       ],
       "all_frames": false
