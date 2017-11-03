@@ -9,8 +9,24 @@
 			padding-top: 5px;
 		}
 
-		input {
+		table {
+			margin: 15px 0;
+		}
+
+		td {
+			padding: 0 5px 10px 0;
+		}
+
+		table, td:last-child, input {
 			width: 100%;
+		}
+
+		input {
+			width: 350px;
+		}
+
+		label {
+			white-space: nowrap;
 		}
 
 		h4 {
@@ -22,16 +38,21 @@
 
 <body>
 	<h4>Extension gallery settings</h4>
-	<label>
-		API key
-		<input type="text" id="apikey">
-	</label>
-	<br>
-	<label>
-		Target URL
-		<input type="text" id="target">
-	</label>
-	<br>
+
+	<table>
+		<tr><td>
+			<label for="apikey">API key</label>
+		</td><td>
+			<input type="text" id="apikey">
+		</td></tr>
+
+		<tr><td>
+			<label for="target">Target URL</label>
+		</td><td>
+			<input type="text" id="target">
+		</td></tr>
+	</table>
+
 	<div id="status"></div>
 	<button id="save">Save</button>
 
