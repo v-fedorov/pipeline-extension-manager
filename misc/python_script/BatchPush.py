@@ -43,7 +43,7 @@ class BatchPush(push.PushExtensionScripts):
         res = requests.put(url, headers=self.coveo_headers)
         print "_send_batch_request: {0} {1}".format(res.status_code, res.text)
 
-    def push_file(self, filename):
+    def push(self, filename):
         """ Send file to Coveo """
         with open(filename, 'r') as infile:
             scripts_data = json.loads(infile.read())
@@ -58,12 +58,12 @@ class BatchPush(push.PushExtensionScripts):
 
 
 def main():
-    """ Load scripts.json and push to a Coveo Push source """
+    """ Load a json payload and push it to a Coveo Push source using Batch """
     if len(sys.argv) < 2:
         print "Missing filename"
         exit()
 
-    BatchPush().push_file(sys.argv[1])
+    BatchPush().push(sys.argv[1])
 
 if __name__ == "__main__":
     main()

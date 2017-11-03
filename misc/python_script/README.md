@@ -16,5 +16,10 @@ If a folder is found, it takes all the `.py` files and indexes them
 2. Change the `example-config.yml` into `config.yml` and add your own values
 	1. Git: [Get your API key here](https://help.github.com/articles/creating-a-personal-access-token-for-the-command-line/)
 	2. Coveo: Use the PUSH source api key when it was created
-3. Run the script
+3. Run the script `main.py`, or alternatively run crawling and pushing seperately:
+```
+	python GithubCrawler.py YOUR_PAYLOAD_FILE.json
+	python BatchPush.py YOUR_PAYLOAD_FILE.json
+```
+
 4. The return status should be `202` or `200`

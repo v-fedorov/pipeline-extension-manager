@@ -5,8 +5,9 @@
 
 import json
 import re
-import requests
+import sys
 
+import requests
 import config
 
 
@@ -52,9 +53,9 @@ class PushExtensionScripts(object):
             response.text
         )
 
-    def push(self):
-        """ Send scripts.json file to Coveo """
-        with open('scripts.json', 'r') as infile:
+    def push(self, filename):
+        """ Load a payload and add documents to a Push source, one document at a time. """
+        with open(filename, 'r') as infile:
             scripts_data = json.load(infile)
 
         self._change_status('REBUILD')
@@ -66,8 +67,13 @@ class PushExtensionScripts(object):
 
 
 def main():
-    """ Load scripts.json and push to a Coveo Push source """
-    PushExtensionScripts().push()
+    """ Load a payload file, iterate over documents
+        and push them to a Coveo Push source one by one """
+    if len(sys.argv) < 2:
+        print "Missing filename"
+        exit()
+
+    PushExtensionScripts().push(sys.argv[1])
 
 if __name__ == "__main__":
     main()
