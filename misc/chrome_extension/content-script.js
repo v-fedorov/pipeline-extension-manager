@@ -201,8 +201,26 @@ let setDocId = docId => {
 	validateDocId();
 };
 
+
+let validateParameters = () => {
+	let $ta = $('#__parametersForTest');
+	let v = $ta.val().trim();
+	if (!v) {
+		$ta.removeClass('invalid');
+	}
+	else {
+		try {
+			JSON.parse(v);
+			$ta.removeClass('invalid');
+		}
+		catch(e) {
+			$ta.addClass('invalid');
+		}
+	}
+};
+
 /**
- * The onclick for the test button
+ * The onclick for the test buttons on the elements, in the Extensions page.
  *
  * @param {object} element - The row element
  */
@@ -235,12 +253,28 @@ function addTestModal() {
 
 		$('#__runTests').click(runTest);
 
+		chrome.storage.local.get({
+				__parameters: ''
+			},
+			items => {
+				try {
+					if (items.__parameters) {
+						$('#__parametersForTest').val( JSON.stringify(JSON.parse(items.__parameters),2,2) );
+					}
+				}
+				catch(e) {
+					$('#__parametersForTest').val('');
+				}
+			}
+		);
+
+
 		let currentOrg = getCurrentOrg();
-		let modal = document.getElementById('__contentModal');
+		let modal = $('#__contentModal');
 		let span = document.getElementsByClassName('__close');
 
 		let hideModal = () => {
-			modal.style.display = 'none';
+			modal.hide();
 		};
 
 		for (var i = 0; i < span.length; i++) {
@@ -248,7 +282,7 @@ function addTestModal() {
 			element.onclick = hideModal;
 		}
 
-		modal.onclick = function (event) {
+		modal.onclick = event => {
 			if (event.target === modal) {
 				hideModal();
 			}
@@ -280,6 +314,7 @@ function addTestModal() {
 		Coveo.init(testSection);
 
 		$('#__testDocId').on('input', validateDocId);
+		$('#__parametersForTest').on('input', validateParameters);
 	});
 }
 
@@ -331,7 +366,8 @@ function runTest() {
 	let docUri = '';
 	let errorBannerElement = $('#__extensionTesterErrors');
 	errorBannerElement.empty();
-	var toSendData = {
+
+	let toSendData = {
 		"document": {
 			"permissions": [],
 			"metadata": [{
@@ -662,14 +698,13 @@ function runTest() {
 						$('#__originalLink').val(docUri);
 					}
 					try {
-						toSendData.parameters = JSON.parse($('.ParametersJson').val());
+						let json = JSON.parse($('#__parametersForTest').val());
+						toSendData.parameters = json;
+						$('#__parametersForTest').val( JSON.stringify(json,2,2) );
+						chrome.storage.local.set({__parameters: JSON.stringify(json)});
 					}
 					catch (e) {
 						console.warn(e);
-						let parameters = $('.CoveoParameterList').coveo('get');
-						if (parameters) {
-							toSendData.parameters = parameters.getParameterPayload();
-						}
 					}
 
 					//Build the document metadata

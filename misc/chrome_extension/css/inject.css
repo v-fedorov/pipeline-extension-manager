@@ -94,6 +94,11 @@ textarea.ParametersJson {
 	max-width: 100%;
 }
 
+textarea.ParametersJson.invalid {
+	border: 1px solid red;
+}
+
+
 .flex-row {
 	display: flex;
 	flex-direction: row;
