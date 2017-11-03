@@ -50,7 +50,7 @@ function setupExtensionGalleryModal() {
 		modal.css('display', 'block');
 	});
 
-	let hideModal = ()=>{
+	let hideModal = () => {
 		modal.css('display', 'none');
 	};
 
@@ -187,7 +187,7 @@ function addExtensionSearchToPage() {
  */
 
 
-let validateDocId = ()=>{
+let validateDocId = () => {
 	if ($('#__testDocId').val()) {
 		$('#__runTests').removeAttr('disabled');
 	}
@@ -196,7 +196,7 @@ let validateDocId = ()=>{
 	}
 };
 
-let setDocId = docId=> {
+let setDocId = docId => {
 	$('#__testDocId').val(docId);
 	validateDocId();
 };
@@ -239,7 +239,7 @@ function addTestModal() {
 		let modal = document.getElementById('__contentModal');
 		let span = document.getElementsByClassName('__close');
 
-		let hideModal = ()=>{
+		let hideModal = () => {
 			modal.style.display = 'none';
 		};
 
@@ -664,7 +664,7 @@ function runTest() {
 					try {
 						toSendData.parameters = JSON.parse($('.ParametersJson').val());
 					}
-					catch(e) {
+					catch (e) {
 						console.warn(e);
 						let parameters = $('.CoveoParameterList').coveo('get');
 						if (parameters) {
