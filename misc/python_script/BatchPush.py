@@ -6,10 +6,10 @@ import json
 import sys
 import requests
 
-import push
+import CoveoPush
 
 
-class BatchPush(push.PushExtensionScripts):
+class BatchPush(CoveoPush.CoveoPush):
     """ Helper to push scripts to a Coveo Push Source """
 
     def _get_file_uri(self):

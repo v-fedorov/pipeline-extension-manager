@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-""" Push scripts.json to a Coveo Push source """
+""" Push documents to a Coveo Push source """
 
 import json
 import re
@@ -11,8 +11,8 @@ import requests
 import config
 
 
-class PushExtensionScripts(object):
-    """ Helper to push scripts to a Coveo Push Source """
+class CoveoPush(object):
+    """ Helper to push documents to a Coveo Push Source """
 
     def __init__(self):
         config_vars = ['coveo_org_id', 'coveo_source_id', 'coveo_api_key', 'coveo_push_url']
@@ -42,8 +42,8 @@ class PushExtensionScripts(object):
         print 'Url: ' + url
         return url
 
-    def push_script(self, script_info):
-        """ Send all results to the PUSH api """
+    def push_doc(self, script_info):
+        """ Send one document to the PUSH api """
         url = self._get_url('/documents?documentId={docId}', {'docId': script_info['url']})
         response = requests.put(url, json=script_info, headers=self.coveo_headers)
 
@@ -61,7 +61,7 @@ class PushExtensionScripts(object):
         self._change_status('REBUILD')
 
         for script_info in scripts_data:
-            self.push_script(script_info)
+            self.push_doc(script_info)
 
         self._change_status('IDLE')
 
@@ -73,7 +73,7 @@ def main():
         print "Missing filename"
         exit()
 
-    PushExtensionScripts().push(sys.argv[1])
+    CoveoPush().push(sys.argv[1])
 
 if __name__ == "__main__":
     main()
