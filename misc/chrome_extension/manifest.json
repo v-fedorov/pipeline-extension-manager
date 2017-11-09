@@ -25,6 +25,8 @@
         "js/jquery-3.2.1.min.js",
         "js/CoveoJsSearch.min.js",
         "js/json-formatter.js",
+        "js/EncodeHelper.js",
+        "js/ExtensionGallery.js",
         "content-script.js"
       ],
       "css": [
