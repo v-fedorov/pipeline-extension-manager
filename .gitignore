@@ -1,7 +1,8 @@
-
+.vscode
+*.pyc
 misc/python_script/.vscode
 misc/python_script/keys.yml
 misc/python_script/.vscode/.ropeproject
-.vscode
 misc/python_script/config.yml
 misc/chrome_extension/api_key.txt
+temp/
