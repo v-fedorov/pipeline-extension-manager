@@ -2,31 +2,37 @@
 // jshint -W110
 /*global chrome, Coveo, EncodeHelper, ExtensionGallery, JSONFormatter, unescape */
 
-//The global timeout variable for the addToPage()
-var addTimeOut;
-//The api key
-var apiKey;
-//The url of the cloud platform
-var url;
-//Add button delay for the test buttons
-var addTestButtonDelay;
-
-
-
-
-
-
-
-
-
-
-
+let TEST_CONFIG = {
+	apiKey: null,
+	platformUrl: null
+};
 
 
 /*
  * EXTENSION TESTER
  *
  */
+
+/**
+ * Gets the access token of the user from the document cookies
+ *
+ * https://stackoverflow.com/questions/5142337/read-a-javascript-cookie-by-name
+ *
+ * @returns The access token
+ */
+let getCookieApiKey = () => {
+	let cookiestring = RegExp('' + 'access_token' + '[^;]+').exec(document.cookie);
+	return decodeURIComponent(!!cookiestring ? cookiestring.toString().replace(/^[^=]+./, '') : '');
+};
+
+/**
+ * Gets the current org from the url
+ *
+ * @returns {string} The org string
+ */
+let getCurrentOrg = () => {
+	return window.location.hash.substring(1).split('/')[0];
+};
 
 let getParameterNameForStorage = ()=> {
 	let extName = $('#__extName').text(),
@@ -40,11 +46,20 @@ let getStorageDefinitionForParameters = (json) => {
 		name = getParameterNameForStorage();
 
 	if (json) {
-		json = JSON.stringify(json)
+		json = JSON.stringify(json);
 	}
 
 	def[name] = json || '';  // default to empty string.
 	return def;
+};
+
+
+/**
+ * Resets the results of the previous tests
+ */
+let resetTestEnv = () => {
+	$('#__testResults').text('');
+	$('#__originalFile, #__extensionTesterErrors').html('');
 };
 
 let validateDocId = () => {
@@ -190,30 +205,6 @@ function addTestModal() {
 
 
 /**
- * Gets the access token of the user from the document cookies
- *
- * https://stackoverflow.com/questions/5142337/read-a-javascript-cookie-by-name
- *
- * @returns The access token
- */
-function getCookieApiKey() {
-	let cookiestring = RegExp('' + 'access_token' + '[^;]+').exec(document.cookie);
-	return decodeURIComponent(!!cookiestring ? cookiestring.toString().replace(/^[^=]+./, '') : '');
-}
-
-
-
-/**
- * Resets the results of the previous tests
- *
- */
-function resetTestEnv() {
-	$('#__testResults').text('');
-	$('#__originalFile, #__extensionTesterErrors').html('');
-}
-
-
-/**
  * Runs the extension test
  *
  */
@@ -234,8 +225,24 @@ function runTest() {
 	let documentUrl = `https://${location.host}/rest/search/document?uniqueId=${encodeURIComponent(uniqueId)}&access_token=${apiTestsKey}&organizationId=${currentOrg}`;
 	let extensionSettingsUrl = `https://${location.host}/rest/organizations/${currentOrg}/extensions/${extensionId}`;
 	let docUri = '';
-	let errorBannerElement = $('#__extensionTesterErrors');
-	errorBannerElement.empty();
+
+	// clear previous messages
+	$('#__extensionTesterErrors').empty();
+
+	/**
+	 * Add an error message to the test
+	 *
+	 * @param {string} msg - The error message
+	 * @param {boolean} isWarning - True if is warning, else error
+	 */
+	let addMessage = (msg, isWarning) => {
+		$('#__extensionTesterErrors').append(`
+			<div class='banner flex center-align bg-${isWarning === true ? 'yellow' : 'red'}'>
+				<div class="banner-description">
+					<p>${msg}</p>
+				</div>
+			</div>`);
+	};
 
 	let toSendData = {
 		"document": {
@@ -569,20 +576,22 @@ function runTest() {
 						$('#__originalLink').val(docUri);
 					}
 					try {
-						let json = JSON.parse($('#__parametersForTest textarea').val());
+						let paramsText = $('#__parametersForTest textarea').val();
+						let json = paramsText ? JSON.parse(paramsText) : {};
 						toSendData.parameters = json;
-						$('#__parametersForTest textarea').val(JSON.stringify(json, 2, 2));
 
+						$('#__parametersForTest textarea').val(JSON.stringify(json, 2, 2));
 						chrome.storage.local.set( getStorageDefinitionForParameters(json) );
 					}
 					catch (e) {
+						toSendData.parameters = {};
 						console.warn(e);
 					}
 
 					//Build the document metadata
 					console.log('PARAMETERS: ', toSendData.parameters);
 
-					function addToJson(valueToAdd, addKey) {
+					let addToJson = (valueToAdd, addKey) => {
 						if (valueToAdd && valueToAdd.length) {
 							if (valueToAdd.constructor === Array) {
 								toSendData.document.metadata[0].Values[addKey] = valueToAdd;
@@ -596,7 +605,7 @@ function runTest() {
 								toSendData.document.metadata[0].Values[addKey] = [valueToAdd];
 							}
 						}
-					}
+					};
 					addToJson(data);
 				}
 			},
@@ -613,7 +622,6 @@ function runTest() {
 	/**
 	 * Sends the ajax request to the extension tester with
 	 * all the metadata added
-	 *
 	 */
 	function runTestAjax() {
 		$.ajax({
@@ -640,24 +648,6 @@ function runTest() {
 		});
 	}
 
-
-	/**
-	 * Add an error message to the test
-	 *
-	 * @param {string} msg - The error message
-	 * @param {boolean} isWarning - True if is warning, else error
-	 */
-	function addMessage(msg, isWarning) {
-		let message =
-			`
-		<div class='banner flex center-align bg-${isWarning === true ? 'yellow' : 'red'}'>
-			<div class="banner-description">
-				<p>${msg}</p>
-			</div>
-		</div>
-		`;
-		errorBannerElement.append(message);
-	}
 }
 
 
@@ -692,7 +682,7 @@ let addTestButtonsToPage = () => {
 		$tr.append($td);
 		$td.on('click', testButtonsOnClick);
 	});
-}
+};
 
 
 
@@ -723,8 +713,8 @@ window.onload = function () {
 			__publicApiKey: data['apiKey'],
 			__searchURL: data['url']
 		}, function (items) {
-			apiKey = items.__publicApiKey;
-			url = items.__searchURL;
+			TEST_CONFIG.apiKey = items.__publicApiKey;
+			TEST_CONFIG.platformUrl = items.__searchURL;
 
 			let observer = new MutationObserver(function (/*mutations, observer*/) {
 				// If the EditExtensionComponent appears
@@ -735,10 +725,12 @@ window.onload = function () {
 				// If extensions appears AND it wasn't already modified by this script
 				if ($('#extensions').length && !$('#extensions').attr('__modified')) {
 
-					if (addTestButtonDelay) {
-						clearTimeout(addTestButtonDelay);
+					if (window._addTestButton_timeout_ref) {
+						clearTimeout(window._addTestButton_timeout_ref);
 					}
-					addTestButtonDelay = setTimeout(function () {
+					window._addTestButton_timeout_ref = setTimeout(()=>{
+						window._addTestButton_timeout_ref = null;
+
 						addTestButtonsToPage();
 						if (!$('#__contentModal').length) {
 							addTestModal();
@@ -784,14 +776,3 @@ function fetchBlob(uri, callback) {
 	};
 	xhr.send();
 }
-
-
-/**
- * Gets the current org from the url
- *
- * @returns {string} The org string
- */
-function getCurrentOrg() {
-	return window.location.hash.substring(1).split('/')[0];
-}
-

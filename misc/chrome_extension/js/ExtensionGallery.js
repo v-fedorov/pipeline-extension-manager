@@ -2,8 +2,7 @@
  *	EXTENSION GALLERY
  */
 
-/*global Coveo */
-
+/*global chrome, Coveo, TEST_CONFIG, resetTestEnv */
 
 class ExtensionGallery {
 
@@ -68,7 +67,7 @@ class ExtensionGallery {
     $('#ExtensionName, #ExtensionDescription').val('');
 
     if (uniqueId) {
-      $.get(`${url}/rest/search/v2/html?organizationId=extensions&uniqueId=${uniqueId}&access_token=${apiKey}`,
+      $.get(`${TEST_CONFIG.platformUrl}/rest/search/v2/html?organizationId=extensions&uniqueId=${uniqueId}&access_token=${TEST_CONFIG.apiKey}`,
         function (data) {
           ExtensionGallery.setAceEditorValue($(data).contents()[4].innerHTML);
         }
@@ -103,18 +102,16 @@ class ExtensionGallery {
    * Creates the modal componant of the page along with the button
    */
   static createModal() {
-    let editorElement = $('#EditExtensionComponent > div > div > form > div:nth-child(2)')[0];
     //Get the HTML data
-    $.get(chrome.extension.getURL('/html/extension-search.html'), function (data) {
-      let containerDiv = document.createElement('div');
-      containerDiv.innerHTML = data;
-      editorElement.insertBefore(containerDiv, editorElement.childNodes[0]);
+    $.get(chrome.extension.getURL('/html/extension-search.html'), searchForExtensionHtml => {
+      let searchPageAndAddButton = $(searchForExtensionHtml);
+      $('#EditExtensionComponent form .column:last-child').prepend(searchPageAndAddButton);
 
       //Init the Coveo search
       var root = document.getElementById('__search');
       Coveo.SearchEndpoint.endpoints['extensions'] = new Coveo.SearchEndpoint({
-        restUri: `${url}/rest/search`,
-        accessToken: apiKey
+        restUri: `${TEST_CONFIG.platformUrl}/rest/search`,
+        accessToken: TEST_CONFIG.apiKey
       });
       Coveo.init(root, {
         ResultLink: {
@@ -134,10 +131,12 @@ class ExtensionGallery {
    * Adds the select with options to the page after 350 ms the edit modal started appearing
    */
   static addExtensionSearchToPage() {
-    if (addTimeOut) {
-      clearTimeout(addTimeOut);
+    if (window._addExtensionSearchToPage_timeout_ref) {
+      clearTimeout(window._addExtensionSearchToPage_timeout_ref);
     }
-    addTimeOut = setTimeout(function () {
+    window._addExtensionSearchToPage_timeout_ref = setTimeout(()=>{
+      window._addExtensionSearchToPage_timeout_ref = null;
+
       //If its opening
       if ($('#EditExtensionComponent').length && !$('#__modalButton')[0]) {
         ExtensionGallery.createModal();
@@ -162,10 +161,3 @@ class ExtensionGallery {
   }
 
 }
-
-
-
-
-
-
-
