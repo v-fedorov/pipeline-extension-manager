@@ -10,8 +10,8 @@ This extension has 2 parts to it:
 The extension gallery can be found when one clicks on the "Add Extension" button in the top right of the extensions page.
 This is what is looks like:
 ![extension gallery button](https://user-images.githubusercontent.com/17149559/27692683-569b0ad6-5cb5-11e7-996f-1d4f8e12c08e.png)
-When clicked on, a Coveo seach pops up with a list of availible extensions. The extensions are added by the python script portion of the repo.
-![extension gallery search](https://user-images.githubusercontent.com/17149559/27692821-abeb7b88-5cb5-11e7-8b81-17793b94eb6f.png)
+When clicked on, a Coveo seach pops up with a list of available extensions. The extensions are added by the python script portion of the repo.
+![extension gallery search](../screenshots/extensiongallery.png)
 
 #### Additional notes
 You can setup your own extension gallery, simply follow the instructions in the python section of this repo, then
@@ -21,7 +21,7 @@ change where where the content is being taken. Head to chrome://extensions/ and 
 'Test' buttons can be found beside every extension
 ![test buttons](https://user-images.githubusercontent.com/17149559/27692869-cd622802-5cb5-11e7-8c69-f93b6b88c5f1.png)
 Clicking on a 'Test' button will bring up the test interface
-![test interace](https://user-images.githubusercontent.com/17149559/27692962-0a287034-5cb6-11e7-8922-e645696dad24.png)
+![test interace](../screenshots/selectdocument.png)
 Simply clicking on the document you want to test will start the test and the results will appear
 
 ## How to build
