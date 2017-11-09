@@ -28,6 +28,24 @@ var addTestButtonDelay;
  *
  */
 
+let getParameterNameForStorage = ()=> {
+	let extName = $('#__extName').text(),
+		name = 'parameters_' + (extName||'').replace(/[^\w]/g,'_');
+	return name;
+};
+
+// Set the name for the parameter list based on extension names.
+let getStorageDefinitionForParameters = (json) => {
+	let def = {},
+		name = getParameterNameForStorage();
+
+	if (json) {
+		json = JSON.stringify(json)
+	}
+
+	def[name] = json || '';  // default to empty string.
+	return def;
+};
 
 let validateDocId = () => {
 	if ($('#__testDocId').val()) {
@@ -45,18 +63,21 @@ let setDocId = docId => {
 
 
 let validateParameters = () => {
-	let $ta = $('#__parametersForTest');
+	let $ta = $('#__parametersForTest textarea');
 	let v = $ta.val().trim();
 	if (!v) {
 		$ta.removeClass('invalid');
+		$ta.addClass('valid');
 	}
 	else {
 		try {
 			JSON.parse(v);
 			$ta.removeClass('invalid');
+			$ta.addClass('valid');
 		}
 		catch (e) {
 			$ta.addClass('invalid');
+			$ta.removeClass('valid');
 		}
 	}
 };
@@ -67,10 +88,29 @@ let validateParameters = () => {
  * @param {object} element - The row element
  */
 function testButtonsOnClick(element) {
-	let extId = $('.extension-name .second-row', element).text().trim();
+	let extId = $('.extension-name .second-row', element).text().trim(),
+		extName = $('.extension-name .first-row', element).text().trim();
 	$('#__tab-select-document').click();
 	setDocId('');
-	$('#__extName').text($('.extension-name .first-row', element).text().trim());
+	$('#__extName').text(extName);
+
+	// get saved parameters from local storage for this extension
+	chrome.storage.local.get( getStorageDefinitionForParameters(),
+		items => {
+			try {
+				let paramName = getParameterNameForStorage(), v = items[paramName] || '';
+				if (v) {
+					v = JSON.stringify(JSON.parse(v), 2, 2);
+				}
+				$('#__parametersForTest textarea').val(v);
+			}
+			catch (e) {
+				$('#__parametersForTest textarea').val('');
+			}
+			validateParameters();
+		}
+	);
+
 
 	// Show modal
 	$('#__contentModal').show();
@@ -95,22 +135,7 @@ function addTestModal() {
 
 		$('#__runTests').click(runTest);
 
-		chrome.storage.local.get({
-			__parameters: ''
-		},
-			items => {
-				try {
-					if (items.__parameters) {
-						$('#__parametersForTest').val(JSON.stringify(JSON.parse(items.__parameters), 2, 2));
-					}
-				}
-				catch (e) {
-					$('#__parametersForTest').val('');
-				}
-			}
-		);
-
-
+		// Show modal
 		let currentOrg = getCurrentOrg();
 		let modal = $('#__contentModal');
 		let span = document.getElementsByClassName('__close');
@@ -156,7 +181,8 @@ function addTestModal() {
 		Coveo.init(testSection);
 
 		$('#__testDocId').on('input', validateDocId);
-		$('#__parametersForTest').on('input', validateParameters);
+		let $ta = $('#__parametersForTest textarea');
+		$ta.on('input', validateParameters);
 	});
 }
 
@@ -541,10 +567,11 @@ function runTest() {
 						$('#__originalLink').val(docUri);
 					}
 					try {
-						let json = JSON.parse($('#__parametersForTest').val());
+						let json = JSON.parse($('#__parametersForTest textarea').val());
 						toSendData.parameters = json;
-						$('#__parametersForTest').val(JSON.stringify(json, 2, 2));
-						chrome.storage.local.set({ __parameters: JSON.stringify(json) });
+						$('#__parametersForTest textarea').val(JSON.stringify(json, 2, 2));
+
+						chrome.storage.local.set( getStorageDefinitionForParameters(json) );
 					}
 					catch (e) {
 						console.warn(e);

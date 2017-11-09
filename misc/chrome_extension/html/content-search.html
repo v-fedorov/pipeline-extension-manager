@@ -102,7 +102,16 @@
 			</div>
 			<div data-tab="__tab-parameters" class="tab-pane">
 				<br>
-				<textarea id="__parametersForTest" name="parametersForTest" class="ParametersJson"></textarea>
+				<h3>If this extension is using parameters, you can define them here for your test using JSON.</h3>
+				<br><br>
+
+				<div id="__parametersForTest" name="parametersForTest" class="input-field form-group mod-resizeable validate js-autosized ParametersJson">
+						<textarea placeholder="Parameters as JSON" required=""></textarea>
+						<label for="__parametersForTest">
+								Parameters (JSON)
+						</label>
+				</div>
+
 			</div>
 			<div data-tab="__tab-test" class="tab-pane">
 				<div id="__testSection" data-endpoint="orgContent" class="mod-header-padding mod-form-top-bottom-padding">

@@ -87,15 +87,14 @@
 	margin-top: 20px;
 }
 
-textarea.ParametersJson {
+#__parametersForTest.ParametersJson textarea {
+	font-family: source_code_pro_regular, 'Courier New', Courier, monospace;
+	font-size: 14px;
+
 	min-height: 200px;
 	height: 100%;
 	min-width: 100%;
 	max-width: 100%;
-}
-
-textarea.ParametersJson.invalid {
-	border: 1px solid red;
 }
 
 
