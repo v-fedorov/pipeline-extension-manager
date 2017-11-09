@@ -44,15 +44,17 @@
 
 .__close {
 	color: #aaaaaa;
-	float: right;
+	cursor: pointer;
+	position: absolute;
+	right: 20px;
 	font-size: 28px;
 	font-weight: bold;
+	z-index: 999;
 }
 .__close:hover,
 .__close:focus {
 	color: #000;
 	text-decoration: none;
-	cursor: pointer;
 }
 
 .__animateBottom{
