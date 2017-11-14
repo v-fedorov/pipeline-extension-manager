@@ -1,41 +1,62 @@
 /*global chrome*/
 
-// Saves options to chrome.storage.sync.
-function save_options() {
-	let key = document.getElementById('apikey').value;
-	let url = document.getElementById('target').value;
-	chrome.storage.local.set({
-		__publicApiKey: key,
-		__searchURL: url
-	}, function () {
+
+let initOptions = () => {
+
+	let $ = (id) => {
+		return document.getElementById(id);
+	};
+
+	// helper to get/set a value using a dom id
+	let $val = (id, val) => {
+		let el = document.getElementById(id);
+		if (val !== undefined) {
+			el.value = val;
+		}
+		return el.value;
+	};
+
+	let showStatus = () => {
 		// Update status to let user know options were saved.
-		var status = document.getElementById('status');
+		var status = $('status');
 		status.textContent = 'Options saved.';
-		setTimeout(function () {
+		setTimeout(() => {
 			status.textContent = '';
 		}, 750);
-	});
-}
-
-// Restores select box and checkbox state using the preferences
-// stored in chrome.storage.
-function restore_options() {
-	// Use default value
-	let xhr = new XMLHttpRequest();
-	xhr.onreadystatechange = function() {
-		let data = JSON.parse(xhr.responseText);
-		chrome.storage.local.get({
-			//Public key with only search enabled
-			__publicApiKey: data['apiKey'],
-			__searchURL: data['url']
-		}, function (items) {
-			document.getElementById('apikey').value = items.__publicApiKey;
-			document.getElementById('target').value = items.__searchURL;
-		});
 	};
-	xhr.open('GET', '/config/config.json', false);
-	xhr.send();
-}
-document.addEventListener('DOMContentLoaded', restore_options);
-document.getElementById('save').addEventListener('click',
-	save_options);
+
+	// Saves options to chrome.storage.sync.
+	let saveOptions = () => {
+		chrome.storage.local.set({
+				__publicApiKey: $val('apikey'),
+				__searchURL: $val('target')
+			},
+			showStatus
+		);
+	};
+
+	// Restores select box and checkbox state using the preferences stored in chrome.storage.
+	let restoreOptions = () => {
+		// Use default value
+		let xhr = new XMLHttpRequest();
+		xhr.onreadystatechange = () => {
+			let data = JSON.parse(xhr.responseText);
+			chrome.storage.local.get({
+				//Public key with only search enabled
+				__publicApiKey: data['apiKey'],
+				__searchURL: data['url']
+			}, (items) => {
+				$val('apikey', items.__publicApiKey);
+				$val('target', items.__searchURL);
+			});
+		};
+		xhr.open('GET', '/config/config.json', false);
+		xhr.send();
+	};
+
+	document.addEventListener('DOMContentLoaded', restoreOptions);
+	$('save').addEventListener('click',	saveOptions);
+
+};
+
+initOptions();

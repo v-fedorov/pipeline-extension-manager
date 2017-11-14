@@ -37,20 +37,24 @@
 	padding: 20px;
 	border: 1px solid #888;
 	width: 80%;
+	height: 97%;
+	overflow: auto;
 }
 /* The Close Button */
 
 .__close {
 	color: #aaaaaa;
-	float: right;
+	cursor: pointer;
+	position: absolute;
+	right: 20px;
 	font-size: 28px;
 	font-weight: bold;
+	z-index: 999;
 }
-.__close:hover,	
+.__close:hover,
 .__close:focus {
 	color: #000;
 	text-decoration: none;
-	cursor: pointer;
 }
 
 .__animateBottom{
@@ -61,7 +65,7 @@
 @keyframes animatebottom{
 	from{
 		bottom:-300px;opacity:0
-	} 
+	}
 	to{
 		bottom:0;opacity:1
 	}
@@ -83,4 +87,46 @@
 
 #__orgContent.CoveoSearchInterface .coveo-search-section{
 	margin-top: 20px;
+}
+
+#__parametersForTest.ParametersJson textarea {
+	font-family: source_code_pro_regular, 'Courier New', Courier, monospace;
+	font-size: 14px;
+
+	min-height: 200px;
+	height: 100%;
+	min-width: 100%;
+	max-width: 100%;
+}
+
+
+.flex-row {
+	display: flex;
+	flex-direction: row;
+}
+
+.flex1 {
+	flex: 1;
+}
+
+#__contentModal .tab-pane .CoveoResult {
+	margin: 0;
+}
+
+#__contentModal .tab-pane .CoveoResult:last-child {
+	margin-bottom: 20px;
+}
+
+#__contentModal .tab-pane .CoveoFieldValue.coveo-with-label {
+	border: 1px solid silver;
+	font-size: 12px;
+	margin: 3px 3px 0 0;
+	padding: 3px 6px;
+}
+
+#__contentModal .tab-pane .CoveoFieldValue.coveo-with-label {
+	border: 1px solid silver;
+	font-size: 12px;
+	margin: 3px;
+	padding: 3px 6px;
 }

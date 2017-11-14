@@ -12,10 +12,10 @@
 	<div class="__modal-content __animateBottom">
 		<span class="__close">&times;</span>
 
-		<div id="__search" class="CoveoSearchInterface" data-enable-history="false" data-design="new" data-expression="@source=&#34;coveo labs extension gallery&#34;"
-		 data-endpoint="extensions">
-			<div class="coveo-search-section">
-				<div class="CoveoSearchbox" data-enable-omnibox="true"></div>
+		<div id="__search" class="CoveoSearchInterface" data-enable-history="false" data-design="new" data-expression='@source=="coveo labs extension gallery"'
+		 data-endpoint="extensions" data-results-per-page="20" style="min-height: auto">
+			<div class="coveo-search-section" style="margin: 10px 60px">
+				<div class="CoveoSearchbox" data-enable-omnibox="true" data-enable-search-as-you-type="true" data-enable-query-suggest-addon="true"></div>
 			</div>
 			<div class="coveo-main-section">
 				<div class="coveo-results-column">
@@ -23,45 +23,20 @@
 					<div class="CoveoResultList" data-layout="list" data-wait-animation="fade" data-auto-select-fields-to-include="true" id="__resultList">
 
 						<script id="Default" class="result-template" type="text/html" data-layout="list">
-							<div style="display:none;">
-								<!--Adding these seem to fix the result not returning these values-->
-								<div data-ext-desc="<%=raw.extdescription%>"></div>
-								<div data-ext-required="<%=raw.extrequired%>"></div>
-							</div>
-							<div class="coveo-result-frame">
-								<div class="coveo-result-row">
-									<div class="coveo-result-cell">
-										<div class="coveo-result-row">
-											<div class="coveo-result-cell" style="width:85px;text-align:center;padding-top:7px;">
-												<span class="CoveoIcon"></span>
-												<div class="CoveoQuickview">
-												</div>
-											</div>
-											<div class="coveo-result-cell" style="padding-left:15px;">
-												<div class="coveo-result-row">
-													<div class="coveo-result-cell" style="font-size:18px;">
-														<a class="CoveoResultLink"></a>
-													</div>
-													<div class="coveo-result-cell" style="width:120px; text-align:right; font-size:12px">
-														<span class="CoveoFieldValue" data-field="@date" data-helper="date"></span>
-													</div>
-												</div>
-												<div class="coveo-result-row">
-													<div class="coveo-result-cell">
-														<span class="CoveoFieldValue" data-field="@extdescription"></span>
-													</div>
-												</div>
-											</div>
-										</div>
-									</div>
-								</div>
+							<div style="padding-bottom: 20px;">
+									<div class="CoveoQuickview" style="float: left; text-align: center; margin-right: 10px;"></div>
+									<a class="CoveoResultLink"></a>
+									<div class="CoveoFieldValue" data-field="@extdescription" style="padding-top: 10px;"></div>
 							</div>
 						</script>
 
 					</div>
+					<div class="CoveoPager"></div>
 				</div>
 			</div>
 		</div>
-		<p>Scripts taken from <a href="https://github.com/coveo-labs" target="_blank">https://github.com/coveo-labs</a></p>
+		<p>Scripts taken from
+			<a href="https://github.com/coveo-labs" target="_blank">https://github.com/coveo-labs</a>
+		</p>
 	</div>
 </div>

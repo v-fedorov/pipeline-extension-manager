@@ -1,187 +1,11 @@
 'use strict';
 // jshint -W110
-/*global chrome, Coveo*/
+/*global chrome, Coveo, EncodeHelper, ExtensionGallery, JSONFormatter, unescape */
 
-//The global timeout variable for the addToPage()
-var addTimeOut;
-//The api key
-var apiKey;
-//The url of the cloud platform
-var url;
-//Add button delay for the test buttons
-var addTestButtonDelay;
-
-
-
-
-
-
-
-
-
-
-/*
- *	EXTENSION GALLERY
- *
- */
-
-
-/**
- * Sets up the javascript for the modal
- *
- */
-function setupExtensionGalleryModal() {
-
-	let svgButtonHTML = `<svg height='18' width='18' style='position: absolute; top:50%; transform:translate(-50%, -50%);'>
-			<polygon points='0,0 0,18 18,9' style='fill:#f58020;'></polygon>
-			Search
-		</svg>`;
-
-	$('#__search > div.coveo-search-section > div > a').html(svgButtonHTML);
-
-	// Get the modal
-	let modal = $('#__extensionsGalleryModal');
-
-	// Get the <span> element that closes the modal
-	let span = $('.__close');
-
-	// When the user clicks the button, open the modal
-	$('#__modalButton').on('click', function () {
-		modal.css('display', 'block');
-	});
-
-	let hideModal = ()=>{
-		modal.css('display', 'none');
-	};
-
-	// When the user clicks on <span> (x), close the modal
-	for (var i = 0; i < span.length; i++) {
-		var element = span[i];
-		$(element).on('click', hideModal);
-	}
-
-	// When the user clicks anywhere outside of the modal, close it
-	modal.on('click', function (event) {
-		if (event.target === modal[0]) {
-			modal.css('display', 'none');
-		}
-	});
-
-}
-
-
-/**
- * The onclick function for the extension search result link
- *
- * @param {event} e - The event
- * @param {object} result - The search result
- */
-function extensionGalleryOnClick(e, result) {
-	let title = result.title;
-	let description = result.raw.extdescription;
-	let reqData = result.raw.extrequired;
-	let uniqueId = result.uniqueId;
-
-	setAceEditorValue('');
-	$('#BodyTextDataStream').attr('checked', false);
-	$('#BodyHTMLDataStream').attr('checked', false);
-	$('#ThumbnailDataStream').attr('checked', false);
-	$('#FileBinaryStream').attr('checked', false);
-	$('#ExtensionName').val('');
-	$('#ExtensionDescription').val('');
-
-	if (uniqueId) {
-		$.get(`${url}/rest/search/v2/html?organizationId=extensions&uniqueId=${uniqueId}&access_token=${apiKey}`,
-			function (data) {
-				setAceEditorValue($(data).contents()[4].innerHTML);
-			}
-		);
-	}
-	if (title) {
-		$('#ExtensionName').val(title);
-	}
-	if (description) {
-		$('#ExtensionDescription').val(description);
-	}
-	if (reqData) {
-		let itemToIdMap = {
-			'Body text': '#BodyTextDataStream',
-			'Body HTML': '#BodyHTMLDataStream',
-			'Thumbnail': '#ThumbnailDataStream',
-			'Original file': '#FileBinaryStream'
-		};
-		reqData.split(';').forEach(itemData => {
-			let id = itemToIdMap[itemData];
-			if (id) {
-				// if 'Body text' is in reqData, check the #BodyTextDataStream
-				$(id).attr('checked', true);
-			}
-		});
-	}
-	$('#__extensionsGalleryModal').css('display', 'none');
-}
-
-
-/**
- * Creates the modal componant of the page along with the button
- *
- */
-function createExtensionGalleryModal() {
-	let editorElement = $('#EditExtensionComponent > div > div > form > div:nth-child(2)')[0];
-	//Get the HTML data
-	$.get(chrome.extension.getURL('/html/extension-search.html'), function (data) {
-		let containerDiv = document.createElement('div');
-		containerDiv.innerHTML = data;
-		editorElement.insertBefore(containerDiv, editorElement.childNodes[0]);
-
-		//Init the Coveo search
-		var root = document.getElementById('__search');
-		Coveo.SearchEndpoint.endpoints['extensions'] = new Coveo.SearchEndpoint({
-			restUri: `${url}/rest/search`,
-			accessToken: apiKey
-		});
-		Coveo.init(root, {
-			ResultLink: {
-				onClick: function (e, result) {
-					e.preventDefault();
-					resetTestEnv();
-					extensionGalleryOnClick(e, result);
-				}
-			}
-		});
-
-		setupExtensionGalleryModal();
-	});
-}
-
-
-/**
- * Adds the select with options to the page
- * after 350 ms the edit modal started appearing
- *
- */
-function addExtensionSearchToPage() {
-	if (addTimeOut) {
-		clearTimeout(addTimeOut);
-	}
-	addTimeOut = setTimeout(function () {
-		//If its opening
-		if ($('#EditExtensionComponent').length && !$('#__modalButton')[0]) {
-			createExtensionGalleryModal();
-		}
-	}, 350);
-}
-
-
-
-
-
-
-
-
-
-
-
+let TEST_CONFIG = {
+	apiKey: null,
+	platformUrl: null
+};
 
 
 /*
@@ -189,36 +13,130 @@ function addExtensionSearchToPage() {
  *
  */
 
+/**
+ * Gets the access token of the user from the document cookies
+ *
+ * https://stackoverflow.com/questions/5142337/read-a-javascript-cookie-by-name
+ *
+ * @returns The access token
+ */
+let getCookieApiKey = () => {
+	let cookiestring = RegExp('' + 'access_token' + '[^;]+').exec(document.cookie);
+	return decodeURIComponent(!!cookiestring ? cookiestring.toString().replace(/^[^=]+./, '') : '');
+};
 
 /**
- * The onclick for the test button
+ * Gets the current org from the url
  *
- * @param {object} element - The row element
+ * @returns {string} The org string
  */
-function testButtonsOnClick(element) {
-	let extId = $('.extension-name .second-row', element).text().trim();
-	$('#__tab1').click();
-	$('#__testDocId').val('');
-	$('#__extName').text($('.extension-name .first-row', element).text().trim());
-	launchTestModal(extId);
-}
+let getCurrentOrg = () => {
+	return window.location.hash.substring(1).split('/')[0];
+};
+
+let getParameterNameForStorage = ()=> {
+	let extName = $('#__extName').text(),
+		name = 'parameters_' + (extName||'').replace(/[^\w]/g,'_');
+	return name;
+};
+
+// Set the name for the parameter list based on extension names.
+let getStorageDefinitionForParameters = (json) => {
+	let def = {},
+		name = getParameterNameForStorage();
+
+	if (json) {
+		json = JSON.stringify(json);
+	}
+
+	def[name] = json || '';  // default to empty string.
+	return def;
+};
 
 
 /**
- * Opens the testing modal with the specific extension to test
- *
- * @param {string} extensionId - The extension id
+ * Resets the results of the previous tests
  */
-function launchTestModal(extensionId) {
-	let modal = document.getElementById('__contentModal');
-	modal.style.display = 'block';
-	$('#__currentExtension').text(extensionId);
-}
+let resetTestEnv = () => {
+	$('#__testResults').text('');
+	$('#__originalFile, #__extensionTesterErrors').html('');
+};
+
+let validateDocId = () => {
+	if ($('#__testDocId').val()) {
+		$('#__runTests').removeAttr('disabled');
+	}
+	else {
+		$('#__runTests').prop('disabled', 'disabled');
+	}
+};
+
+let setDocId = docId => {
+	$('#__testDocId').val(docId);
+	validateDocId();
+};
+
+
+let validateParameters = () => {
+	let $ta = $('#__parametersForTest textarea');
+	let v = $ta.val().trim();
+	if (!v) {
+		$ta.removeClass('invalid');
+		$ta.addClass('valid');
+	}
+	else {
+		try {
+			JSON.parse(v);
+			$ta.removeClass('invalid');
+			$ta.addClass('valid');
+		}
+		catch (e) {
+			$ta.addClass('invalid');
+			$ta.removeClass('valid');
+		}
+	}
+};
+
+/**
+ * The onclick for the test buttons on the elements, in the Extensions page.
+ *
+ * @param {event} e - The mouse click event
+ */
+let testButtonsOnClick = e => {
+	let $extRow = $(e.target).closest('tr'),
+		extId = $('.extension-name .second-row', $extRow).text().trim(),
+		extName = $('.extension-name .first-row', $extRow).text().trim();
+
+	$('#__tab-select-document').click();
+	setDocId('');
+	$('#__extName').text(extName);
+
+	// get saved parameters from local storage for this extension
+	chrome.storage.local.get( getStorageDefinitionForParameters(),
+		items => {
+			try {
+				let paramName = getParameterNameForStorage(), v = items[paramName] || '';
+				if (v) {
+					v = JSON.stringify(JSON.parse(v), 2, 2);
+				}
+				$('#__parametersForTest textarea').val(v);
+			}
+			catch (e) {
+				$('#__parametersForTest textarea').val('');
+			}
+			validateParameters();
+		}
+	);
+
+
+	// Show modal
+	$('#__contentModal').show();
+	$('#__currentExtension').text(extId);
+};
 
 
 /**
  * Add test modal to page
- *
  */
 function addTestModal() {
 	$.get(chrome.extension.getURL('/html/content-search.html'), function (data) {
@@ -234,12 +152,13 @@ function addTestModal() {
 
 		$('#__runTests').click(runTest);
 
+		// Show modal
 		let currentOrg = getCurrentOrg();
-		let modal = document.getElementById('__contentModal');
+		let modal = $('#__contentModal');
 		let span = document.getElementsByClassName('__close');
 
-		let hideModal = ()=>{
-			modal.style.display = 'none';
+		let hideModal = () => {
+			modal.hide();
 		};
 
 		for (var i = 0; i < span.length; i++) {
@@ -247,7 +166,7 @@ function addTestModal() {
 			element.onclick = hideModal;
 		}
 
-		modal.onclick = function (event) {
+		modal.onclick = event => {
 			if (event.target === modal) {
 				hideModal();
 			}
@@ -267,9 +186,9 @@ function addTestModal() {
 			ResultLink: {
 				onClick: function (e, result) {
 					e.preventDefault();
-					$('#__testDocId').val(result.uniqueId);
+					setDocId(result.uniqueId);
 					resetTestEnv();
-					$('#__tab2').click();
+					$('#__tab-test').click();
 					// Give the option to pass parameters before triggering the test
 					// $('#__runTests').click();
 				}
@@ -277,31 +196,11 @@ function addTestModal() {
 		});
 		let testSection = document.getElementById('__testSection');
 		Coveo.init(testSection);
+
+		$('#__testDocId').on('input', validateDocId);
+		let $ta = $('#__parametersForTest textarea');
+		$ta.on('input', validateParameters);
 	});
-}
-
-/**
- * Gets the access token of the user from the document cookies
- *
- * https://stackoverflow.com/questions/5142337/read-a-javascript-cookie-by-name
- *
- * @returns The access token
- */
-function getCookieApiKey() {
-	let cookiestring = RegExp('' + 'access_token' + '[^;]+').exec(document.cookie);
-	return unescape(!!cookiestring ? cookiestring.toString().replace(/^[^=]+./, '') : '');
-}
-
-
-
-/**
- * Resets the results of the previous tests
- *
- */
-function resetTestEnv() {
-	$('#__testResults').text('');
-	$('#__originalFile').html('');
-	$('#__extensionTesterErrors').html('');
 }
 
 
@@ -326,9 +225,26 @@ function runTest() {
 	let documentUrl = `https://${location.host}/rest/search/document?uniqueId=${encodeURIComponent(uniqueId)}&access_token=${apiTestsKey}&organizationId=${currentOrg}`;
 	let extensionSettingsUrl = `https://${location.host}/rest/organizations/${currentOrg}/extensions/${extensionId}`;
 	let docUri = '';
-	let errorBannerElement = $('#__extensionTesterErrors');
-	errorBannerElement.empty();
-	var toSendData = {
+
+	// clear previous messages
+	$('#__extensionTesterErrors').empty();
+
+	/**
+	 * Add an error message to the test
+	 *
+	 * @param {string} msg - The error message
+	 * @param {boolean} isWarning - True if is warning, else error
+	 */
+	let addMessage = (msg, isWarning) => {
+		$('#__extensionTesterErrors').append(`
+			<div class='banner flex center-align bg-${isWarning === true ? 'yellow' : 'red'}'>
+				<div class="banner-description">
+					<p>${msg}</p>
+				</div>
+			</div>`);
+	};
+
+	let toSendData = {
 		"document": {
 			"permissions": [],
 			"metadata": [{
@@ -487,7 +403,7 @@ function runTest() {
 			dataType: 'html',
 			success: function (data) {
 				toSendData.document.dataStreams[0].Values['DOCUMENT_DATA'] = {
-					'inlineContent': base64Encode(data),
+					'inlineContent': EncodeHelper.base64(data),
 					'compression': 'UNCOMPRESSED'
 				};
 			},
@@ -550,7 +466,7 @@ function runTest() {
 					//If it find no statusCode, meaning it was successful
 					if (!data.status) {
 						toSendData.document.dataStreams[0].Values['BODY_TEXT'] = {
-							'inlineContent': btoa(unicodeEscape(data.content)),
+							'inlineContent': btoa(EncodeHelper.unicodeEscape(data.content)),
 							'compression': 'UNCOMPRESSED'
 						};
 					}
@@ -587,8 +503,9 @@ function runTest() {
 				if (data) {
 					//If it find no statusCode, meaning it was successful
 					if (!data.status) {
+						let utf8bytes = unescape(encodeURIComponent(data));
 						toSendData.document.dataStreams[0].Values['BODY_HTML'] = {
-							'inlineContent': btoa(unescape(encodeURIComponent(data))),
+							'inlineContent': btoa(utf8bytes),
 							'compression': 'UNCOMPRESSED'
 						};
 					}
@@ -658,13 +575,23 @@ function runTest() {
 					if ($('#__originalLink').length) {
 						$('#__originalLink').val(docUri);
 					}
-					//Build the document metadata
-					let parameters = $('.CoveoParameterList').coveo('get');
-					if (parameters) {
-						toSendData.parameters = parameters.getParameterPayload();
+					try {
+						let paramsText = $('#__parametersForTest textarea').val();
+						let json = paramsText ? JSON.parse(paramsText) : {};
+						toSendData.parameters = json;
+
+						$('#__parametersForTest textarea').val(JSON.stringify(json, 2, 2));
+						chrome.storage.local.set( getStorageDefinitionForParameters(json) );
+					}
+					catch (e) {
+						toSendData.parameters = {};
+						console.warn(e);
 					}
 
-					function addToJson(valueToAdd, addKey) {
+					//Build the document metadata
+					console.log('PARAMETERS: ', toSendData.parameters);
+
+					let addToJson = (valueToAdd, addKey) => {
 						if (valueToAdd && valueToAdd.length) {
 							if (valueToAdd.constructor === Array) {
 								toSendData.document.metadata[0].Values[addKey] = valueToAdd;
@@ -678,7 +605,7 @@ function runTest() {
 								toSendData.document.metadata[0].Values[addKey] = [valueToAdd];
 							}
 						}
-					}
+					};
 					addToJson(data);
 				}
 			},
@@ -695,7 +622,6 @@ function runTest() {
 	/**
 	 * Sends the ajax request to the extension tester with
 	 * all the metadata added
-	 *
 	 */
 	function runTestAjax() {
 		$.ajax({
@@ -722,24 +648,6 @@ function runTest() {
 		});
 	}
 
-
-	/**
-	 * Add an error message to the test
-	 *
-	 * @param {string} msg - The error message
-	 * @param {boolean} isWarning - True if is warning, else error
-	 */
-	function addMessage(msg, isWarning) {
-		let message =
-			`
-		<div class='banner flex center-align bg-${isWarning === true ? 'yellow' : 'red'}'>
-			<div class="banner-description">
-				<p>${msg}</p>
-			</div>
-		</div>
-		`;
-		errorBannerElement.append(message);
-	}
 }
 
 
@@ -747,37 +655,34 @@ function runTest() {
  * Adds the Test buttons in the table of the extensions
  *
  */
-function addTestButtonsToPage() {
-	//Do this first, since it will be called multiple times
-	//before the async function is done below
-	//This is to ensure we don't get multiple columns
-	$('#extensions').attr('__modified', true);
-	if ($('#__testHeader').length === 0) {
-		$($('#extensions')[0].children[0].children[0]).append('<th id="__testHeader">Tests</th>');
+let addTestButtonsToPage = () => {
+	// Do this first, since it will be called multiple times before the async function is done below
+
+	// This is to ensure we don't get multiple columns
+	let $table = $('#extensions');
+	$table.attr('__modified', true);
+
+	if ( $('tbody tr.empty', $table).length ) {
+		// no extensions, don't need to add buttons or header
+		return;
 	}
-	for (let i = 0; i < $('#extensions')[0].children[1].children.length; i++) {
-		let element = $('#extensions')[0].children[1].children[i];
-		//If a button is not found and there is an extension present
-		if ($(element).find('.btn').length === 0 && !$(element).hasClass('empty')) {
-			$(element).append(`
-				<td class="col">
-					<div class="wrapper">
-						<div class="btn">Test</div>
-					</div>
-				</td>
-				`);
-			$(element).find('.btn').on('click', function () {
-				testButtonsOnClick(element);
-			});
-		}
-		//Changes the length of "No extensions found" TD when found to occupy space of "Tests" TH
-		//Makes it look better basicly
-		else if ($(element).hasClass('empty')) {
-			let tdElement = $(element).find('td');
-			tdElement.attr('colspan', tdElement.attr('colspan') + 1);
-		}
+
+	// Add 'Tests' column in Extension table header
+	if ( $('#__testHeader', $table).length === 0 ) {
+		$('thead tr', $table).append('<th id="__testHeader">Tests</th>');
 	}
-}
+	// Add Test buttons to each extension
+	$('tbody tr', $table).each( (i,tr)=> {
+		let $tr = $(tr);
+		if ( $('.btn', $tr).length ) {
+			// button is already there
+			return;
+		}
+		let $td = $(`<td class="col"><div class="wrapper"><div class="btn">Test</div></div></td>`);
+		$tr.append($td);
+		$td.on('click', testButtonsOnClick);
+	});
+};
 
 
 
@@ -800,7 +705,6 @@ function addTestButtonsToPage() {
  *
  */
 window.onload = function () {
-
 	$.get(chrome.extension.getURL('/config/config.json'), function (data) {
 		data = JSON.parse(data);
 		//Default values if no values are found
@@ -809,34 +713,31 @@ window.onload = function () {
 			__publicApiKey: data['apiKey'],
 			__searchURL: data['url']
 		}, function (items) {
-			apiKey = items.__publicApiKey;
-			url = items.__searchURL;
-
-			//Checks if there were changes on the page
-			MutationObserver = window.MutationObserver || window.WebKitMutationObserver;
+			TEST_CONFIG.apiKey = items.__publicApiKey;
+			TEST_CONFIG.platformUrl = items.__searchURL;
 
 			let observer = new MutationObserver(function (/*mutations, observer*/) {
 				// If the EditExtensionComponent appears
 				if ($('#EditExtensionComponent').length && $('#CreateExtension').length) {
-					addExtensionSearchToPage();
+					ExtensionGallery.addExtensionSearchToPage();
 				}
 
 				// If extensions appears AND it wasn't already modified by this script
 				if ($('#extensions').length && !$('#extensions').attr('__modified')) {
 
-					if (addTestButtonDelay) {
-						clearTimeout(addTestButtonDelay);
+					if (window._addTestButton_timeout_ref) {
+						clearTimeout(window._addTestButton_timeout_ref);
 					}
-					addTestButtonDelay = setTimeout(function () {
+					window._addTestButton_timeout_ref = setTimeout(()=>{
+						window._addTestButton_timeout_ref = null;
+
 						addTestButtonsToPage();
 						if (!$('#__contentModal').length) {
 							addTestModal();
 						}
 
 						//If a row is added later on, add the buttons
-						$('#extensions').on("DOMNodeInserted", "tr", function () {
-							addTestButtonsToPage();
-						});
+						$('#extensions').on("DOMNodeInserted", "tr", addTestButtonsToPage);
 					}, 100);
 				}
 			});
@@ -851,77 +752,8 @@ window.onload = function () {
 	});
 };
 
-/**
- * Sets the value of the ace editor by injecting JS into the main page
- * WHY JS, WHY
- * but it works...
- * https://stackoverflow.com/questions/3955803/page-variables-in-content-script
- *
- * @param {string} stringToSet - The string to set
- */
-function setAceEditorValue(stringToSet) {
-
-	var scriptContent = `window.ace.edit('AceCodeEditor').setValue(\`${stringToSet}\`)`;
-
-	var script = document.createElement('script');
-	script.id = 'tmpScript';
-	script.appendChild(document.createTextNode(scriptContent));
-	(document.body || document.head || document.documentElement).appendChild(script);
-
-	$('#tmpScript').remove();
-
-}
 
 
-/**
- * Converts a UTF-8 string into UTF-16LE
- * while staying in a UTF-8 context
- *
- * Example:
- * Let's say you have the string "aaaa"
- * The extension tester would take the two first letters and merge them into a chinese symbol
- * So it would look like this: 慡慡
- * When you look at the unicode of those characters, it comes out to: \u6161
- * "61" being the hex of a
- * To combat this, one needs to take the string and add another UTF-8 character to it,
- * so if I wanted the string "aaaa" to appear, I would need to pass the string: "a\0a\0a\0a\0"
- * This string would get converted into the unicode \u6100, which is the letter "a" we're looking for
- * So this code creates a UTF-16 string: \u0061
- * It flips the character: \u6100
- * Encodes each character into ascii: a  (The   being \0)
- * Then it sends it back.
- * This also works with any valid unicode character, so encoding issues shouldn't be present
- *
- * Inspired from
- * https://gist.github.com/mathiasbynens/1243213
- *
- * @param {string} str - The string to convert
- * @returns The UTF-16LE string
- */
-function unicodeEscape(str) {
-	return str.replace(/[\s\S]/g, function (escape) {
-		let code = ('0000' + escape.charCodeAt().toString(16)).slice(-4);
-		code = hex2a(code.substr(2, 2) + code.substr(0, 2));
-		return code;
-	});
-}
-
-
-/**
- * Converts hex to ascii
- * https://stackoverflow.com/questions/3745666/how-to-convert-from-hex-to-ascii-in-javascript
- *
- * @param {string} hexx - the hex
- * @returns ascii value
- */
-function hex2a(hexx) {
-	var hex = hexx.toString();//force conversion
-	var str = '';
-	for (var i = 0; i < hex.length; i += 2) {
-		str += String.fromCharCode(parseInt(hex.substr(i, 2), 16));
-	}
-	return str;
-}
 
 //https://stackoverflow.com/questions/23013871/how-to-parse-into-base64-string-the-binary-image-from-response
 function fetchBlob(uri, callback) {
@@ -943,52 +775,4 @@ function fetchBlob(uri, callback) {
 		}
 	};
 	xhr.send();
-}
-
-
-/**
- * Gets the current org from the url
- *
- * @returns {string} The org string
- */
-function getCurrentOrg() {
-	return window.location.hash.substring(1).split('/')[0];
-}
-
-
-/**
- * A better btoa() function that doesn't crash everytime...
- *
- * https://stackoverflow.com/questions/19124701/get-image-using-jquery-ajax-and-decode-it-to-base64
- *
- * @param {string} str - The string to encode
- * @returns The base64 encoded string
- */
-function base64Encode(str) {
-	/*jslint bitwise: true */
-	var CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-	var out = "", i = 0, len = str.length, c1, c2, c3;
-	while (i < len) {
-		c1 = (str.charCodeAt(i++) & 0xff);
-		if (i === len) {
-			out += CHARS.charAt(c1 >> 2);
-			out += CHARS.charAt((c1 & 0x3) << 4);
-			out += "==";
-			break;
-		}
-		c2 = str.charCodeAt(i++);
-		if (i === len) {
-			out += CHARS.charAt(c1 >> 2);
-			out += CHARS.charAt(((c1 & 0x3) << 4) | ((c2 & 0xF0) >> 4));
-			out += CHARS.charAt((c2 & 0xF) << 2);
-			out += "=";
-			break;
-		}
-		c3 = str.charCodeAt(i++);
-		out += CHARS.charAt(c1 >> 2);
-		out += CHARS.charAt(((c1 & 0x3) << 4) | ((c2 & 0xF0) >> 4));
-		out += CHARS.charAt(((c2 & 0xF) << 2) | ((c3 & 0xC0) >> 6));
-		out += CHARS.charAt(c3 & 0x3F);
-	}
-	return out;
 }
