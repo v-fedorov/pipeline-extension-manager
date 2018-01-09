@@ -67,9 +67,9 @@ class ExtensionGallery {
     $('#ExtensionName, #ExtensionDescription').val('');
 
     if (uniqueId) {
-      $.get(`${TEST_CONFIG.platformUrl}/rest/search/v2/html?organizationId=extensions&uniqueId=${uniqueId}&access_token=${TEST_CONFIG.apiKey}`,
-        function (data) {
-          ExtensionGallery.setAceEditorValue($(data).contents()[4].innerHTML);
+      $.get(`${TEST_CONFIG.platformUrl}/rest/search/v2/html?organizationId=coveolabspublic&uniqueId=${encodeURIComponent(uniqueId)}&access_token=${TEST_CONFIG.apiKey}`,
+        (data) => {
+          ExtensionGallery.setAceEditorValue( $(data).find('pre').text() );
         }
       );
     }
