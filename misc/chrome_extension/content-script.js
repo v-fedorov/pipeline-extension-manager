@@ -139,7 +139,7 @@ let testButtonsOnClick = e => {
  * Add test modal to page
  */
 function addTestModal() {
-	$.get(chrome.extension.getURL('/html/content-search.html'), function (data) {
+	$.get(chrome.runtime.getURL('/html/content-search.html'), function (data) {
 		$('body').append(data);
 
 		let activateTab = id => {
@@ -344,7 +344,7 @@ function runTest() {
 	 *
 	 */
 	function addOriginalFile() {
-		$.get(chrome.extension.getURL('/html/originalFile.html'), function (data) {
+		$.get(chrome.runtime.getURL('/html/originalFile.html'), function (data) {
 			let originalFileElement = $('#__originalFile');
 			originalFileElement.html(data);
 
@@ -705,18 +705,20 @@ let addTestButtonsToPage = () => {
  *
  */
 window.onload = function () {
-	$.get(chrome.extension.getURL('/config/config.json'), function (data) {
-		data = JSON.parse(data);
+	$.get(chrome.runtime.getURL('/config/config.json'), (data)=>{
+		if (typeof data === 'string') {
+			data = JSON.parse(data);
+		}
 		//Default values if no values are found
 		chrome.storage.local.get({
 			// Public key with only search enabled
 			__publicApiKey: data['apiKey'],
 			__searchURL: data['url']
-		}, function (items) {
+		}, (items) => {
 			TEST_CONFIG.apiKey = items.__publicApiKey;
 			TEST_CONFIG.platformUrl = items.__searchURL;
 
-			let observer = new MutationObserver(function (/*mutations, observer*/) {
+			let observer = new MutationObserver((/*mutations, observer*/)=>{
 				// If the EditExtensionComponent appears
 				if ($('#EditExtensionComponent').length && $('#CreateExtension').length) {
 					ExtensionGallery.addExtensionSearchToPage();
