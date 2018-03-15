@@ -1,12 +1,6 @@
 'use strict';
-// jshint -W110
-/*global chrome, Coveo, EncodeHelper, ExtensionGallery, JSONFormatter, unescape */
-
-let TEST_CONFIG = {
-	apiKey: null,
-	platformUrl: null
-};
-
+// jshint -W110, -W003
+/*global chrome, Coveo, EncodeHelper, ExtensionGallery, JSONFormatter, Headers, unescape */
 
 /*
  * EXTENSION TESTER
@@ -139,8 +133,10 @@ let testButtonsOnClick = e => {
  * Add test modal to page
  */
 function addTestModal() {
-	$.get(chrome.runtime.getURL('/html/content-search.html'), function (data) {
-		$('body').append(data);
+	fetch(chrome.runtime.getURL('/html/content-search.html'))
+	.then(res=>res.text())
+	.then(function (body) {
+		$('body').append(body);
 
 		let activateTab = id => {
 			$('.__selector > .tab-navigation .tab.active, .__selector > .tab-content .tab-pane.active').removeClass('active');
@@ -268,75 +264,76 @@ function runTest() {
 		'metadata': false,
 		'documentData': false
 	};
-	$.ajax({
-		url: extensionSettingsUrl,
-		headers: {
+
+	fetch(extensionSettingsUrl, {
+		headers: new Headers({
 			'Authorization': `Bearer ${apiTestsKey}`,
 			'Accept': 'application/json',
 			'Content-Type': 'application/json'
-		},
-		method: 'GET',
-		dataType: 'json',
-		complete: function () {
-			let counter = 0;
-			let displayedError = false;
-			function wait() {
-				//Wait until all true
-				let areAllRequestsCompleted = Object.keys(requestsReady).every(k => requestsReady[k]);
-				if (areAllRequestsCompleted) {
-					//Clears the original file selector, since we already have the extracted data
-					$('#__originalFile').html('');
-					runTestAjax();
-				}
-				else {
-					counter++;
-					if (counter > 500 && !displayedError) {
-						addMessage('Something might have gone wrong, check the console for errors');
-						displayedError = true;
-					}
-					setTimeout(wait, 100);
-				}
+		}),
+		method: 'GET'
+	})
+	.then(res=>res.json())
+	.catch(()=>{
+		addMessage('Failed to fetch extension, stopping');
+		loadingElement.css('display', 'none');
+	})
+	.then(data => { // success
+		if (data.requiredDataStreams) {
+			let streams = data.requiredDataStreams;
+			if ( streams.includes('BODY_TEXT') ) {
+				setBodyText();
 			}
-			wait();
-		},
-		success: function (data) {
-			if (data.requiredDataStreams) {
-				if ($.inArray('BODY_TEXT', data.requiredDataStreams) !== -1) {
-					setBodyText();
-				}
-				else {
-					requestsReady.bodyText = true;
-				}
-
-				if ($.inArray('BODY_HTML', data.requiredDataStreams) !== -1) {
-					setBodyHTML();
-				}
-				else {
-					requestsReady.bodyHTML = true;
-				}
-
-				if ($.inArray('THUMBNAIL', data.requiredDataStreams) !== -1) {
-					setThumbnail();
-				}
-				else {
-					requestsReady.thumbnail = true;
-				}
-
-				if ($.inArray('DOCUMENT_DATA', data.requiredDataStreams) !== -1) {
-					addOriginalFile();
-				}
-				else {
-					requestsReady.documentData = true;
-				}
+			else {
+				requestsReady.bodyText = true;
 			}
-			setDocumentMetadata();
-		},
-		error: function () {
-			addMessage('Failed to fetch extension, stopping');
-			loadingElement.css('display', 'none');
+
+			if ( streams.includes('BODY_HTML') ) {
+				setBodyHTML();
+			}
+			else {
+				requestsReady.bodyHTML = true;
+			}
+
+			if ( streams.includes('THUMBNAIL') ) {
+				setThumbnail();
+			}
+			else {
+				requestsReady.thumbnail = true;
+			}
+
+			if ( streams.includes('DOCUMENT_DATA') ) {
+				addOriginalFile();
+			}
+			else {
+				requestsReady.documentData = true;
+			}
 		}
+		setDocumentMetadata();
+	})
+	.then(() => {
+		// complete
+		let counter = 0;
+		let displayedError = false;
+		function wait() {
+			//Wait until all true
+			let areAllRequestsCompleted = Object.keys(requestsReady).every(k => requestsReady[k]);
+			if (areAllRequestsCompleted) {
+				//Clears the original file selector, since we already have the extracted data
+				$('#__originalFile').html('');
+				runTestAjax();
+			}
+			else {
+				counter++;
+				if (counter > 500 && !displayedError) {
+					addMessage('Something might have gone wrong, check the console for errors');
+					displayedError = true;
+				}
+				setTimeout(wait, 100);
+			}
+		}
+		wait();
 	});
-
 
 
 	/**
@@ -344,7 +341,9 @@ function runTest() {
 	 *
 	 */
 	function addOriginalFile() {
-		$.get(chrome.runtime.getURL('/html/originalFile.html'), function (data) {
+		fetch(chrome.runtime.getURL('/html/originalFile.html'))
+		.then(res=>res.text())
+		.then(data => {
 			let originalFileElement = $('#__originalFile');
 			originalFileElement.html(data);
 
@@ -394,26 +393,22 @@ function runTest() {
 	 *
 	 */
 	function useLinkOnClick() {
-		$.ajax({
-			url: $('#__originalLink').val(),
-			headers: {
+		fetch($('#__originalLink').val(), {
+			headers: new Headers({
 				'Access-Control-Allow-Origin': '*'
-			},
-			method: 'GET',
-			dataType: 'html',
-			success: function (data) {
-				toSendData.document.dataStreams[0].Values['DOCUMENT_DATA'] = {
-					'inlineContent': EncodeHelper.base64(data),
-					'compression': 'UNCOMPRESSED'
-				};
-			},
-			error: function (data) {
-				addMessage(`Failed to get URL content: ${data}`);
-			},
-			complete: function () {
-				requestsReady.documentData = true;
-			}
-
+			}),
+			method: 'GET'
+		})
+		.then(res=>res.text())
+		.then(data=>{
+			toSendData.document.dataStreams[0].Values['DOCUMENT_DATA'] = {
+				'inlineContent': EncodeHelper.base64(data),
+				'compression': 'UNCOMPRESSED'
+			};
+			requestsReady.documentData = true;
+		})
+		.catch(data => {
+			addMessage(`Failed to get URL content: ${data}`);
 		});
 	}
 
@@ -453,34 +448,31 @@ function runTest() {
 	 * @returns The ajax request
 	 */
 	function setBodyText() {
-		return $.ajax({
-			url: `https://${location.host}/rest/search/text?access_token=${apiTestsKey}&organizationId=${currentOrg}&uniqueId=${encodeURIComponent(uniqueId)}`,
-			headers: {
+		return fetch(`https://${location.host}/rest/search/text?access_token=${apiTestsKey}&organizationId=${currentOrg}&uniqueId=${encodeURIComponent(uniqueId)}`, {
+			headers: new Headers({
 				'Accept': 'application/json',
 				'Content-Type': 'application/json'
-			},
-			method: 'GET',
-			dataType: 'json',
-			success: function (data) {
-				if (data.content) {
-					//If it find no statusCode, meaning it was successful
-					if (!data.status) {
-						toSendData.document.dataStreams[0].Values['BODY_TEXT'] = {
-							'inlineContent': btoa(EncodeHelper.unicodeEscape(data.content)),
-							'compression': 'UNCOMPRESSED'
-						};
-					}
-					else {
-						addMessage('Extension called for "Body text", but no Body Text exists for this document');
-					}
+			}),
+			method: 'GET'
+		})
+		.then(res=>res.json())
+		.then(data => {
+			if (data.content) {
+				//If it find no statusCode, meaning it was successful
+				if (!data.status) {
+					toSendData.document.dataStreams[0].Values['BODY_TEXT'] = {
+						'inlineContent': btoa(EncodeHelper.unicodeEscape(data.content)),
+						'compression': 'UNCOMPRESSED'
+					};
 				}
-			},
-			error: function () {
-				addMessage('Extension called for "Body text", but no Body Text exists for this document');
-			},
-			complete: function () {
-				requestsReady.bodyText = true;
+				else {
+					addMessage('Extension called for "Body text", but no Body Text exists for this document');
+				}
 			}
+			requestsReady.bodyText = true;
+		})
+		.catch(()=>{
+			addMessage('Extension called for "Body text", but no Body Text exists for this document');
 		});
 	}
 
@@ -491,35 +483,31 @@ function runTest() {
 	 * @returns The ajax request
 	 */
 	function setBodyHTML() {
-		return $.ajax({
-			url: `https://${location.host}/rest/search/html?access_token=${apiTestsKey}&organizationId=${currentOrg}&uniqueId=${encodeURIComponent(uniqueId)}`,
-			headers: {
+		return fetch(`https://${location.host}/rest/search/html?access_token=${apiTestsKey}&organizationId=${currentOrg}&uniqueId=${encodeURIComponent(uniqueId)}`, {
+			headers: new Headers({
 				'Accept': 'application/json',
 				'Content-Type': 'application/json'
-			},
-			method: 'GET',
-			dataType: 'html',
-			success: function (data) {
-				if (data) {
-					//If it find no statusCode, meaning it was successful
-					if (!data.status) {
-						let utf8bytes = unescape(encodeURIComponent(data));
-						toSendData.document.dataStreams[0].Values['BODY_HTML'] = {
-							'inlineContent': btoa(utf8bytes),
-							'compression': 'UNCOMPRESSED'
-						};
-					}
-					else {
-						addMessage('Extension called for "Body HTML", but no Body HTML exists for this document');
-					}
+			})
+		})
+		.then(res=>res.text())
+		.then(data => {
+			if (data) {
+				//If it find no statusCode, meaning it was successful
+				if (!data.status) {
+					let utf8bytes = unescape(encodeURIComponent(data));
+					toSendData.document.dataStreams[0].Values['BODY_HTML'] = {
+						'inlineContent': btoa(utf8bytes),
+						'compression': 'UNCOMPRESSED'
+					};
 				}
-			},
-			error: function () {
-				addMessage('Extension called for "Body HTML", but no Body HTML exists for this document');
-			},
-			complete: function () {
-				requestsReady.bodyHTML = true;
+				else {
+					addMessage('Extension called for "Body HTML", but no Body HTML exists for this document');
+				}
 			}
+			requestsReady.bodyHTML = true;
+		})
+		.catch (()=> {
+				addMessage('Extension called for "Body HTML", but no Body HTML exists for this document');
 		});
 	}
 
@@ -556,66 +544,73 @@ function runTest() {
 	 */
 	function setDocumentMetadata() {
 		//Get the document metadata
-		return $.ajax({
-			url: documentUrl,
-			headers: {
+		return fetch(documentUrl, {
+			headers: new Headers({
 				'Accept': 'application/json',
 				'Content-Type': 'application/json'
-			},
-			method: 'GET',
-			dataType: 'json',
-			success: function (data) {
-				//StatusCode would mean an error
-				if ('statusCode' in data) {
-					$('#__testResults').text('Failed to fetch document\n' + JSON.stringify(data, null, 2));
-					loadingElement.css('display', 'none');
+			}),
+			method: 'GET'
+		})
+		.then(res => res.json())
+		.catch(() => {
+			addMessage('Failed to fetch document metadata');
+		})
+		.then(data => {
+			//StatusCode would mean an error
+			if ('statusCode' in data) {
+				$('#__testResults').text('Failed to fetch document\n' + JSON.stringify(data, null, 2));
+				loadingElement.css('display', 'none');
+			}
+			else {
+				docUri = data.printableUri;
+				if ($('#__originalLink').length) {
+					$('#__originalLink').val(docUri);
 				}
-				else {
-					docUri = data.printableUri;
-					if ($('#__originalLink').length) {
-						$('#__originalLink').val(docUri);
-					}
-					try {
-						let paramsText = $('#__parametersForTest textarea').val();
-						let json = paramsText ? JSON.parse(paramsText) : {};
-						toSendData.parameters = json;
+				try {
+					let paramsText = $('#__parametersForTest textarea').val();
+					let json = paramsText ? JSON.parse(paramsText) : {};
+					toSendData.parameters = json;
 
-						$('#__parametersForTest textarea').val(JSON.stringify(json, 2, 2));
-						chrome.storage.local.set( getStorageDefinitionForParameters(json) );
-					}
-					catch (e) {
-						toSendData.parameters = {};
-						console.warn(e);
-					}
+					$('#__parametersForTest textarea').val(JSON.stringify(json, 2, 2));
+					chrome.storage.local.set( getStorageDefinitionForParameters(json) );
+				}
+				catch (e) {
+					toSendData.parameters = {};
+					console.warn(e);
+				}
 
-					//Build the document metadata
-					console.log('PARAMETERS: ', toSendData.parameters);
-
-					let addToJson = (valueToAdd, addKey) => {
-						if (valueToAdd && valueToAdd.length) {
-							if (valueToAdd.constructor === Array) {
-								toSendData.document.metadata[0].Values[addKey] = valueToAdd;
-							}
-							else if (valueToAdd.constructor === Object) {
-								for (let ckey in valueToAdd) {
-									addToJson(valueToAdd[ckey], ckey);
-								}
-							}
-							else {
-								toSendData.document.metadata[0].Values[addKey] = [valueToAdd];
+				//Build the document metadata
+				let addToJson = (valueToAdd, addKey) => {
+					if (valueToAdd && valueToAdd.length) {
+						if (valueToAdd instanceof Array) {
+							toSendData.document.metadata[0].Values[addKey] = valueToAdd;
+						}
+						else if (valueToAdd instanceof Object) {
+							for (let ckey in valueToAdd) {
+								addToJson(valueToAdd[ckey], ckey);
 							}
 						}
-					};
-					addToJson(data);
+						else if (valueToAdd.constructor === Object) {
+							for (let ckey in valueToAdd) {
+								addToJson(valueToAdd[ckey], ckey);
+							}
+						}
+						else {
+							toSendData.document.metadata[0].Values[addKey] = [valueToAdd];
+						}
+					}
+				};
+				for (let key in data) {
+					addToJson(data[key], key);
 				}
-			},
-			error: function () {
-				addMessage('Failed to fetch document metadata');
-			},
-			complete: function () {
-				requestsReady.metadata = true;
+				for (let key in data.raw) {
+					addToJson(data.raw[key], key);
+				}
 			}
+
+			requestsReady.metadata = true;
 		});
+
 	}
 
 
@@ -624,28 +619,26 @@ function runTest() {
 	 * all the metadata added
 	 */
 	function runTestAjax() {
-		$.ajax({
-			url: testUrl,
-			headers: {
+
+		fetch(testUrl, {
+			method: 'POST', // or 'PUT'
+			body: JSON.stringify(toSendData),
+			headers: new Headers({
 				'Authorization': `Bearer ${apiTestsKey}`,
-				'Accept': 'application/json',
 				'Content-Type': 'application/json'
-			},
-			method: 'POST',
-			dataType: 'json',
-			data: JSON.stringify(toSendData, null, 0),
-			complete: function (data) {
-				if (data.status === 400) {
-					addMessage(data.responseJSON.errorCode);
-				} else if (data.responseJSON.result && data.responseJSON.result.reason) {
-					data.responseJSON.result.reason = unescape(data.responseJSON.result.reason);
-				}
-				//$('#__testResults').text(unescape(JSON.stringify(data.responseJSON, null, 2).replace(/\\\\n/g, '\n').replace(/\\\\\\"/g, '\"')));
-				let formatter = new JSONFormatter(data.responseJSON, Infinity, { hoverPreviewEnabled: false });
-				$('#__testResults').html(formatter.render());
-				loadingElement.css('display', 'none');
-			}
+			})
+		})
+		.then(res => res.json())
+		.catch(error => {
+			console.error('Error:', error);
+			addMessage(error.errorCode);
+		})
+		.then(response => {
+			let formatter = new JSONFormatter(response, Infinity, { hoverPreviewEnabled: false });
+			$('#__testResults').html(formatter.render());
+			loadingElement.css('display', 'none');
 		});
+
 	}
 
 }
@@ -704,55 +697,41 @@ let addTestButtonsToPage = () => {
  * Loads the values from the config and inits the mutation obs
  *
  */
-window.onload = function () {
-	$.get(chrome.runtime.getURL('/config/config.json'), (data)=>{
-		if (typeof data === 'string') {
-			data = JSON.parse(data);
+
+function initPipelineExtensionTester() {
+	let observer = new MutationObserver((/*mutations, observer*/)=>{
+		// If the EditExtensionComponent appears
+		if ($('#EditExtensionComponent').length && $('#CreateExtension').length) {
+			ExtensionGallery.addExtensionSearchToPage();
 		}
-		//Default values if no values are found
-		chrome.storage.local.get({
-			// Public key with only search enabled
-			__publicApiKey: data['apiKey'],
-			__searchURL: data['url']
-		}, (items) => {
-			TEST_CONFIG.apiKey = items.__publicApiKey;
-			TEST_CONFIG.platformUrl = items.__searchURL;
 
-			let observer = new MutationObserver((/*mutations, observer*/)=>{
-				// If the EditExtensionComponent appears
-				if ($('#EditExtensionComponent').length && $('#CreateExtension').length) {
-					ExtensionGallery.addExtensionSearchToPage();
+		// If extensions appears AND it wasn't already modified by this script
+		if ($('#extensions').length && !$('#extensions').attr('__modified')) {
+
+			if (window._addTestButton_timeout_ref) {
+				clearTimeout(window._addTestButton_timeout_ref);
+			}
+			window._addTestButton_timeout_ref = setTimeout(()=>{
+				window._addTestButton_timeout_ref = null;
+
+				addTestButtonsToPage();
+				if (!$('#__contentModal').length) {
+					addTestModal();
 				}
 
-				// If extensions appears AND it wasn't already modified by this script
-				if ($('#extensions').length && !$('#extensions').attr('__modified')) {
-
-					if (window._addTestButton_timeout_ref) {
-						clearTimeout(window._addTestButton_timeout_ref);
-					}
-					window._addTestButton_timeout_ref = setTimeout(()=>{
-						window._addTestButton_timeout_ref = null;
-
-						addTestButtonsToPage();
-						if (!$('#__contentModal').length) {
-							addTestModal();
-						}
-
-						//If a row is added later on, add the buttons
-						$('#extensions').on("DOMNodeInserted", "tr", addTestButtonsToPage);
-					}, 100);
-				}
-			});
-
-			// define what element should be observed by the observer
-			// and what types of mutations trigger the callback
-			observer.observe(document, {
-				subtree: true,
-				attributes: true
-			});
-		});
+				//If a row is added later on, add the buttons
+				$('#extensions').on("DOMNodeInserted", "tr", addTestButtonsToPage);
+			}, 100);
+		}
 	});
-};
+
+	// define what element should be observed by the observer
+	// and what types of mutations trigger the callback
+	observer.observe(document, {
+		subtree: true,
+		attributes: true
+	});
+}
 
 
 
@@ -777,4 +756,10 @@ function fetchBlob(uri, callback) {
 		}
 	};
 	xhr.send();
+}
+
+
+// load it only in /admin/ extensions page.
+if ( /https:\/\/platform\w*\.cloud.coveo.com\/admin\/.*\/extensions\//.test(window.location.href) ) {
+	window.addEventListener("load", initPipelineExtensionTester);
 }
