@@ -2,7 +2,12 @@
  *	EXTENSION GALLERY
  */
 
-/*global chrome, Coveo, TEST_CONFIG, resetTestEnv */
+/*global chrome, Coveo, resetTestEnv */
+
+let TEST_CONFIG = {
+	apiKey: 'xxba74c99f-4825-486f-bd24-61815c2968fe',
+	platformUrl: 'https://platform.cloud.coveo.com'
+};
 
 class ExtensionGallery {
 
