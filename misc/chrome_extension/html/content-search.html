@@ -5,7 +5,7 @@
 	<div class="__modal-content __animateBottom __selector">
 		<span class="__close">&times;</span>
 
-		<h1 class="inline bold text-medium-blue">Extension tester&nbsp;&nbsp;-&nbsp;&nbsp;
+		<h1 class="inline bold text-medium-blue">Extension tester &nbsp;&nbsp;-&nbsp;&nbsp;
 			<span id="__extName"></span>
 		</h1>
 		<h4 class="admin-description text-dark-grey">Click on a document to test it with the extension</h4>
@@ -30,7 +30,7 @@
 						<span class='sync-feedback-text'>No API key found, please add one in the settings tab.</span>
 					</div>
 
-					<div id="__orgContent" class="CoveoSearchInterface" data-enable-history="false" data-design="new" data-endpoint="orgContent">
+					<div id="__orgContent" class="CoveoSearchInterface coveo-after-initialization" data-enable-history="false" data-design="new" data-endpoint="orgContent">
 
 						<div class="coveo-search-section">
 							<div class="CoveoSearchbox" data-enable-omnibox="true"></div>
@@ -115,7 +115,7 @@
 
 			</div>
 			<div data-tab="__tab-test" class="tab-pane">
-				<div id="__testSection" data-endpoint="orgContent" class="mod-header-padding mod-form-top-bottom-padding">
+				<div id="__testSection" data-endpoint="orgContent" class="mod-header-padding mod-form-top-bottom-padding coveo-after-initialization">
 					<div class="coveo-form">
 						<div class="flex-row">
 							<fieldset class="input-field form-group flex1">
@@ -159,8 +159,8 @@
 
 					</div>
 				</div>
-			</div>
-		</div>
+			</div><!-- tab-pane -->
+		</div><!-- tab-content -->
 
 	</div>
 </div>
