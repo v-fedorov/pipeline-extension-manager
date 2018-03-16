@@ -30,7 +30,8 @@
 						<span class='sync-feedback-text'>No API key found, please add one in the settings tab.</span>
 					</div>
 
-					<div id="__orgContent" class="CoveoSearchInterface coveo-after-initialization" data-enable-history="false" data-design="new" data-endpoint="orgContent">
+					<div id="__orgContent" class="CoveoSearchInterface coveo-after-initialization" data-enable-history="false" data-design="new"
+					  data-endpoint="orgContent">
 
 						<div class="coveo-search-section">
 							<div class="CoveoSearchbox" data-enable-omnibox="true"></div>
@@ -88,79 +89,82 @@
 															<div class="CoveoFieldValue" data-field="@filetype" data-text-caption="File type:"></div>
 														</div>
 													</div>
+												</div>
 											</div>
-										</div>
 									</script>
+									</div>
+									<div class="CoveoPager"></div>
+									<div class="CoveoResultsPerPage"></div>
 								</div>
-								<div class="CoveoPager"></div>
-								<div class="CoveoResultsPerPage"></div>
+
 							</div>
-
 						</div>
+
 					</div>
-
 				</div>
-			</div>
-			<div data-tab="__tab-parameters" class="tab-pane">
-				<br>
-				<h3>If this extension is using parameters, you can define them here for your test using JSON.</h3>
-				<br><br>
+				<div data-tab="__tab-parameters" class="tab-pane">
+					<br>
+					<h3>If this extension is using parameters, you can define them here for your test using JSON.</h3>
+					<br>
+					<br>
 
-				<div id="__parametersForTest" name="parametersForTest" class="input-field form-group mod-resizeable validate js-autosized ParametersJson">
+					<div id="__parametersForTest" name="parametersForTest" class="input-field form-group mod-resizeable validate js-autosized ParametersJson">
 						<textarea placeholder="Parameters as JSON" required=""></textarea>
 						<label for="__parametersForTest">
-								Parameters (JSON)
+							Parameters (JSON)
 						</label>
+					</div>
+
 				</div>
+				<div data-tab="__tab-test" class="tab-pane">
+					<div id="__testSection" data-endpoint="orgContent" class="mod-header-padding mod-form-top-bottom-padding coveo-after-initialization">
+						<div class="coveo-form">
+							<div class="flex-row">
+								<fieldset class="input-field form-group flex1">
+									<input type="text" id="__testDocId" required placeholder="uniqueId">
+									<label>Document unique ID</label>
+									<input type="hidden" id="__currentExtension">
+								</fieldset>
+								<button id="__runTests" class="btn mod-primary" style="margin: 15px 0 0 10px;" disabled>Test</button>
+							</div>
 
-			</div>
-			<div data-tab="__tab-test" class="tab-pane">
-				<div id="__testSection" data-endpoint="orgContent" class="mod-header-padding mod-form-top-bottom-padding coveo-after-initialization">
-					<div class="coveo-form">
-						<div class="flex-row">
-							<fieldset class="input-field form-group flex1">
-								<input type="text" id="__testDocId" required placeholder="uniqueId">
-								<label>Document unique ID</label>
-								<input type="hidden" id="__currentExtension">
+							<fieldset class="form-group">
+								<div id="__originalFile"></div>
 							</fieldset>
-							<button id="__runTests" class="btn mod-primary" style="margin: 15px 0 0 10px;" disabled>Test</button>
-						</div>
 
-						<fieldset class="form-group">
-							<div id="__originalFile"></div>
-						</fieldset>
+							<fieldset class="form-group">
+								<div class='banner flex center-align bg-yellow'>
+									<div class="banner-description">
+										<p title="Example: Youtube has a mapping for the meta coveo_likecount and maps it to the field (meta) ytlikecount, if you were to use coveo_likecount in your script, you wouldn't get a value"
+										  data-placement="down">Warning: not all metadata is present compared to a real extension, only indexed metadata can be used (hover for
+											example)
+										</p>
+									</div>
+								</div>
+								<div id="__extensionTesterErrors"></div>
+							</fieldset>
 
-						<fieldset class="form-group">
-							<div class='banner flex center-align bg-yellow'>
-								<div class="banner-description">
-									<p title="Example: Youtube has a mapping for the meta coveo_likecount and maps it to the field (meta) ytlikecount, if you were to use coveo_likecount in your script, you wouldn't get a value"
-									 data-placement="down">Warning: not all metadata is present compared to a real extension, only indexed metadata can be used (hover for
-										example)
-									</p>
+							<div class="loading-prompt" id="__testLoading" style="display:none;">
+								<div>Running test. Please wait.</div>
+								<div class="spinner">
+									<div class="bounce1"></div>
+									<div class="bounce2"></div>
+									<div class="bounce3"></div>
 								</div>
 							</div>
-							<div id="__extensionTesterErrors"></div>
-						</fieldset>
 
-						<div class="loading-prompt" id="__testLoading" style="display:none;">
-							<div>Running test. Please wait.</div>
-							<div class="spinner">
-								<div class="bounce1"></div>
-								<div class="bounce2"></div>
-								<div class="bounce3"></div>
-							</div>
+							<br>
+
+							<fieldset class="form-group">
+								<pre id="__testResults" style="white-space: pre-wrap; word-wrap:break-word;"></pre>
+							</fieldset>
+
 						</div>
-
-						<br>
-
-						<fieldset class="form-group">
-							<pre id="__testResults" style="white-space: pre-wrap; word-wrap:break-word;"></pre>
-						</fieldset>
-
 					</div>
 				</div>
-			</div><!-- tab-pane -->
-		</div><!-- tab-content -->
+				<!-- tab-pane -->
+			</div>
+			<!-- tab-content -->
 
+		</div>
 	</div>
-</div>

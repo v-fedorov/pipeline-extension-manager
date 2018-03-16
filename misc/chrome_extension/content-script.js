@@ -28,9 +28,9 @@ let getCurrentOrg = () => {
 	return window.location.hash.substring(1).split('/')[0];
 };
 
-let getParameterNameForStorage = ()=> {
+let getParameterNameForStorage = () => {
 	let extName = $('#__extName').text(),
-		name = 'parameters_' + (extName||'').replace(/[^\w]/g,'_');
+		name = 'parameters_' + (extName || '').replace(/[^\w]/g, '_');
 	return name;
 };
 
@@ -106,7 +106,7 @@ let testButtonsOnClick = e => {
 	$('#__extName').text(extName);
 
 	// get saved parameters from local storage for this extension
-	chrome.storage.local.get( getStorageDefinitionForParameters(),
+	chrome.storage.local.get(getStorageDefinitionForParameters(),
 		items => {
 			try {
 				let paramName = getParameterNameForStorage(), v = items[paramName] || '';
@@ -134,69 +134,69 @@ let testButtonsOnClick = e => {
  */
 function addTestModal() {
 	fetch(chrome.runtime.getURL('/html/content-search.html'))
-	.then(res=>res.text())
-	.then(function (body) {
-		$('body').append(body);
+		.then(res => res.text())
+		.then(function (body) {
+			$('body').append(body);
 
-		let activateTab = id => {
-			$('.__selector > .tab-navigation .tab.active, .__selector > .tab-content .tab-pane.active').removeClass('active');
-			$(`#${id},[data-tab=${id}]`).addClass('active');
-		};
-		$('.__selector > .tab-navigation .tab.enabled').on('click', data => {
-			activateTab(data.target.id);
-		});
+			let activateTab = id => {
+				$('.__selector > .tab-navigation .tab.active, .__selector > .tab-content .tab-pane.active').removeClass('active');
+				$(`#${id},[data-tab=${id}]`).addClass('active');
+			};
+			$('.__selector > .tab-navigation .tab.enabled').on('click', data => {
+				activateTab(data.target.id);
+			});
 
-		$('#__runTests').click(runTest);
+			$('#__runTests').click(runTest);
 
-		// Show modal
-		let currentOrg = getCurrentOrg();
-		let modal = $('#__contentModal');
-		let span = document.getElementsByClassName('__close');
+			// Show modal
+			let currentOrg = getCurrentOrg();
+			let modal = $('#__contentModal');
+			let span = document.getElementsByClassName('__close');
 
-		let hideModal = () => {
-			modal.hide();
-		};
+			let hideModal = () => {
+				modal.hide();
+			};
 
-		for (var i = 0; i < span.length; i++) {
-			var element = span[i];
-			element.onclick = hideModal;
-		}
-
-		modal.onclick = event => {
-			if (event.target === modal) {
-				hideModal();
+			for (var i = 0; i < span.length; i++) {
+				var element = span[i];
+				element.onclick = hideModal;
 			}
-		};
 
-		let root = document.getElementById('__orgContent');
-		Coveo.SearchEndpoint.endpoints['orgContent'] = new Coveo.SearchEndpoint({
-			restUri: `https://${location.host}/rest/search`,
-			accessToken: getCookieApiKey(),
-			anonymous: false,
-			isGuestUser: false,
-			queryStringArguments: {
-				organizationId: currentOrg
-			}
-		});
-		Coveo.init(root, {
-			ResultLink: {
-				onClick: function (e, result) {
-					e.preventDefault();
-					setDocId(result.uniqueId);
-					resetTestEnv();
-					$('#__tab-test').click();
-					// Give the option to pass parameters before triggering the test
-					// $('#__runTests').click();
+			modal.onclick = event => {
+				if (event.target === modal) {
+					hideModal();
 				}
-			}
-		});
-		let testSection = document.getElementById('__testSection');
-		Coveo.init(testSection);
+			};
 
-		$('#__testDocId').on('input', validateDocId);
-		let $ta = $('#__parametersForTest textarea');
-		$ta.on('input', validateParameters);
-	});
+			let root = document.getElementById('__orgContent');
+			Coveo.SearchEndpoint.endpoints['orgContent'] = new Coveo.SearchEndpoint({
+				restUri: `https://${location.host}/rest/search`,
+				accessToken: getCookieApiKey(),
+				anonymous: false,
+				isGuestUser: false,
+				queryStringArguments: {
+					organizationId: currentOrg
+				}
+			});
+			Coveo.init(root, {
+				ResultLink: {
+					onClick: function (e, result) {
+						e.preventDefault();
+						setDocId(result.uniqueId);
+						resetTestEnv();
+						$('#__tab-test').click();
+						// Give the option to pass parameters before triggering the test
+						// $('#__runTests').click();
+					}
+				}
+			});
+			let testSection = document.getElementById('__testSection');
+			Coveo.init(testSection);
+
+			$('#__testDocId').on('input', validateDocId);
+			let $ta = $('#__parametersForTest textarea');
+			$ta.on('input', validateParameters);
+		});
 }
 
 
@@ -273,67 +273,67 @@ function runTest() {
 		}),
 		method: 'GET'
 	})
-	.then(res=>res.json())
-	.catch(()=>{
-		addMessage('Failed to fetch extension, stopping');
-		loadingElement.css('display', 'none');
-	})
-	.then(data => { // success
-		if (data.requiredDataStreams) {
-			let streams = data.requiredDataStreams;
-			if ( streams.includes('BODY_TEXT') ) {
-				setBodyText();
-			}
-			else {
-				requestsReady.bodyText = true;
-			}
-
-			if ( streams.includes('BODY_HTML') ) {
-				setBodyHTML();
-			}
-			else {
-				requestsReady.bodyHTML = true;
-			}
-
-			if ( streams.includes('THUMBNAIL') ) {
-				setThumbnail();
-			}
-			else {
-				requestsReady.thumbnail = true;
-			}
-
-			if ( streams.includes('DOCUMENT_DATA') ) {
-				addOriginalFile();
-			}
-			else {
-				requestsReady.documentData = true;
-			}
-		}
-		setDocumentMetadata();
-	})
-	.then(() => {
-		// complete
-		let counter = 0;
-		let displayedError = false;
-		function wait() {
-			//Wait until all true
-			let areAllRequestsCompleted = Object.keys(requestsReady).every(k => requestsReady[k]);
-			if (areAllRequestsCompleted) {
-				//Clears the original file selector, since we already have the extracted data
-				$('#__originalFile').html('');
-				runTestAjax();
-			}
-			else {
-				counter++;
-				if (counter > 500 && !displayedError) {
-					addMessage('Something might have gone wrong, check the console for errors');
-					displayedError = true;
+		.then(res => res.json())
+		.catch(() => {
+			addMessage('Failed to fetch extension, stopping');
+			loadingElement.css('display', 'none');
+		})
+		.then(data => { // success
+			if (data.requiredDataStreams) {
+				let streams = data.requiredDataStreams;
+				if (streams.includes('BODY_TEXT')) {
+					setBodyText();
 				}
-				setTimeout(wait, 100);
+				else {
+					requestsReady.bodyText = true;
+				}
+
+				if (streams.includes('BODY_HTML')) {
+					setBodyHTML();
+				}
+				else {
+					requestsReady.bodyHTML = true;
+				}
+
+				if (streams.includes('THUMBNAIL')) {
+					setThumbnail();
+				}
+				else {
+					requestsReady.thumbnail = true;
+				}
+
+				if (streams.includes('DOCUMENT_DATA')) {
+					addOriginalFile();
+				}
+				else {
+					requestsReady.documentData = true;
+				}
 			}
-		}
-		wait();
-	});
+			setDocumentMetadata();
+		})
+		.then(() => {
+			// complete
+			let counter = 0;
+			let displayedError = false;
+			function wait() {
+				//Wait until all true
+				let areAllRequestsCompleted = Object.keys(requestsReady).every(k => requestsReady[k]);
+				if (areAllRequestsCompleted) {
+					//Clears the original file selector, since we already have the extracted data
+					$('#__originalFile').html('');
+					runTestAjax();
+				}
+				else {
+					counter++;
+					if (counter > 500 && !displayedError) {
+						addMessage('Something might have gone wrong, check the console for errors');
+						displayedError = true;
+					}
+					setTimeout(wait, 100);
+				}
+			}
+			wait();
+		});
 
 
 	/**
@@ -342,47 +342,47 @@ function runTest() {
 	 */
 	function addOriginalFile() {
 		fetch(chrome.runtime.getURL('/html/originalFile.html'))
-		.then(res=>res.text())
-		.then(data => {
-			let originalFileElement = $('#__originalFile');
-			originalFileElement.html(data);
+			.then(res => res.text())
+			.then(data => {
+				let originalFileElement = $('#__originalFile');
+				originalFileElement.html(data);
 
-			//Coveo things (vapor css)
-			$('input[type=file]').change(function () {
-				var fileValue = this.files.length ? this.files[0].name : '';
-				var $input = $(this).closest('.file-input').find('.file-path');
-				$input.val(fileValue);
-				$input.toggleClass('has-file', !!fileValue);
-				$(this).closest('.file-input').find('.clear-file').toggleClass('hidden', !fileValue);
-			});
-			$('.clear-file').click(function () {
-				var $input = $(this).closest('.file-input');
-				var $path = $input.find('.file-path');
+				//Coveo things (vapor css)
+				$('input[type=file]').change(function () {
+					var fileValue = this.files.length ? this.files[0].name : '';
+					var $input = $(this).closest('.file-input').find('.file-path');
+					$input.val(fileValue);
+					$input.toggleClass('has-file', !!fileValue);
+					$(this).closest('.file-input').find('.clear-file').toggleClass('hidden', !fileValue);
+				});
+				$('.clear-file').click(function () {
+					var $input = $(this).closest('.file-input');
+					var $path = $input.find('.file-path');
 
-				$input.find('input[type=file]').val('');
-				$path.val('');
-				$path.removeClass('hasFile');
-				$(this).addClass('hidden');
-			});
+					$input.find('input[type=file]').val('');
+					$path.val('');
+					$path.removeClass('hasFile');
+					$(this).addClass('hidden');
+				});
 
-			let activateTab = id => {
-				$('#__originalFile > .tab-navigation .tab.active, #__originalFile > .tab-content .tab-pane.active').removeClass('active');
-				$(`#${id},[data-tab=${id}]`).addClass('active');
-			};
-			$('#__originalFile > .tab-navigation .tab.enabled').on('click', data => {
-				activateTab(data.target.id);
-			});
-			//Coveo things
+				let activateTab = id => {
+					$('#__originalFile > .tab-navigation .tab.active, #__originalFile > .tab-content .tab-pane.active').removeClass('active');
+					$(`#${id},[data-tab=${id}]`).addClass('active');
+				};
+				$('#__originalFile > .tab-navigation .tab.enabled').on('click', data => {
+					activateTab(data.target.id);
+				});
+				//Coveo things
 
-			$('#__uploadedFile').on('change', handleFileChange);
-			$('#__noFile').click(function () {
-				requestsReady.documentData = true;
+				$('#__uploadedFile').on('change', handleFileChange);
+				$('#__noFile').click(function () {
+					requestsReady.documentData = true;
+				});
+				if (docUri !== "") {
+					$('#__originalLink').val(docUri);
+				}
+				$('#__useLinkBtn').on('click', useLinkOnClick);
 			});
-			if (docUri !== "") {
-				$('#__originalLink').val(docUri);
-			}
-			$('#__useLinkBtn').on('click', useLinkOnClick);
-		});
 	}
 
 
@@ -399,17 +399,17 @@ function runTest() {
 			}),
 			method: 'GET'
 		})
-		.then(res=>res.text())
-		.then(data=>{
-			toSendData.document.dataStreams[0].Values['DOCUMENT_DATA'] = {
-				'inlineContent': EncodeHelper.base64(data),
-				'compression': 'UNCOMPRESSED'
-			};
-			requestsReady.documentData = true;
-		})
-		.catch(data => {
-			addMessage(`Failed to get URL content: ${data}`);
-		});
+			.then(res => res.text())
+			.then(data => {
+				toSendData.document.dataStreams[0].Values['DOCUMENT_DATA'] = {
+					'inlineContent': EncodeHelper.base64(data),
+					'compression': 'UNCOMPRESSED'
+				};
+				requestsReady.documentData = true;
+			})
+			.catch(data => {
+				addMessage(`Failed to get URL content: ${data}`);
+			});
 	}
 
 
@@ -455,25 +455,25 @@ function runTest() {
 			}),
 			method: 'GET'
 		})
-		.then(res=>res.json())
-		.then(data => {
-			if (data.content) {
-				//If it find no statusCode, meaning it was successful
-				if (!data.status) {
-					toSendData.document.dataStreams[0].Values['BODY_TEXT'] = {
-						'inlineContent': btoa(EncodeHelper.unicodeEscape(data.content)),
-						'compression': 'UNCOMPRESSED'
-					};
+			.then(res => res.json())
+			.then(data => {
+				if (data.content) {
+					//If it find no statusCode, meaning it was successful
+					if (!data.status) {
+						toSendData.document.dataStreams[0].Values['BODY_TEXT'] = {
+							'inlineContent': btoa(EncodeHelper.unicodeEscape(data.content)),
+							'compression': 'UNCOMPRESSED'
+						};
+					}
+					else {
+						addMessage('Extension called for "Body text", but no Body Text exists for this document');
+					}
 				}
-				else {
-					addMessage('Extension called for "Body text", but no Body Text exists for this document');
-				}
-			}
-			requestsReady.bodyText = true;
-		})
-		.catch(()=>{
-			addMessage('Extension called for "Body text", but no Body Text exists for this document');
-		});
+				requestsReady.bodyText = true;
+			})
+			.catch(() => {
+				addMessage('Extension called for "Body text", but no Body Text exists for this document');
+			});
 	}
 
 
@@ -489,26 +489,26 @@ function runTest() {
 				'Content-Type': 'application/json'
 			})
 		})
-		.then(res=>res.text())
-		.then(data => {
-			if (data) {
-				//If it find no statusCode, meaning it was successful
-				if (!data.status) {
-					let utf8bytes = unescape(encodeURIComponent(data));
-					toSendData.document.dataStreams[0].Values['BODY_HTML'] = {
-						'inlineContent': btoa(utf8bytes),
-						'compression': 'UNCOMPRESSED'
-					};
+			.then(res => res.text())
+			.then(data => {
+				if (data) {
+					//If it find no statusCode, meaning it was successful
+					if (!data.status) {
+						let utf8bytes = unescape(encodeURIComponent(data));
+						toSendData.document.dataStreams[0].Values['BODY_HTML'] = {
+							'inlineContent': btoa(utf8bytes),
+							'compression': 'UNCOMPRESSED'
+						};
+					}
+					else {
+						addMessage('Extension called for "Body HTML", but no Body HTML exists for this document');
+					}
 				}
-				else {
-					addMessage('Extension called for "Body HTML", but no Body HTML exists for this document');
-				}
-			}
-			requestsReady.bodyHTML = true;
-		})
-		.catch (()=> {
+				requestsReady.bodyHTML = true;
+			})
+			.catch(() => {
 				addMessage('Extension called for "Body HTML", but no Body HTML exists for this document');
-		});
+			});
 	}
 
 
@@ -551,65 +551,65 @@ function runTest() {
 			}),
 			method: 'GET'
 		})
-		.then(res => res.json())
-		.catch(() => {
-			addMessage('Failed to fetch document metadata');
-		})
-		.then(data => {
-			//StatusCode would mean an error
-			if ('statusCode' in data) {
-				$('#__testResults').text('Failed to fetch document\n' + JSON.stringify(data, null, 2));
-				loadingElement.css('display', 'none');
-			}
-			else {
-				docUri = data.printableUri;
-				if ($('#__originalLink').length) {
-					$('#__originalLink').val(docUri);
+			.then(res => res.json())
+			.catch(() => {
+				addMessage('Failed to fetch document metadata');
+			})
+			.then(data => {
+				//StatusCode would mean an error
+				if ('statusCode' in data) {
+					$('#__testResults').text('Failed to fetch document\n' + JSON.stringify(data, null, 2));
+					loadingElement.css('display', 'none');
 				}
-				try {
-					let paramsText = $('#__parametersForTest textarea').val();
-					let json = paramsText ? JSON.parse(paramsText) : {};
-					toSendData.parameters = json;
-
-					$('#__parametersForTest textarea').val(JSON.stringify(json, 2, 2));
-					chrome.storage.local.set( getStorageDefinitionForParameters(json) );
-				}
-				catch (e) {
-					toSendData.parameters = {};
-					console.warn(e);
-				}
-
-				//Build the document metadata
-				let addToJson = (valueToAdd, addKey) => {
-					if (valueToAdd && valueToAdd.length) {
-						if (valueToAdd instanceof Array) {
-							toSendData.document.metadata[0].Values[addKey] = valueToAdd;
-						}
-						else if (valueToAdd instanceof Object) {
-							for (let ckey in valueToAdd) {
-								addToJson(valueToAdd[ckey], ckey);
-							}
-						}
-						else if (valueToAdd.constructor === Object) {
-							for (let ckey in valueToAdd) {
-								addToJson(valueToAdd[ckey], ckey);
-							}
-						}
-						else {
-							toSendData.document.metadata[0].Values[addKey] = [valueToAdd];
-						}
+				else {
+					docUri = data.printableUri;
+					if ($('#__originalLink').length) {
+						$('#__originalLink').val(docUri);
 					}
-				};
-				for (let key in data) {
-					addToJson(data[key], key);
-				}
-				for (let key in data.raw) {
-					addToJson(data.raw[key], key);
-				}
-			}
+					try {
+						let paramsText = $('#__parametersForTest textarea').val();
+						let json = paramsText ? JSON.parse(paramsText) : {};
+						toSendData.parameters = json;
 
-			requestsReady.metadata = true;
-		});
+						$('#__parametersForTest textarea').val(JSON.stringify(json, 2, 2));
+						chrome.storage.local.set(getStorageDefinitionForParameters(json));
+					}
+					catch (e) {
+						toSendData.parameters = {};
+						console.warn(e);
+					}
+
+					//Build the document metadata
+					let addToJson = (valueToAdd, addKey) => {
+						if (valueToAdd && valueToAdd.length) {
+							if (valueToAdd instanceof Array) {
+								toSendData.document.metadata[0].Values[addKey] = valueToAdd;
+							}
+							else if (valueToAdd instanceof Object) {
+								for (let ckey in valueToAdd) {
+									addToJson(valueToAdd[ckey], ckey);
+								}
+							}
+							else if (valueToAdd.constructor === Object) {
+								for (let ckey in valueToAdd) {
+									addToJson(valueToAdd[ckey], ckey);
+								}
+							}
+							else {
+								toSendData.document.metadata[0].Values[addKey] = [valueToAdd];
+							}
+						}
+					};
+					for (let key in data) {
+						addToJson(data[key], key);
+					}
+					for (let key in data.raw) {
+						addToJson(data.raw[key], key);
+					}
+				}
+
+				requestsReady.metadata = true;
+			});
 
 	}
 
@@ -628,16 +628,16 @@ function runTest() {
 				'Content-Type': 'application/json'
 			})
 		})
-		.then(res => res.json())
-		.catch(error => {
-			console.error('Error:', error);
-			addMessage(error.errorCode);
-		})
-		.then(response => {
-			let formatter = new JSONFormatter(response, Infinity, { hoverPreviewEnabled: false });
-			$('#__testResults').html(formatter.render());
-			loadingElement.css('display', 'none');
-		});
+			.then(res => res.json())
+			.catch(error => {
+				console.error('Error:', error);
+				addMessage(error.errorCode);
+			})
+			.then(response => {
+				let formatter = new JSONFormatter(response, Infinity, { hoverPreviewEnabled: false });
+				$('#__testResults').html(formatter.render());
+				loadingElement.css('display', 'none');
+			});
 
 	}
 
@@ -655,19 +655,19 @@ let addTestButtonsToPage = () => {
 	let $table = $('#extensions');
 	$table.attr('__modified', true);
 
-	if ( $('tbody tr.empty', $table).length ) {
+	if ($('tbody tr.empty', $table).length) {
 		// no extensions, don't need to add buttons or header
 		return;
 	}
 
 	// Add 'Tests' column in Extension table header
-	if ( $('#__testHeader', $table).length === 0 ) {
+	if ($('#__testHeader', $table).length === 0) {
 		$('thead tr', $table).append('<th id="__testHeader">Tests</th>');
 	}
 	// Add Test buttons to each extension
-	$('tbody tr', $table).each( (i,tr)=> {
+	$('tbody tr', $table).each((i, tr) => {
 		let $tr = $(tr);
-		if ( $('.btn', $tr).length ) {
+		if ($('.btn', $tr).length) {
 			// button is already there
 			return;
 		}
@@ -699,7 +699,7 @@ let addTestButtonsToPage = () => {
  */
 
 function initPipelineExtensionTester() {
-	let observer = new MutationObserver((/*mutations, observer*/)=>{
+	let observer = new MutationObserver((/*mutations, observer*/) => {
 		// If the EditExtensionComponent appears
 		if ($('#EditExtensionComponent').length && $('#CreateExtension').length) {
 			ExtensionGallery.addExtensionSearchToPage();
@@ -711,7 +711,7 @@ function initPipelineExtensionTester() {
 			if (window._addTestButton_timeout_ref) {
 				clearTimeout(window._addTestButton_timeout_ref);
 			}
-			window._addTestButton_timeout_ref = setTimeout(()=>{
+			window._addTestButton_timeout_ref = setTimeout(() => {
 				window._addTestButton_timeout_ref = null;
 
 				addTestButtonsToPage();
@@ -760,6 +760,6 @@ function fetchBlob(uri, callback) {
 
 
 // load it only in /admin/ extensions page.
-if ( /https:\/\/platform\w*\.cloud.coveo.com\/admin\/.*\/extensions\//.test(window.location.href) ) {
+if (/https:\/\/platform\w*\.cloud.coveo.com\/admin\/.*\/extensions\//.test(window.location.href)) {
 	window.addEventListener("load", initPipelineExtensionTester);
 }

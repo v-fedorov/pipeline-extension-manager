@@ -5,8 +5,8 @@
 /*global chrome, Coveo, resetTestEnv */
 
 let TEST_CONFIG = {
-	apiKey: 'xxba74c99f-4825-486f-bd24-61815c2968fe',
-	platformUrl: 'https://platform.cloud.coveo.com'
+  apiKey: 'xxba74c99f-4825-486f-bd24-61815c2968fe',
+  platformUrl: 'https://platform.cloud.coveo.com'
 };
 
 class ExtensionGallery {
@@ -74,7 +74,7 @@ class ExtensionGallery {
     if (uniqueId) {
       $.get(`${TEST_CONFIG.platformUrl}/rest/search/v2/html?organizationId=coveolabspublic&uniqueId=${encodeURIComponent(uniqueId)}&access_token=${TEST_CONFIG.apiKey}`,
         (data) => {
-          ExtensionGallery.setAceEditorValue( $(data).find('pre').text() );
+          ExtensionGallery.setAceEditorValue($(data).find('pre').text());
         }
       );
     }
@@ -139,7 +139,7 @@ class ExtensionGallery {
     if (window._addExtensionSearchToPage_timeout_ref) {
       clearTimeout(window._addExtensionSearchToPage_timeout_ref);
     }
-    window._addExtensionSearchToPage_timeout_ref = setTimeout(()=>{
+    window._addExtensionSearchToPage_timeout_ref = setTimeout(() => {
       window._addExtensionSearchToPage_timeout_ref = null;
 
       //If its opening

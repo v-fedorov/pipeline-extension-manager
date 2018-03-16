@@ -10,29 +10,27 @@
     "48": "icons/48.png",
     "128": "icons/128.png"
   },
-  "content_scripts": [
-    {
-      "run_at": "document_end",
-      "matches": [
-        "https://platform.cloud.coveo.com/admin/*",
-        "https://platformdev.cloud.coveo.com/admin/*",
-        "https://platformqa.cloud.coveo.com/admin/*",
-        "https://platformhipaa.cloud.coveo.com/admin/*"
-      ],
-      "js": [
-        "js/jquery-3.3.1.min.js",
-        "js/CoveoJsSearch.min.js",
-        "js/json-formatter.js",
-        "js/EncodeHelper.js",
-        "js/ExtensionGallery.js",
-        "content-script.js"
-      ],
-      "css": [
-        "css/inject.css"
-      ],
-      "all_frames": false
-    }
-  ],
+  "content_scripts": [{
+    "run_at": "document_end",
+    "matches": [
+      "https://platform.cloud.coveo.com/admin/*",
+      "https://platformdev.cloud.coveo.com/admin/*",
+      "https://platformqa.cloud.coveo.com/admin/*",
+      "https://platformhipaa.cloud.coveo.com/admin/*"
+    ],
+    "js": [
+      "js/jquery-3.3.1.min.js",
+      "js/CoveoJsSearch.min.js",
+      "js/json-formatter.js",
+      "js/EncodeHelper.js",
+      "js/ExtensionGallery.js",
+      "content-script.js"
+    ],
+    "css": [
+      "css/inject.css"
+    ],
+    "all_frames": false
+  }],
   "permissions": [
     "tabs",
     "storage",
