@@ -1,12 +1,6 @@
 'use strict';
-// jshint -W110
-/*global chrome, Coveo, EncodeHelper, ExtensionGallery, JSONFormatter, unescape */
-
-let TEST_CONFIG = {
-	apiKey: null,
-	platformUrl: null
-};
-
+// jshint -W110, -W003
+/*global chrome, Coveo, EncodeHelper, ExtensionGallery, JSONFormatter, Headers, unescape */
 
 /*
  * EXTENSION TESTER
@@ -34,9 +28,9 @@ let getCurrentOrg = () => {
 	return window.location.hash.substring(1).split('/')[0];
 };
 
-let getParameterNameForStorage = ()=> {
+let getParameterNameForStorage = () => {
 	let extName = $('#__extName').text(),
-		name = 'parameters_' + (extName||'').replace(/[^\w]/g,'_');
+		name = 'parameters_' + (extName || '').replace(/[^\w]/g, '_');
 	return name;
 };
 
@@ -112,7 +106,7 @@ let testButtonsOnClick = e => {
 	$('#__extName').text(extName);
 
 	// get saved parameters from local storage for this extension
-	chrome.storage.local.get( getStorageDefinitionForParameters(),
+	chrome.storage.local.get(getStorageDefinitionForParameters(),
 		items => {
 			try {
 				let paramName = getParameterNameForStorage(), v = items[paramName] || '';
@@ -139,68 +133,70 @@ let testButtonsOnClick = e => {
  * Add test modal to page
  */
 function addTestModal() {
-	$.get(chrome.runtime.getURL('/html/content-search.html'), function (data) {
-		$('body').append(data);
+	fetch(chrome.runtime.getURL('/html/content-search.html'))
+		.then(res => res.text())
+		.then(function (body) {
+			$('body').append(body);
 
-		let activateTab = id => {
-			$('.__selector > .tab-navigation .tab.active, .__selector > .tab-content .tab-pane.active').removeClass('active');
-			$(`#${id},[data-tab=${id}]`).addClass('active');
-		};
-		$('.__selector > .tab-navigation .tab.enabled').on('click', data => {
-			activateTab(data.target.id);
-		});
+			let activateTab = id => {
+				$('.__selector > .tab-navigation .tab.active, .__selector > .tab-content .tab-pane.active').removeClass('active');
+				$(`#${id},[data-tab=${id}]`).addClass('active');
+			};
+			$('.__selector > .tab-navigation .tab.enabled').on('click', data => {
+				activateTab(data.target.id);
+			});
 
-		$('#__runTests').click(runTest);
+			$('#__runTests').click(runTest);
 
-		// Show modal
-		let currentOrg = getCurrentOrg();
-		let modal = $('#__contentModal');
-		let span = document.getElementsByClassName('__close');
+			// Show modal
+			let currentOrg = getCurrentOrg();
+			let modal = $('#__contentModal');
+			let span = document.getElementsByClassName('__close');
 
-		let hideModal = () => {
-			modal.hide();
-		};
+			let hideModal = () => {
+				modal.hide();
+			};
 
-		for (var i = 0; i < span.length; i++) {
-			var element = span[i];
-			element.onclick = hideModal;
-		}
-
-		modal.onclick = event => {
-			if (event.target === modal) {
-				hideModal();
+			for (var i = 0; i < span.length; i++) {
+				var element = span[i];
+				element.onclick = hideModal;
 			}
-		};
 
-		let root = document.getElementById('__orgContent');
-		Coveo.SearchEndpoint.endpoints['orgContent'] = new Coveo.SearchEndpoint({
-			restUri: `https://${location.host}/rest/search`,
-			accessToken: getCookieApiKey(),
-			anonymous: false,
-			isGuestUser: false,
-			queryStringArguments: {
-				organizationId: currentOrg
-			}
-		});
-		Coveo.init(root, {
-			ResultLink: {
-				onClick: function (e, result) {
-					e.preventDefault();
-					setDocId(result.uniqueId);
-					resetTestEnv();
-					$('#__tab-test').click();
-					// Give the option to pass parameters before triggering the test
-					// $('#__runTests').click();
+			modal.onclick = event => {
+				if (event.target === modal) {
+					hideModal();
 				}
-			}
-		});
-		let testSection = document.getElementById('__testSection');
-		Coveo.init(testSection);
+			};
 
-		$('#__testDocId').on('input', validateDocId);
-		let $ta = $('#__parametersForTest textarea');
-		$ta.on('input', validateParameters);
-	});
+			let root = document.getElementById('__orgContent');
+			Coveo.SearchEndpoint.endpoints['orgContent'] = new Coveo.SearchEndpoint({
+				restUri: `https://${location.host}/rest/search`,
+				accessToken: getCookieApiKey(),
+				anonymous: false,
+				isGuestUser: false,
+				queryStringArguments: {
+					organizationId: currentOrg
+				}
+			});
+			Coveo.init(root, {
+				ResultLink: {
+					onClick: function (e, result) {
+						e.preventDefault();
+						setDocId(result.uniqueId);
+						resetTestEnv();
+						$('#__tab-test').click();
+						// Give the option to pass parameters before triggering the test
+						// $('#__runTests').click();
+					}
+				}
+			});
+			let testSection = document.getElementById('__testSection');
+			Coveo.init(testSection);
+
+			$('#__testDocId').on('input', validateDocId);
+			let $ta = $('#__parametersForTest textarea');
+			$ta.on('input', validateParameters);
+		});
 }
 
 
@@ -268,16 +264,55 @@ function runTest() {
 		'metadata': false,
 		'documentData': false
 	};
-	$.ajax({
-		url: extensionSettingsUrl,
-		headers: {
+
+	fetch(extensionSettingsUrl, {
+		headers: new Headers({
 			'Authorization': `Bearer ${apiTestsKey}`,
 			'Accept': 'application/json',
 			'Content-Type': 'application/json'
-		},
-		method: 'GET',
-		dataType: 'json',
-		complete: function () {
+		}),
+		method: 'GET'
+	})
+		.then(res => res.json())
+		.catch(() => {
+			addMessage('Failed to fetch extension, stopping');
+			loadingElement.css('display', 'none');
+		})
+		.then(data => { // success
+			if (data.requiredDataStreams) {
+				let streams = data.requiredDataStreams;
+				if (streams.includes('BODY_TEXT')) {
+					setBodyText();
+				}
+				else {
+					requestsReady.bodyText = true;
+				}
+
+				if (streams.includes('BODY_HTML')) {
+					setBodyHTML();
+				}
+				else {
+					requestsReady.bodyHTML = true;
+				}
+
+				if (streams.includes('THUMBNAIL')) {
+					setThumbnail();
+				}
+				else {
+					requestsReady.thumbnail = true;
+				}
+
+				if (streams.includes('DOCUMENT_DATA')) {
+					addOriginalFile();
+				}
+				else {
+					requestsReady.documentData = true;
+				}
+			}
+			setDocumentMetadata();
+		})
+		.then(() => {
+			// complete
 			let counter = 0;
 			let displayedError = false;
 			function wait() {
@@ -298,45 +333,7 @@ function runTest() {
 				}
 			}
 			wait();
-		},
-		success: function (data) {
-			if (data.requiredDataStreams) {
-				if ($.inArray('BODY_TEXT', data.requiredDataStreams) !== -1) {
-					setBodyText();
-				}
-				else {
-					requestsReady.bodyText = true;
-				}
-
-				if ($.inArray('BODY_HTML', data.requiredDataStreams) !== -1) {
-					setBodyHTML();
-				}
-				else {
-					requestsReady.bodyHTML = true;
-				}
-
-				if ($.inArray('THUMBNAIL', data.requiredDataStreams) !== -1) {
-					setThumbnail();
-				}
-				else {
-					requestsReady.thumbnail = true;
-				}
-
-				if ($.inArray('DOCUMENT_DATA', data.requiredDataStreams) !== -1) {
-					addOriginalFile();
-				}
-				else {
-					requestsReady.documentData = true;
-				}
-			}
-			setDocumentMetadata();
-		},
-		error: function () {
-			addMessage('Failed to fetch extension, stopping');
-			loadingElement.css('display', 'none');
-		}
-	});
-
+		});
 
 
 	/**
@@ -344,46 +341,48 @@ function runTest() {
 	 *
 	 */
 	function addOriginalFile() {
-		$.get(chrome.runtime.getURL('/html/originalFile.html'), function (data) {
-			let originalFileElement = $('#__originalFile');
-			originalFileElement.html(data);
+		fetch(chrome.runtime.getURL('/html/originalFile.html'))
+			.then(res => res.text())
+			.then(data => {
+				let originalFileElement = $('#__originalFile');
+				originalFileElement.html(data);
 
-			//Coveo things (vapor css)
-			$('input[type=file]').change(function () {
-				var fileValue = this.files.length ? this.files[0].name : '';
-				var $input = $(this).closest('.file-input').find('.file-path');
-				$input.val(fileValue);
-				$input.toggleClass('has-file', !!fileValue);
-				$(this).closest('.file-input').find('.clear-file').toggleClass('hidden', !fileValue);
-			});
-			$('.clear-file').click(function () {
-				var $input = $(this).closest('.file-input');
-				var $path = $input.find('.file-path');
+				//Coveo things (vapor css)
+				$('input[type=file]').change(function () {
+					var fileValue = this.files.length ? this.files[0].name : '';
+					var $input = $(this).closest('.file-input').find('.file-path');
+					$input.val(fileValue);
+					$input.toggleClass('has-file', !!fileValue);
+					$(this).closest('.file-input').find('.clear-file').toggleClass('hidden', !fileValue);
+				});
+				$('.clear-file').click(function () {
+					var $input = $(this).closest('.file-input');
+					var $path = $input.find('.file-path');
 
-				$input.find('input[type=file]').val('');
-				$path.val('');
-				$path.removeClass('hasFile');
-				$(this).addClass('hidden');
-			});
+					$input.find('input[type=file]').val('');
+					$path.val('');
+					$path.removeClass('hasFile');
+					$(this).addClass('hidden');
+				});
 
-			let activateTab = id => {
-				$('#__originalFile > .tab-navigation .tab.active, #__originalFile > .tab-content .tab-pane.active').removeClass('active');
-				$(`#${id},[data-tab=${id}]`).addClass('active');
-			};
-			$('#__originalFile > .tab-navigation .tab.enabled').on('click', data => {
-				activateTab(data.target.id);
-			});
-			//Coveo things
+				let activateTab = id => {
+					$('#__originalFile > .tab-navigation .tab.active, #__originalFile > .tab-content .tab-pane.active').removeClass('active');
+					$(`#${id},[data-tab=${id}]`).addClass('active');
+				};
+				$('#__originalFile > .tab-navigation .tab.enabled').on('click', data => {
+					activateTab(data.target.id);
+				});
+				//Coveo things
 
-			$('#__uploadedFile').on('change', handleFileChange);
-			$('#__noFile').click(function () {
-				requestsReady.documentData = true;
+				$('#__uploadedFile').on('change', handleFileChange);
+				$('#__noFile').click(function () {
+					requestsReady.documentData = true;
+				});
+				if (docUri !== "") {
+					$('#__originalLink').val(docUri);
+				}
+				$('#__useLinkBtn').on('click', useLinkOnClick);
 			});
-			if (docUri !== "") {
-				$('#__originalLink').val(docUri);
-			}
-			$('#__useLinkBtn').on('click', useLinkOnClick);
-		});
 	}
 
 
@@ -394,27 +393,23 @@ function runTest() {
 	 *
 	 */
 	function useLinkOnClick() {
-		$.ajax({
-			url: $('#__originalLink').val(),
-			headers: {
+		fetch($('#__originalLink').val(), {
+			headers: new Headers({
 				'Access-Control-Allow-Origin': '*'
-			},
-			method: 'GET',
-			dataType: 'html',
-			success: function (data) {
+			}),
+			method: 'GET'
+		})
+			.then(res => res.text())
+			.then(data => {
 				toSendData.document.dataStreams[0].Values['DOCUMENT_DATA'] = {
 					'inlineContent': EncodeHelper.base64(data),
 					'compression': 'UNCOMPRESSED'
 				};
-			},
-			error: function (data) {
-				addMessage(`Failed to get URL content: ${data}`);
-			},
-			complete: function () {
 				requestsReady.documentData = true;
-			}
-
-		});
+			})
+			.catch(data => {
+				addMessage(`Failed to get URL content: ${data}`);
+			});
 	}
 
 
@@ -453,15 +448,15 @@ function runTest() {
 	 * @returns The ajax request
 	 */
 	function setBodyText() {
-		return $.ajax({
-			url: `https://${location.host}/rest/search/text?access_token=${apiTestsKey}&organizationId=${currentOrg}&uniqueId=${encodeURIComponent(uniqueId)}`,
-			headers: {
+		return fetch(`https://${location.host}/rest/search/text?access_token=${apiTestsKey}&organizationId=${currentOrg}&uniqueId=${encodeURIComponent(uniqueId)}`, {
+			headers: new Headers({
 				'Accept': 'application/json',
 				'Content-Type': 'application/json'
-			},
-			method: 'GET',
-			dataType: 'json',
-			success: function (data) {
+			}),
+			method: 'GET'
+		})
+			.then(res => res.json())
+			.then(data => {
 				if (data.content) {
 					//If it find no statusCode, meaning it was successful
 					if (!data.status) {
@@ -474,14 +469,11 @@ function runTest() {
 						addMessage('Extension called for "Body text", but no Body Text exists for this document');
 					}
 				}
-			},
-			error: function () {
-				addMessage('Extension called for "Body text", but no Body Text exists for this document');
-			},
-			complete: function () {
 				requestsReady.bodyText = true;
-			}
-		});
+			})
+			.catch(() => {
+				addMessage('Extension called for "Body text", but no Body Text exists for this document');
+			});
 	}
 
 
@@ -491,15 +483,14 @@ function runTest() {
 	 * @returns The ajax request
 	 */
 	function setBodyHTML() {
-		return $.ajax({
-			url: `https://${location.host}/rest/search/html?access_token=${apiTestsKey}&organizationId=${currentOrg}&uniqueId=${encodeURIComponent(uniqueId)}`,
-			headers: {
+		return fetch(`https://${location.host}/rest/search/html?access_token=${apiTestsKey}&organizationId=${currentOrg}&uniqueId=${encodeURIComponent(uniqueId)}`, {
+			headers: new Headers({
 				'Accept': 'application/json',
 				'Content-Type': 'application/json'
-			},
-			method: 'GET',
-			dataType: 'html',
-			success: function (data) {
+			})
+		})
+			.then(res => res.text())
+			.then(data => {
 				if (data) {
 					//If it find no statusCode, meaning it was successful
 					if (!data.status) {
@@ -513,14 +504,11 @@ function runTest() {
 						addMessage('Extension called for "Body HTML", but no Body HTML exists for this document');
 					}
 				}
-			},
-			error: function () {
-				addMessage('Extension called for "Body HTML", but no Body HTML exists for this document');
-			},
-			complete: function () {
 				requestsReady.bodyHTML = true;
-			}
-		});
+			})
+			.catch(() => {
+				addMessage('Extension called for "Body HTML", but no Body HTML exists for this document');
+			});
 	}
 
 
@@ -556,15 +544,18 @@ function runTest() {
 	 */
 	function setDocumentMetadata() {
 		//Get the document metadata
-		return $.ajax({
-			url: documentUrl,
-			headers: {
+		return fetch(documentUrl, {
+			headers: new Headers({
 				'Accept': 'application/json',
 				'Content-Type': 'application/json'
-			},
-			method: 'GET',
-			dataType: 'json',
-			success: function (data) {
+			}),
+			method: 'GET'
+		})
+			.then(res => res.json())
+			.catch(() => {
+				addMessage('Failed to fetch document metadata');
+			})
+			.then(data => {
 				//StatusCode would mean an error
 				if ('statusCode' in data) {
 					$('#__testResults').text('Failed to fetch document\n' + JSON.stringify(data, null, 2));
@@ -581,7 +572,7 @@ function runTest() {
 						toSendData.parameters = json;
 
 						$('#__parametersForTest textarea').val(JSON.stringify(json, 2, 2));
-						chrome.storage.local.set( getStorageDefinitionForParameters(json) );
+						chrome.storage.local.set(getStorageDefinitionForParameters(json));
 					}
 					catch (e) {
 						toSendData.parameters = {};
@@ -589,12 +580,15 @@ function runTest() {
 					}
 
 					//Build the document metadata
-					console.log('PARAMETERS: ', toSendData.parameters);
-
 					let addToJson = (valueToAdd, addKey) => {
 						if (valueToAdd && valueToAdd.length) {
-							if (valueToAdd.constructor === Array) {
+							if (valueToAdd instanceof Array) {
 								toSendData.document.metadata[0].Values[addKey] = valueToAdd;
+							}
+							else if (valueToAdd instanceof Object) {
+								for (let ckey in valueToAdd) {
+									addToJson(valueToAdd[ckey], ckey);
+								}
 							}
 							else if (valueToAdd.constructor === Object) {
 								for (let ckey in valueToAdd) {
@@ -606,16 +600,17 @@ function runTest() {
 							}
 						}
 					};
-					addToJson(data);
+					for (let key in data) {
+						addToJson(data[key], key);
+					}
+					for (let key in data.raw) {
+						addToJson(data.raw[key], key);
+					}
 				}
-			},
-			error: function () {
-				addMessage('Failed to fetch document metadata');
-			},
-			complete: function () {
+
 				requestsReady.metadata = true;
-			}
-		});
+			});
+
 	}
 
 
@@ -624,28 +619,26 @@ function runTest() {
 	 * all the metadata added
 	 */
 	function runTestAjax() {
-		$.ajax({
-			url: testUrl,
-			headers: {
+
+		fetch(testUrl, {
+			method: 'POST', // or 'PUT'
+			body: JSON.stringify(toSendData),
+			headers: new Headers({
 				'Authorization': `Bearer ${apiTestsKey}`,
-				'Accept': 'application/json',
 				'Content-Type': 'application/json'
-			},
-			method: 'POST',
-			dataType: 'json',
-			data: JSON.stringify(toSendData, null, 0),
-			complete: function (data) {
-				if (data.status === 400) {
-					addMessage(data.responseJSON.errorCode);
-				} else if (data.responseJSON.result && data.responseJSON.result.reason) {
-					data.responseJSON.result.reason = unescape(data.responseJSON.result.reason);
-				}
-				//$('#__testResults').text(unescape(JSON.stringify(data.responseJSON, null, 2).replace(/\\\\n/g, '\n').replace(/\\\\\\"/g, '\"')));
-				let formatter = new JSONFormatter(data.responseJSON, Infinity, { hoverPreviewEnabled: false });
+			})
+		})
+			.then(res => res.json())
+			.catch(error => {
+				console.error('Error:', error);
+				addMessage(error.errorCode);
+			})
+			.then(response => {
+				let formatter = new JSONFormatter(response, Infinity, { hoverPreviewEnabled: false });
 				$('#__testResults').html(formatter.render());
 				loadingElement.css('display', 'none');
-			}
-		});
+			});
+
 	}
 
 }
@@ -662,19 +655,19 @@ let addTestButtonsToPage = () => {
 	let $table = $('#extensions');
 	$table.attr('__modified', true);
 
-	if ( $('tbody tr.empty', $table).length ) {
+	if ($('tbody tr.empty', $table).length) {
 		// no extensions, don't need to add buttons or header
 		return;
 	}
 
 	// Add 'Tests' column in Extension table header
-	if ( $('#__testHeader', $table).length === 0 ) {
+	if ($('#__testHeader', $table).length === 0) {
 		$('thead tr', $table).append('<th id="__testHeader">Tests</th>');
 	}
 	// Add Test buttons to each extension
-	$('tbody tr', $table).each( (i,tr)=> {
+	$('tbody tr', $table).each((i, tr) => {
 		let $tr = $(tr);
-		if ( $('.btn', $tr).length ) {
+		if ($('.btn', $tr).length) {
 			// button is already there
 			return;
 		}
@@ -704,55 +697,41 @@ let addTestButtonsToPage = () => {
  * Loads the values from the config and inits the mutation obs
  *
  */
-window.onload = function () {
-	$.get(chrome.runtime.getURL('/config/config.json'), (data)=>{
-		if (typeof data === 'string') {
-			data = JSON.parse(data);
+
+function initPipelineExtensionTester() {
+	let observer = new MutationObserver((/*mutations, observer*/) => {
+		// If the EditExtensionComponent appears
+		if ($('#EditExtensionComponent').length && $('#CreateExtension').length) {
+			ExtensionGallery.addExtensionSearchToPage();
 		}
-		//Default values if no values are found
-		chrome.storage.local.get({
-			// Public key with only search enabled
-			__publicApiKey: data['apiKey'],
-			__searchURL: data['url']
-		}, (items) => {
-			TEST_CONFIG.apiKey = items.__publicApiKey;
-			TEST_CONFIG.platformUrl = items.__searchURL;
 
-			let observer = new MutationObserver((/*mutations, observer*/)=>{
-				// If the EditExtensionComponent appears
-				if ($('#EditExtensionComponent').length && $('#CreateExtension').length) {
-					ExtensionGallery.addExtensionSearchToPage();
+		// If extensions appears AND it wasn't already modified by this script
+		if ($('#extensions').length && !$('#extensions').attr('__modified')) {
+
+			if (window._addTestButton_timeout_ref) {
+				clearTimeout(window._addTestButton_timeout_ref);
+			}
+			window._addTestButton_timeout_ref = setTimeout(() => {
+				window._addTestButton_timeout_ref = null;
+
+				addTestButtonsToPage();
+				if (!$('#__contentModal').length) {
+					addTestModal();
 				}
 
-				// If extensions appears AND it wasn't already modified by this script
-				if ($('#extensions').length && !$('#extensions').attr('__modified')) {
-
-					if (window._addTestButton_timeout_ref) {
-						clearTimeout(window._addTestButton_timeout_ref);
-					}
-					window._addTestButton_timeout_ref = setTimeout(()=>{
-						window._addTestButton_timeout_ref = null;
-
-						addTestButtonsToPage();
-						if (!$('#__contentModal').length) {
-							addTestModal();
-						}
-
-						//If a row is added later on, add the buttons
-						$('#extensions').on("DOMNodeInserted", "tr", addTestButtonsToPage);
-					}, 100);
-				}
-			});
-
-			// define what element should be observed by the observer
-			// and what types of mutations trigger the callback
-			observer.observe(document, {
-				subtree: true,
-				attributes: true
-			});
-		});
+				//If a row is added later on, add the buttons
+				$('#extensions').on("DOMNodeInserted", "tr", addTestButtonsToPage);
+			}, 100);
+		}
 	});
-};
+
+	// define what element should be observed by the observer
+	// and what types of mutations trigger the callback
+	observer.observe(document, {
+		subtree: true,
+		attributes: true
+	});
+}
 
 
 
@@ -777,4 +756,10 @@ function fetchBlob(uri, callback) {
 		}
 	};
 	xhr.send();
+}
+
+
+// load it only in /admin/ extensions page.
+if (/https:\/\/platform\w*\.cloud.coveo.com\/admin\/.*\/extensions\//.test(window.location.href)) {
+	window.addEventListener("load", initPipelineExtensionTester);
 }

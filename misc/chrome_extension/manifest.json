@@ -3,46 +3,43 @@
   "name": "Tester for Indexing Pipeline Extensions",
   "short_name": "Extension Tester",
   "description": "Adds an 'Extension Gallery' to the Extensions page of CloudV2, along with a 'Test' button beside each extension.",
-  "version": "0.4",
+  "version": "0.6",
   "homepage_url": "https://github.com/coveo-labs/pipeline-extension-manager",
-  "options_ui": {
-    "page": "/html/options.html",
-    "chrome_style": true
-  },
   "icons": {
     "16": "icons/16.png",
     "48": "icons/48.png",
     "128": "icons/128.png"
   },
-  "content_scripts": [
-    {
-      "run_at": "document_end",
-      "matches": [
-        "http://*/*",
-        "https://*/*"
-      ],
-      "js": [
-        "js/jquery-3.2.1.min.js",
-        "js/CoveoJsSearch.min.js",
-        "js/json-formatter.js",
-        "js/EncodeHelper.js",
-        "js/ExtensionGallery.js",
-        "content-script.js"
-      ],
-      "css": [
-        "css/inject.css"
-      ],
-      "all_frames": false
-    }
-  ],
+  "content_scripts": [{
+    "run_at": "document_end",
+    "matches": [
+      "https://platform.cloud.coveo.com/admin/*",
+      "https://platformdev.cloud.coveo.com/admin/*",
+      "https://platformqa.cloud.coveo.com/admin/*",
+      "https://platformhipaa.cloud.coveo.com/admin/*"
+    ],
+    "js": [
+      "js/jquery-3.3.1.min.js",
+      "js/CoveoJsSearch.min.js",
+      "js/json-formatter.js",
+      "js/EncodeHelper.js",
+      "js/ExtensionGallery.js",
+      "content-script.js"
+    ],
+    "css": [
+      "css/inject.css"
+    ],
+    "all_frames": false
+  }],
   "permissions": [
     "tabs",
-    "http://*/*",
-    "https://*/*",
-    "storage"
+    "storage",
+    "https://platform.cloud.coveo.com/admin/*",
+    "https://platformdev.cloud.coveo.com/admin/*",
+    "https://platformqa.cloud.coveo.com/admin/*",
+    "https://platformhipaa.cloud.coveo.com/admin/*"
   ],
   "web_accessible_resources": [
-    "/html/*",
-    "/config/config.json"
+    "/html/*"
   ]
 }
