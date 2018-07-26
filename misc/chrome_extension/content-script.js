@@ -437,7 +437,7 @@ function runTest() {
         };
         requestsReady.documentData = true;
       },
-      false,
+      false
     );
 
     // Read in the image file as a data URL.

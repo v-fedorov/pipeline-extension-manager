@@ -72,7 +72,7 @@ class ExtensionGallery {
         ExtensionGallery.setAceEditorValue(
           $(data)
             .find('pre')
-            .text(),
+            .text()
         );
       });
     }
