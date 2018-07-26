@@ -649,11 +649,15 @@ function runTest() {
  *
  */
 let addTestButtonsToPage = () => {
-	// Do this first, since it will be called multiple times before the async function is done below
+
+  // Do this first, since it will be called multiple times before the async function is done below
+  let nExtension = document.getElementById('extensions');
+  if (!nExtension) {
+    return;
+  }
 
 	// This is to ensure we don't get multiple columns
-	let $table = $('#extensions');
-	$table.attr('__modified', true);
+	let $table = $(nExtension);
 
 	if ($('tbody tr.empty', $table).length) {
 		// no extensions, don't need to add buttons or header
@@ -699,38 +703,51 @@ let addTestButtonsToPage = () => {
  */
 
 function initPipelineExtensionTester() {
-	let observer = new MutationObserver((/*mutations, observer*/) => {
-		// If the EditExtensionComponent appears
-		if ($('#EditExtensionComponent').length && $('#CreateExtension').length) {
-			ExtensionGallery.addExtensionSearchToPage();
-		}
+	let modalObserver = new MutationObserver((mutations, observer) => {
+    const nAdmin = document.getElementById('admin');
+    if (!nAdmin) {
+      return;
+    }
+    const nModal = document.getElementById('Modal');
+    if (!nModal) {
+      return;
+    }
+    observer.disconnect();
 
-		// If extensions appears AND it wasn't already modified by this script
-		if ($('#extensions').length && !$('#extensions').attr('__modified')) {
-
-			if (window._addTestButton_timeout_ref) {
-				clearTimeout(window._addTestButton_timeout_ref);
-			}
-			window._addTestButton_timeout_ref = setTimeout(() => {
-				window._addTestButton_timeout_ref = null;
-
-				addTestButtonsToPage();
-				if (!$('#__contentModal').length) {
-					addTestModal();
-				}
-
-				//If a row is added later on, add the buttons
-				$('#extensions').on("DOMNodeInserted", "tr", addTestButtonsToPage);
-			}, 100);
-		}
+    let modalObserver = new MutationObserver(()=>{
+      // If the EditExtensionComponent appears
+      if ($('#EditExtensionComponent').length && $('#CreateExtension').length) {
+        ExtensionGallery.addExtensionSearchToPage();
+      }
+    });
+    modalObserver.observe(nAdmin, {childList: true, subtree: true});
 	});
 
-	// define what element should be observed by the observer
-	// and what types of mutations trigger the callback
-	observer.observe(document, {
-		subtree: true,
-		attributes: true
-	});
+  let extensionObserver = new MutationObserver((mutations, observer) => {
+    const nAdmin = document.getElementById('admin');
+    if (!nAdmin) {
+      return;
+    }
+    const nMain = document.getElementById('main');
+    if (!nMain) {
+      return;
+    }
+
+    observer.disconnect();
+
+    // If extensions appears AND it wasn't already modified by this script
+    addTestButtonsToPage();
+    if (!$('#__contentModal').length) {
+      addTestModal();
+    }
+
+    let extensionObserver = new MutationObserver(addTestButtonsToPage);
+    extensionObserver.observe(nMain, { childList: true, subtree: true });
+
+  });
+
+	modalObserver.observe(document, { childList: true, subtree: true	});
+	extensionObserver.observe(document, {childList: true, subtree: true });
 }
 
 
