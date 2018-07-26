@@ -6,16 +6,14 @@
 
 let TEST_CONFIG = {
   apiKey: 'xxba74c99f-4825-486f-bd24-61815c2968fe',
-  platformUrl: 'https://platform.cloud.coveo.com'
+  platformUrl: 'https://platform.cloud.coveo.com',
 };
 
 class ExtensionGallery {
-
   /**
    * Sets up the javascript for the modal
    */
   static setupModal() {
-
     let svgButtonHTML = `<svg height='18' width='18' style='position: absolute; top:50%; transform:translate(-50%, -50%);'>
           <polygon points='0,0 0,18 18,9' style='fill:#f58020;'></polygon>
           Search
@@ -30,7 +28,7 @@ class ExtensionGallery {
     let span = $('.__close');
 
     // When the user clicks the button, open the modal
-    $('#__modalButton').on('click', function () {
+    $('#__modalButton').on('click', function() {
       modal.css('display', 'block');
     });
 
@@ -45,21 +43,19 @@ class ExtensionGallery {
     }
 
     // When the user clicks anywhere outside of the modal, close it
-    modal.on('click', function (event) {
+    modal.on('click', function(event) {
       if (event.target === modal[0]) {
         modal.css('display', 'none');
       }
     });
-
   }
 
-
   /**
-    * The onclick function for the extension search result link
-    *
-    * @param {event} e - The event
-    * @param {object} result - The search result
-    */
+   * The onclick function for the extension search result link
+   *
+   * @param {event} e - The event
+   * @param {object} result - The search result
+   */
   static onClick(e, result) {
     let title = result.title;
     let description = result.raw.extdescription;
@@ -72,11 +68,13 @@ class ExtensionGallery {
     $('#ExtensionName, #ExtensionDescription').val('');
 
     if (uniqueId) {
-      $.get(`${TEST_CONFIG.platformUrl}/rest/search/v2/html?organizationId=coveolabspublic&uniqueId=${encodeURIComponent(uniqueId)}&access_token=${TEST_CONFIG.apiKey}`,
-        (data) => {
-          ExtensionGallery.setAceEditorValue($(data).find('pre').text());
-        }
-      );
+      $.get(`${TEST_CONFIG.platformUrl}/rest/search/v2/html?organizationId=coveolabspublic&uniqueId=${encodeURIComponent(uniqueId)}&access_token=${TEST_CONFIG.apiKey}`, data => {
+        ExtensionGallery.setAceEditorValue(
+          $(data)
+            .find('pre')
+            .text()
+        );
+      });
     }
     if (title) {
       $('#ExtensionName').val(title);
@@ -88,8 +86,8 @@ class ExtensionGallery {
       let itemToIdMap = {
         'Body text': '#BodyTextDataStream',
         'Body HTML': '#BodyHTMLDataStream',
-        'Thumbnail': '#ThumbnailDataStream',
-        'Original file': '#FileBinaryStream'
+        Thumbnail: '#ThumbnailDataStream',
+        'Original file': '#FileBinaryStream',
       };
       reqData.split(';').forEach(itemData => {
         let id = itemToIdMap[itemData];
@@ -102,7 +100,6 @@ class ExtensionGallery {
     $('#__extensionsGalleryModal').css('display', 'none');
   }
 
-
   /**
    * Creates the modal componant of the page along with the button
    */
@@ -113,22 +110,21 @@ class ExtensionGallery {
       $('#EditExtensionComponent form .column:last-child').prepend(searchPageAndAddButton);
 
       //Init the Coveo search
-      var root = document.getElementById('__search');
-      Coveo.SearchEndpoint.endpoints['extensions'] = new Coveo.SearchEndpoint({
-        restUri: `${TEST_CONFIG.platformUrl}/rest/search`,
-        accessToken: TEST_CONFIG.apiKey
-      });
-      Coveo.init(root, {
-        ResultLink: {
-          onClick: (e, result) => {
-            e.preventDefault();
-            resetTestEnv();
-            ExtensionGallery.onClick(e, result);
-          }
-        }
-      });
+      const root = document.getElementById('__search');
+      if (root) {
+        Coveo.SearchEndpoint.configureCloudV2Endpoint('coveolabspublic', TEST_CONFIG.apiKey);
+        Coveo.init(root, {
+          ResultLink: {
+            onClick: (e, result) => {
+              e.preventDefault();
+              resetTestEnv();
+              ExtensionGallery.onClick(e, result);
+            },
+          },
+        });
 
-      ExtensionGallery.setupModal();
+        ExtensionGallery.setupModal();
+      }
     });
   }
 
@@ -155,7 +151,7 @@ class ExtensionGallery {
    * @param {string} stringToSet - The string to set
    */
   static setAceEditorValue(stringToSet) {
-    let scriptContent = `window.ace.edit('AceCodeEditor').setValue(\`${stringToSet}\`)`;
+    let scriptContent = `window.$('.CodeMirror')[0].CodeMirror.doc.setValue(\`${stringToSet}\`)`;
 
     let script = document.createElement('script');
     script.id = 'tmpScript';
@@ -164,5 +160,4 @@ class ExtensionGallery {
 
     $('#tmpScript').remove();
   }
-
 }
