@@ -6,7 +6,7 @@
 
 let TEST_CONFIG = {
   apiKey: 'xxba74c99f-4825-486f-bd24-61815c2968fe',
-  platformUrl: 'https://platform.cloud.coveo.com'
+  platformUrl: 'https://platform.cloud.coveo.com',
 };
 
 class ExtensionGallery {
@@ -68,11 +68,13 @@ class ExtensionGallery {
     $('#ExtensionName, #ExtensionDescription').val('');
 
     if (uniqueId) {
-      $.get(`${TEST_CONFIG.platformUrl}/rest/search/v2/html?organizationId=coveolabspublic&uniqueId=${encodeURIComponent(uniqueId)}&access_token=${TEST_CONFIG.apiKey}`,
-        (data) => {
-          ExtensionGallery.setAceEditorValue($(data).find('pre').text());
-        }
-      );
+      $.get(`${TEST_CONFIG.platformUrl}/rest/search/v2/html?organizationId=coveolabspublic&uniqueId=${encodeURIComponent(uniqueId)}&access_token=${TEST_CONFIG.apiKey}`, data => {
+        ExtensionGallery.setAceEditorValue(
+          $(data)
+            .find('pre')
+            .text(),
+        );
+      });
     }
     if (title) {
       $('#ExtensionName').val(title);
@@ -85,7 +87,7 @@ class ExtensionGallery {
         'Body text': '#BodyTextDataStream',
         'Body HTML': '#BodyHTMLDataStream',
         Thumbnail: '#ThumbnailDataStream',
-        'Original file': '#FileBinaryStream'
+        'Original file': '#FileBinaryStream',
       };
       reqData.split(';').forEach(itemData => {
         let id = itemToIdMap[itemData];
@@ -117,8 +119,8 @@ class ExtensionGallery {
               e.preventDefault();
               resetTestEnv();
               ExtensionGallery.onClick(e, result);
-            }
-          }
+            },
+          },
         });
 
         ExtensionGallery.setupModal();
