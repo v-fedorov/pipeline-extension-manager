@@ -7,6 +7,15 @@
   float: right
 }
 
+#version {
+	font-family: monospace;
+	color: #ffffff;
+	position: fixed;
+	right: 0;
+	bottom: 0;
+	padding: 3px 8px;
+}
+
 .__modal {
   display: none;
   /* Hidden by default */

@@ -56,10 +56,19 @@ let resetTestEnv = () => {
 };
 
 let validateDocId = () => {
-  if ($('#__testDocId').val()) {
+  let id = $('#__testDocId').val();
+  if (id) {
     $('#__runTests').removeAttr('disabled');
   } else {
     $('#__runTests').prop('disabled', 'disabled');
+  }
+
+  $('#__testDocId').removeClass('invalid');
+  if (/:\/\//.test(id)) {
+    // urls for uniqueId are no longer supported.
+    $('#__testDocId').parent().find('label').attr('data-invalid-message', 'Search API has issues with uniqueId using a URI-like format. We may not be able to retrieve the document for testing.');
+    $('#__testDocId').addClass('invalid');
+    // $('#__runTests').prop('disabled', 'disabled');
   }
 };
 
@@ -113,6 +122,10 @@ let testButtonsOnClick = e => {
         v = JSON.stringify(JSON.parse(v), 2, 2);
       }
       $('#__parametersForTest textarea').val(v);
+
+      let manifest = chrome.runtime.getManifest();
+      document.getElementById('version').innerText = 'v' + manifest.version;
+
     } catch (e) {
       $('#__parametersForTest textarea').val('');
     }
@@ -303,9 +316,10 @@ function runTest() {
           requestsReady.documentData = true;
         }
       }
-      setDocumentMetadata();
+
+      return setDocumentMetadata();
     })
-    .then(() => {
+    .then((gettingDocumentIsSuccessful) => {
       // complete
       let counter = 0;
       let displayedError = false;
@@ -325,7 +339,10 @@ function runTest() {
           setTimeout(wait, 100);
         }
       }
-      wait();
+
+      if (gettingDocumentIsSuccessful) {
+        wait();
+      }
     });
 
   /**
@@ -554,9 +571,11 @@ function runTest() {
       })
       .then(data => {
         //StatusCode would mean an error
-        if ('statusCode' in data) {
+        if (data.statusCode) {
           $('#__testResults').text('Failed to fetch document\n' + JSON.stringify(data, null, 2));
           loadingElement.css('display', 'none');
+
+          return false;
         } else {
           docUri = data.printableUri;
           if ($('#__originalLink').length) {
@@ -601,6 +620,7 @@ function runTest() {
         }
 
         requestsReady.metadata = true;
+        return true;
       });
   }
 
