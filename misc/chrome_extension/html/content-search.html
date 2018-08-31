@@ -10,7 +10,8 @@
 		<h1 class="inline bold text-medium-blue">Extension tester &nbsp;&nbsp;-&nbsp;&nbsp;
 			<span id="__extName"></span>
 		</h1>
-		<h4 class="admin-description text-dark-grey">Click on a document to test it with the extension</h4>
+    <h4 class="admin-description text-dark-grey">Click on a document to test it with the extension</h4>
+    <div id="version"></div>
 		<br>
 
 		<div class="tab-navigation">
@@ -122,9 +123,9 @@
 					<div id="__testSection" data-endpoint="orgContent" class="mod-header-padding mod-form-top-bottom-padding coveo-after-initialization">
 						<div class="coveo-form">
 							<div class="flex-row">
-								<fieldset class="input-field form-group flex1">
-									<input type="text" id="__testDocId" required placeholder="uniqueId">
-									<label>Document unique ID</label>
+								<fieldset class="input-field form-group flex1 validate">
+									<input class="invalid" type="text" id="__testDocId" required placeholder="uniqueId">
+									<label data-invalid-message="error">Document unique ID</label>
 									<input type="hidden" id="__currentExtension">
 								</fieldset>
 								<button id="__runTests" class="btn mod-primary" style="margin: 15px 0 0 10px;" disabled>Test</button>
