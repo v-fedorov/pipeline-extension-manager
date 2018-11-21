@@ -14,9 +14,10 @@
  *
  * @returns The access token
  */
-let getCookieApiKey = () => {
-  let cookiestring = RegExp('' + 'access_token' + '[^;]+').exec(document.cookie);
-  return decodeURIComponent(!!cookiestring ? cookiestring.toString().replace(/^[^=]+./, '') : '');
+const getCookieApiKey = () => {
+  const cookiestring = (/\baccess_token\b[^;]+/).exec(document.cookie);
+  const apikey = decodeURIComponent(!!cookiestring ? cookiestring.toString().replace(/^[^=]+./, '') : '');
+  return apikey;
 };
 
 /**
