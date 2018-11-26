@@ -63,14 +63,6 @@ let validateDocId = () => {
   } else {
     $('#__runTests').prop('disabled', 'disabled');
   }
-
-  $('#__testDocId').removeClass('invalid');
-  if (/:\/\//.test(id)) {
-    // urls for uniqueId are no longer supported.
-    $('#__testDocId').parent().find('label').attr('data-invalid-message', 'Search API has issues with uniqueId using a URI-like format. We may not be able to retrieve the document for testing.');
-    $('#__testDocId').addClass('invalid');
-    // $('#__runTests').prop('disabled', 'disabled');
-  }
 };
 
 let setDocId = docId => {
