@@ -256,6 +256,7 @@ function runTest() {
       ],
     },
     parameters: {},
+    language: "PYTHON",
   };
 
   //When all of these are true, fire the extension test
@@ -651,7 +652,7 @@ function runTest() {
  */
 let addTestButtonsToPage = () => {
   // Do this first, since it will be called multiple times before the async function is done below
-  let nExtension = document.getElementById('extensions');
+  let nExtension = document.querySelector('#admin #main table.admin-table-view');
   if (!nExtension) {
     return;
   }
