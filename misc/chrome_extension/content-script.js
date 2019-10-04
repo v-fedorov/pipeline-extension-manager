@@ -284,6 +284,9 @@ function runTest() {
     })
     .then(data => {
       // success
+
+      toSendData.language = data.language || 'PYTHON3';
+
       if (data.requiredDataStreams) {
         let streams = data.requiredDataStreams;
         if (streams.includes('BODY_TEXT')) {
@@ -657,6 +660,11 @@ let addTestButtonsToPage = () => {
     return;
   }
 
+  const hasExtensions = nExtension.querySelector('.extension-name');
+  if (!hasExtensions) {
+    return;
+  }
+
   // This is to ensure we don't get multiple columns
   let $table = $(nExtension);
 
@@ -762,6 +770,6 @@ function fetchBlob(uri, callback) {
 }
 
 // load it only in /admin/ extensions page.
-if (/https:\/\/platform\w*\.cloud.coveo.com\/admin\/.*\/extensions\//.test(window.location.href)) {
+if (/https:\/\/platform\w*\.cloud.coveo.com\/admin\//.test(window.location.href)) {
   window.addEventListener('load', initPipelineExtensionTester);
 }

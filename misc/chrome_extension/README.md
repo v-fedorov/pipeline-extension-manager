@@ -34,6 +34,11 @@ Simply clicking on the document you want to test will start the test and the res
 3. Load unpacked extension
 4. Find the `chrome_extension` folder in the repo under the `misc` folder
 
+## Build extension package
+
+Bash command to build the package for the Chrome Web Store:
+> `zip -r9 pipeline_extension_manager_v$(node -p -e "require('./manifest.json').version").zip manifest.json content-script.js css html icons js`
+
 ## How to run
 Head to the Coveo Cloud Platform extension's tab
 
