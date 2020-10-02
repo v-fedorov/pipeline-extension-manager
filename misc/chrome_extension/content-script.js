@@ -592,7 +592,10 @@ function runTest() {
 
           //Build the document metadata
           let addToJson = (valueToAdd, addKey) => {
-            if (valueToAdd && valueToAdd.length) {
+            if ( ['boolean', 'number', 'string'].includes(typeof valueToAdd) ) {
+              toSendData.document.metadata[0].Values[addKey] = [valueToAdd];
+            }
+            else if (valueToAdd && valueToAdd.length) {
               if (valueToAdd instanceof Array) {
                 toSendData.document.metadata[0].Values[addKey] = valueToAdd;
               } else if (valueToAdd instanceof Object) {
