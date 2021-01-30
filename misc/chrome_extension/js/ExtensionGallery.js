@@ -28,7 +28,7 @@ class ExtensionGallery {
     let span = $('.__close');
 
     // When the user clicks the button, open the modal
-    $('#__modalButton').on('click', function() {
+    $('#__modalButton').on('click', function () {
       modal.css('display', 'block');
     });
 
@@ -43,7 +43,7 @@ class ExtensionGallery {
     }
 
     // When the user clicks anywhere outside of the modal, close it
-    modal.on('click', function(event) {
+    modal.on('click', function (event) {
       if (event.target === modal[0]) {
         modal.css('display', 'none');
       }

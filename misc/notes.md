@@ -4,7 +4,7 @@
 
 From `misc` folder in a terminal :
 
-`curl https://static.cloud.coveo.com/searchui/v2.4710/js/CoveoJsSearch.min.js -o chrome_extension/js/CoveoJsSearch.min.js`
+`curl https://static.cloud.coveo.com/searchui/v2.10082/js/CoveoJsSearch.min.js -o chrome_extension/js/CoveoJsSearch.min.js`
 
 ## Chrome Store
 
