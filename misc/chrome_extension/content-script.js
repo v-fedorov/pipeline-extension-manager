@@ -130,13 +130,47 @@ let testButtonsOnClick = e => {
   $('#__currentExtension').text(extId);
 };
 
+
+function initCoveo() {
+  console.log('typeof Coveo = ', typeof Coveo);
+  if ((typeof Coveo) === "undefined") {
+    setTimeout(initCoveo, 500);
+    return;
+  }
+  let currentOrg = getCurrentOrg();
+  let root = document.getElementById('__orgContent');
+  Coveo.SearchEndpoint.endpoints['orgContent'] = new Coveo.SearchEndpoint({
+    restUri: `https://${location.host}/rest/search`,
+    accessToken: getCookieApiKey(),
+    anonymous: false,
+    isGuestUser: false,
+    queryStringArguments: {
+      organizationId: currentOrg,
+    },
+  });
+  Coveo.init(root, {
+    ResultLink: {
+      onClick: function (e, result) {
+        e.preventDefault();
+        setDocId(result.uniqueId);
+        resetTestEnv();
+        $('#__tab-test').click();
+        // Give the option to pass parameters before triggering the test
+        // $('#__runTests').click();
+      },
+    },
+  });
+  let testSection = document.getElementById('__testSection');
+  Coveo.init(testSection);
+}
+
 /**
  * Add test modal to page
  */
 function addTestModal() {
   fetch(chrome.runtime.getURL('/html/content-search.html'))
     .then(res => res.text())
-    .then(function(body) {
+    .then(function (body) {
       $('body').append(body);
 
       let activateTab = id => {
@@ -150,7 +184,6 @@ function addTestModal() {
       $('#__runTests').click(runTest);
 
       // Show modal
-      let currentOrg = getCurrentOrg();
       let modal = $('#__contentModal');
       let span = document.getElementsByClassName('__close');
 
@@ -169,30 +202,7 @@ function addTestModal() {
         }
       };
 
-      let root = document.getElementById('__orgContent');
-      Coveo.SearchEndpoint.endpoints['orgContent'] = new Coveo.SearchEndpoint({
-        restUri: `https://${location.host}/rest/search`,
-        accessToken: getCookieApiKey(),
-        anonymous: false,
-        isGuestUser: false,
-        queryStringArguments: {
-          organizationId: currentOrg,
-        },
-      });
-      Coveo.init(root, {
-        ResultLink: {
-          onClick: function(e, result) {
-            e.preventDefault();
-            setDocId(result.uniqueId);
-            resetTestEnv();
-            $('#__tab-test').click();
-            // Give the option to pass parameters before triggering the test
-            // $('#__runTests').click();
-          },
-        },
-      });
-      let testSection = document.getElementById('__testSection');
-      Coveo.init(testSection);
+      initCoveo();
 
       $('#__testDocId').on('input', validateDocId);
       let $ta = $('#__parametersForTest textarea');
@@ -354,7 +364,7 @@ function runTest() {
         originalFileElement.html(data);
 
         //Coveo things (vapor css)
-        $('input[type=file]').change(function() {
+        $('input[type=file]').change(function () {
           var fileValue = this.files.length ? this.files[0].name : '';
           var $input = $(this)
             .closest('.file-input')
@@ -366,7 +376,7 @@ function runTest() {
             .find('.clear-file')
             .toggleClass('hidden', !fileValue);
         });
-        $('.clear-file').click(function() {
+        $('.clear-file').click(function () {
           var $input = $(this).closest('.file-input');
           var $path = $input.find('.file-path');
 
@@ -386,7 +396,7 @@ function runTest() {
         //Coveo things
 
         $('#__uploadedFile').on('change', handleFileChange);
-        $('#__noFile').click(function() {
+        $('#__noFile').click(function () {
           requestsReady.documentData = true;
         });
         if (docUri !== '') {
@@ -441,7 +451,7 @@ function runTest() {
     // Closure to capture the file information.
     reader.addEventListener(
       'load',
-      function() {
+      function () {
         toSendData.document.dataStreams[0].Values['DOCUMENT_DATA'] = {
           inlineContent: reader.result
             .split(',')
@@ -529,11 +539,10 @@ function runTest() {
    *
    */
   function setThumbnail() {
-    let url = `https://${
-      location.host
-    }/rest/search/datastream?access_token=${apiTestsKey}&organizationId=${currentOrg}&contentType=application%2Fbinary&dataStream=%24Thumbnail%24&uniqueId=${encodeURIComponent(uniqueId)}`;
+    let url = `https://${location.host
+      }/rest/search/datastream?access_token=${apiTestsKey}&organizationId=${currentOrg}&contentType=application%2Fbinary&dataStream=%24Thumbnail%24&uniqueId=${encodeURIComponent(uniqueId)}`;
 
-    fetchBlob(url, function(blob) {
+    fetchBlob(url, function (blob) {
       // Array buffer to Base64:
       if (blob) {
         let str = btoa(String.fromCharCode.apply(null, new Uint8Array(blob)));
@@ -592,7 +601,7 @@ function runTest() {
 
           //Build the document metadata
           let addToJson = (valueToAdd, addKey) => {
-            if ( ['boolean', 'number', 'string'].includes(typeof valueToAdd) ) {
+            if (['boolean', 'number', 'string'].includes(typeof valueToAdd)) {
               toSendData.document.metadata[0].Values[addKey] = [valueToAdd];
             }
             else if (valueToAdd && valueToAdd.length) {
@@ -757,7 +766,7 @@ function fetchBlob(uri, callback) {
   xhr.open('GET', uri, true);
   xhr.responseType = 'arraybuffer';
 
-  xhr.onload = function() {
+  xhr.onload = function () {
     if (this.status === 200) {
       var blob = this.response;
       if (callback) {
@@ -773,6 +782,6 @@ function fetchBlob(uri, callback) {
 }
 
 // load it only in /admin/ extensions page.
-if (/https:\/\/platform\w*\.cloud.coveo.com\/admin\//.test(window.location.href)) {
+if (/https:\/\/platform[-\w]*\.cloud.coveo.com\/admin\//.test(window.location.href)) {
   window.addEventListener('load', initPipelineExtensionTester);
 }
