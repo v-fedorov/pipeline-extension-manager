@@ -30,7 +30,7 @@ class CoveoPush(object):
         )
 
         res = requests.post(url, headers=self.coveo_headers)
-        print "_change_status: {0} {1}".format(res.status_code, res.text)
+        print ("_change_status: {0} {1}".format(res.status_code, res.text))
 
     def _get_url(self, url_format, extra):
         data = self.config.copy()
@@ -39,7 +39,7 @@ class CoveoPush(object):
         url = url.format(**data)
         url = re.sub(r'([^:])//+', '\\1/', url)
 
-        print 'Url: ' + url
+        print ('Url: ' + url)
         return url
 
     def push_doc(self, script_info):
@@ -47,11 +47,11 @@ class CoveoPush(object):
         url = self._get_url('/documents?documentId={docId}', {'docId': script_info['url']})
         response = requests.put(url, json=script_info, headers=self.coveo_headers)
 
-        print "{0}: {1} - {2}".format(
+        print ("{0}: {1} - {2}".format(
             script_info['rawfilename'],
             response.status_code,
             response.text
-        )
+        ))
 
     def push(self, filename):
         """ Load a payload and add documents to a Push source, one document at a time. """
@@ -70,7 +70,7 @@ def main():
     """ Load a payload file, iterate over documents
         and push them to a Coveo Push source one by one """
     if len(sys.argv) < 2:
-        print "Missing filename"
+        print ("Missing filename")
         exit()
 
     CoveoPush().push(sys.argv[1])

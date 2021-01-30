@@ -45,12 +45,13 @@ class GithubCrawler(object):
 
         file_name = github_file_obj['name']
         file_url = github_file_obj['url']
-        print "Found extension {}".format(file_name)
+        print ("Found extension {}".format(file_name))
 
         extension_file_data = self.request_github(file_url)
 
-        file_content = extension_file_data['content']
-        file_content = base64.b64decode(''.join(file_content.split('\n')))
+        file_content_bytes = extension_file_data['content']
+        file_content_bytes = base64.b64decode(''.join(file_content_bytes.split('\n')))
+        file_content = file_content_bytes.decode('utf8')
 
         # Extract the metadata
         title = []
@@ -62,12 +63,10 @@ class GithubCrawler(object):
                 title.append(line.split("# Title: ")[1])
 
             if "# Description: " in line:
-                description.append(
-                    line.split("# Description: ")[1])
+                description.append(line.split("# Description: ")[1])
 
             if "# Required data: " in line:
-                req_data.extend(line.split(
-                    "# Required data: ")[1].split(", "))
+                req_data.extend(line.split("# Required data: ")[1].split(", "))
 
         url = github_file_obj['html_url']
         return {
@@ -76,7 +75,7 @@ class GithubCrawler(object):
             "title": ' '.join(title),
             "description": ' '.join(description),
             "required": req_data,
-            "CompressedBinaryData": base64.b64encode(zlib.compress(file_content)),
+            "CompressedBinaryData": base64.b64encode(zlib.compress(file_content_bytes)).decode('utf8'),
             "url": url,
             "FileExtension": '.py'
         }
@@ -91,15 +90,15 @@ class GithubCrawler(object):
         github_user_repos = self.request_github(url)
 
         if not isinstance(github_user_repos, list):
-            print json.dumps(github_user_repos)
+            print(json.dumps(github_user_repos))
             exit()
 
-        print "Found {0} repo(s) for {1}".format(len(github_user_repos), self.config['git_user'])
+        print("Found {0} repo(s) for {1}".format(len(github_user_repos), self.config['git_user']))
 
         # Loop through all the repos
         for repo in github_user_repos:
 
-            print "Searching {} for 'extensions' folder".format(repo['name'])
+            print("Searching {} for 'extensions' folder".format(repo['name']))
 
             # Get all files in the repo
             repo_contents_url = '/'.join(repo['contents_url'].split('/')[:-1])
@@ -110,7 +109,7 @@ class GithubCrawler(object):
 
                 # Find the 'extensions' folder
                 if self.is_extension_folder(repo_content):
-                    print "Found 'extensions' folder in {0}".format(repo['name'])
+                    print("Found 'extensions' folder in {0}".format(repo['name']))
 
                     # Get all the content in the extensions folder
                     extension_files = self.request_github(repo_content['url'])
@@ -129,7 +128,7 @@ class GithubCrawler(object):
 def main():
     """ Crawl Github repos to find extensions scripts and save them as PushAPI payload. """
     if len(sys.argv) < 2:
-        print "Missing filename"
+        print("Missing filename")
         exit()
 
     GithubCrawler().parse(sys.argv[1])

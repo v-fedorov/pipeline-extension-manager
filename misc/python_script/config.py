@@ -18,7 +18,7 @@ def get_config(config_vars):
     for config_var in config_vars:
         if config_var not in config:
             is_config_missing = True
-            print 'Missing key in config.yml: ' + config_var
+            print('Missing key in config.yml: ' + config_var)
 
     if is_config_missing:
         exit('Some required keys are missing from config.yml.')

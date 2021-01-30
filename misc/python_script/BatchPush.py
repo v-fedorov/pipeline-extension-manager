@@ -33,7 +33,7 @@ class BatchPush(CoveoPush.CoveoPush):
             headers=file_info[u'requiredHeaders']
         )
 
-        print "_upload_data: {0} {1}".format(res.status_code, res.text)
+        print("_upload_data: {0} {1}".format(res.status_code, res.text))
 
     def _send_batch_request(self, file_info):
         url = self._get_url(
@@ -41,7 +41,7 @@ class BatchPush(CoveoPush.CoveoPush):
             {"fileId": file_info[u'fileId']}
         )
         res = requests.put(url, headers=self.coveo_headers)
-        print "_send_batch_request: {0} {1}".format(res.status_code, res.text)
+        print("_send_batch_request: {0} {1}".format(res.status_code, res.text))
 
     def push(self, filename):
         """ Send file to Coveo """
@@ -60,7 +60,7 @@ class BatchPush(CoveoPush.CoveoPush):
 def main():
     """ Load a json payload and push it to a Coveo Push source using Batch """
     if len(sys.argv) < 2:
-        print "Missing filename"
+        print ("Missing filename")
         exit()
 
     BatchPush().push(sys.argv[1])
