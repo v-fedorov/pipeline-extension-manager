@@ -57,11 +57,16 @@ let resetTestEnv = () => {
 };
 
 let validateDocId = () => {
+  let docIdInput = $('#__testDocId');
   let id = $('#__testDocId').val();
   if (id) {
     $('#__runTests').removeAttr('disabled');
+    docIdInput.removeClass('invalid');
+    docIdInput.addClass('valid');
   } else {
     $('#__runTests').prop('disabled', 'disabled');
+    docIdInput.removeClass('valid');
+    docIdInput.addClass('invalid');
   }
 };
 
