@@ -132,7 +132,6 @@ let testButtonsOnClick = e => {
 
 
 function initCoveo() {
-  console.log('typeof Coveo = ', typeof Coveo);
   if ((typeof Coveo) === "undefined") {
     setTimeout(initCoveo, 500);
     return;
