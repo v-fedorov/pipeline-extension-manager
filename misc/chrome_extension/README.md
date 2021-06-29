@@ -1,6 +1,15 @@
 # Coveo extension manager
 Manages and helps test pipeline extensions. With this extension, you can quickly add an extension from an existing gallery that gets updated then test it right after with any document avaible in the organization. This improves how quickly one can test extensions and find mistakes.
 
+## No Support
+
+***Please note:*** Coveo Support is not supporting this extension.
+
+This project is made available for your convenience, but it's not supported by Coveo. 
+
+For help, you can try [creating an issue](https://github.com/coveo-labs/pipeline-extension-manager/issues). 
+
+
 ## Install
 
 If you are on Coveo domain, you can install from the [Chrome Web Store](https://chrome.google.com/webstore/detail/tester-for-indexing-pipel/gbaapjhekfgfnjkijijdfkllbfhobieb?hl=en-US).
@@ -51,12 +60,13 @@ Demo of adding a new extesion then testing it immediately with an existing docum
 
 
 ## Notes
+
 The tester is only capable of getting indexed metadata, Body Text, Body HTML and Thumbnail.
 Some metadata only exists when a real extension is being ran, so results may vary.
 So in some cases, it's better to test with re-building a source.
 
-It is currently not possible to test with a datastream in prod. The next rollout (August 5th, 2017) will allow this feature to work.
+No additional support will be provided by the Coveo-Labs team.
 
-This was tested on Chromium 58.0 running Ubuntu 16.04
+Coveo Support is not supporting this extension. 
 
-No additional support will be provided by the Coveo-Labs team
+For help, you can try [creating an issue](https://github.com/coveo-labs/pipeline-extension-manager/issues). 

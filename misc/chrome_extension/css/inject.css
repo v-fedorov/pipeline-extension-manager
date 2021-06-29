@@ -3,17 +3,17 @@
 }
 
 #__modalButton {
-  margin: 0 !important;
-  float: right
+  position: absolute;
+  margin-top: -30px;
+  right: 40px;
 }
 
 #version {
-	font-family: monospace;
-	color: #ffffff;
-	position: fixed;
-	right: 0;
-	bottom: 0;
-	padding: 3px 8px;
+  color: #ffffff;
+  position: fixed;
+  right: 0;
+  bottom: 0;
+  padding: 3px 8px;
 }
 
 .__modal {
@@ -71,17 +71,17 @@
 
 .__animateBottom {
   position: relative;
-  animation: animatebottom 0.4s
+  animation: animatebottom 0.4s;
 }
 
 @keyframes animatebottom {
   from {
     bottom: -300px;
-    opacity: 0
+    opacity: 0;
   }
   to {
     bottom: 0;
-    opacity: 1
+    opacity: 1;
   }
 }
 
@@ -141,4 +141,17 @@
   font-size: 12px;
   margin: 3px;
   padding: 3px 6px;
+}
+
+#__no-support-warning {
+  position: fixed;
+  bottom: 80px;
+  left: 200px;
+  padding: 10px 40px 30px 10px;
+  z-index: 99;
+}
+
+#__no-support-warning .icon {
+  vertical-align: -1em;
+  margin-top: -2px;
 }

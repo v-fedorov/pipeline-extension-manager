@@ -14,13 +14,6 @@ class ExtensionGallery {
    * Sets up the javascript for the modal
    */
   static setupModal() {
-    let svgButtonHTML = `<svg height='18' width='18' style='position: absolute; top:50%; transform:translate(-50%, -50%);'>
-          <polygon points='0,0 0,18 18,9' style='fill:#f58020;'></polygon>
-          Search
-        </svg>`;
-
-    $('#__search > div.coveo-search-section > div > a').html(svgButtonHTML);
-
     // Get the modal
     let modal = $('#__extensionsGalleryModal');
 

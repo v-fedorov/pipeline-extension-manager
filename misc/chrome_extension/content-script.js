@@ -93,20 +93,40 @@ let validateParameters = () => {
   }
 };
 
+const getExtensionIdFromName = async (extName, extVersion) => {
+  const currentOrg = getCurrentOrg();
+  const apiTestsKey = getCookieApiKey();
+  const allExtensions = await fetch(`https://${location.host}/rest/organizations/${currentOrg}/extensions/`, {
+    headers: new Headers({
+      Authorization: `Bearer ${apiTestsKey}`,
+      Accept: 'application/json',
+      'Content-Type': 'application/json',
+    }),
+    method: 'GET',
+  })
+    .then(res => res.json());
+
+  const ext = allExtensions.find(e => e.name === extName && e.versionId === extVersion);
+  if (!ext) {
+    ext = allExtensions.find(e => e.name === extName);
+  }
+  return ext.id;
+};
+
 /**
  * The onclick for the test buttons on the elements, in the Extensions page.
  *
  * @param {event} e - The mouse click event
  */
-let testButtonsOnClick = e => {
+let testButtonsOnClick = async e => {
   const $extRow = $(e.target).closest('tr');
-  const extId = $('.extension-name .second-row', $extRow)
-    .text()
-    .trim();
-  const extName = $('.extension-name .first-row', $extRow)
-    .text()
-    .trim();
+  const extName = $('.extension-name', $extRow).text().trim();
+  const extVersion = $('.extension-last-modified-date .second-row', $extRow).text().replace('Version:', '').trim();
 
+  const extId = await getExtensionIdFromName(extName, extVersion);
+
+  resetTestEnv();
+  
   $('#__tab-select-document').click();
   setDocId('');
   $('#__extName').text(extName);
@@ -298,7 +318,6 @@ function runTest() {
     })
     .then(data => {
       // success
-
       toSendData.language = data.language || 'PYTHON3';
 
       if (data.requiredDataStreams) {
@@ -343,11 +362,14 @@ function runTest() {
           runTestAjax();
         } else {
           counter++;
-          if (counter > 500 && !displayedError) {
+          if (counter > 50 && !displayedError) {
             addMessage('Something might have gone wrong, check the console for errors');
             displayedError = true;
+            loadingElement.css('display', 'none');
           }
-          setTimeout(wait, 100);
+          else {
+            setTimeout(wait, 250);
+          }
         }
       }
 
