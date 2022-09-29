@@ -26,7 +26,7 @@ const getCookieApiKey = () => {
  * @returns {string} The org string
  */
 let getCurrentOrg = () => {
-  return window.location.hash.substring(1).split('/')[0];
+  return window.location.hash.substring(1).split('/')[1];
 };
 
 let getParameterNameForStorage = () => {
