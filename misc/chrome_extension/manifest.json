@@ -1,5 +1,5 @@
 {
-  "manifest_version": 2,
+  "manifest_version": 3,
   "name": "Tester for Indexing Pipeline Extensions",
   "short_name": "Extension Tester",
   "description": "Adds an 'Extension Gallery' to the Extensions page of CloudV2, along with a 'Test' button beside each extension.",
@@ -10,38 +10,54 @@
     "48": "icons/48.png",
     "128": "icons/128.png"
   },
-  "content_scripts": [{
-    "run_at": "document_end",
-    "matches": [
-      "https://platform.cloud.coveo.com/admin/*",
-      "https://platformdev.cloud.coveo.com/admin/*",
-      "https://platformqa.cloud.coveo.com/admin/*",
-      "https://platformhipaa.cloud.coveo.com/admin/*",
-      "https://platform-eu.cloud.coveo.com/admin/*",
-      "https://platformdev-eu.cloud.coveo.com/admin/*",
-      "https://platformqa-eu.cloud.coveo.com/admin/*",
-      "https://platformhipaa-eu.cloud.coveo.com/admin/*",
-      "https://platform-au.cloud.coveo.com/admin/*",
-      "https://platformdev-au.cloud.coveo.com/admin/*",
-      "https://platformqa-au.cloud.coveo.com/admin/*",
-      "https://platformhipaa-au.cloud.coveo.com/admin/*"
-    ],
-    "js": [
-      "js/jquery-3.5.1.min.js",
-      "js/CoveoJsSearch.min.js",
-      "js/json-formatter.js",
-      "js/EncodeHelper.js",
-      "js/ExtensionGallery.js",
-      "content-script.js"
-    ],
-    "css": [
-      "css/inject.css"
-    ],
-    "all_frames": false
-  }],
+  "content_scripts": [
+    {
+      "run_at": "document_end",
+      "matches": [
+        "https://platform.cloud.coveo.com/admin/*",
+        "https://platformdev.cloud.coveo.com/admin/*",
+        "https://platformqa.cloud.coveo.com/admin/*",
+        "https://platformhipaa.cloud.coveo.com/admin/*",
+        "https://platform-eu.cloud.coveo.com/admin/*",
+        "https://platformdev-eu.cloud.coveo.com/admin/*",
+        "https://platformqa-eu.cloud.coveo.com/admin/*",
+        "https://platformhipaa-eu.cloud.coveo.com/admin/*",
+        "https://platform-au.cloud.coveo.com/admin/*",
+        "https://platformdev-au.cloud.coveo.com/admin/*",
+        "https://platformqa-au.cloud.coveo.com/admin/*",
+        "https://platformhipaa-au.cloud.coveo.com/admin/*"
+      ],
+      "js": [
+        "js/jquery-3.5.1.min.js",
+        "js/CoveoJsSearch.min.js",
+        "js/json-formatter.js",
+        "js/EncodeHelper.js",
+        "js/ExtensionGallery.js",
+        "content-script.js"
+      ],
+      "css": [
+        "css/inject.css"
+      ],
+      "all_frames": false
+    }
+  ],
   "permissions": [
     "tabs",
     "storage",
+    "scripting"
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "/html/*"
+      ],
+      "matches": [
+        "<all_urls>"
+      ]
+    }
+  ],
+  "content_security_policy": {},
+  "host_permissions": [
     "https://platform.cloud.coveo.com/admin/*",
     "https://platformdev.cloud.coveo.com/admin/*",
     "https://platformqa.cloud.coveo.com/admin/*",
@@ -54,8 +70,5 @@
     "https://platformdev-au.cloud.coveo.com/admin/*",
     "https://platformqa-au.cloud.coveo.com/admin/*",
     "https://platformhipaa-au.cloud.coveo.com/admin/*"
-  ],
-  "web_accessible_resources": [
-    "/html/*"
   ]
 }
